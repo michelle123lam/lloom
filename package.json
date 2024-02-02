@@ -1,0 +1,18 @@
+{
+	"scripts": {
+		"dev": "npm run build -- --sourcemap=inline --watch",
+		"build": "esbuild src/index.js --minify --format=esm --bundle --outdir=lloom/static"
+	},
+	"type": "module",
+	"devDependencies": {
+		"@anywidget/vite": "^0.1.2",
+		"@sveltejs/vite-plugin-svelte": "^3.0.2",
+		"esbuild": "^0.19.11",
+		"vite": "^5.0.12"
+	},
+	"dependencies": {
+		"@anywidget/svelte": "^0.0.3",
+		"svelte-table": "^0.6.1",
+		"svelte-vega": "^2.1.0"
+	}
+}
