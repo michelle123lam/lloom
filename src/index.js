@@ -1,5 +1,3 @@
-import "./style.css";
-
 import MatrixView from "./components/MatrixView.svelte";
 
 export function render({ model, el }) {
