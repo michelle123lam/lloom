@@ -38,9 +38,11 @@
 
     onMount(() => {
         // Parse the metadata (which is used to display details on GroupView)
+        // console.log("metadataOrig", metadataOrig); // TEMP
         if (metadataOrig != undefined) {
             metadata = JSON.parse(metadataOrig);
             numConcepts = Object.keys(metadata.concepts).length;
+            // console.log("numConcepts", numConcepts); // TEMP
         }
 	});
 
@@ -127,8 +129,6 @@
                     {selectedMatrixElem}
                     {el}
                     {filterItems}
-                    {sortBy}
-                    {sortOrder}
                     {selectedTitle}
                     {selectedMetadata}
                 />

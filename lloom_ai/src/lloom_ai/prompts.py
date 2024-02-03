@@ -1,5 +1,5 @@
 # Distill - Filter ========================
-filter = """
+filter_prompt = """
 I have the following TEXT EXAMPLE:
 {ex}
 
@@ -11,7 +11,7 @@ Please extract {n_quotes} QUOTES exactly copied from this EXAMPLE that are {seed
 # Removed: If there are no quotes relevant to {seed}, leave the list empty.
 
 # Distill - Summarize ========================
-summarize = """
+summarize_prompt = """
 I have this sample text:
 {ex}
 
@@ -22,7 +22,7 @@ Please summarize the main point of this text {seeding_phrase} into {n_bullets} b
 """
 
 # Synthesize ========================
-synthesize = """
+synthesize_prompt = """
 I have this set of bullet point summaries of text examples:
 {examples}
 
@@ -36,7 +36,7 @@ Please write a summary of {n_concepts_phrase} for these examples. {seed_phrase} 
 """
 
 # Review ========================
-review_remove = """
+review_remove_prompt = """
 I have this set of themes generated from text examples:
 {themes}
 
@@ -54,7 +54,7 @@ Please respond ONLY with a valid JSON in the following format:
 }}
 """
 
-review_merge = """
+review_merge_prompt = """
 I have this set of themes generated from text examples:
 {themes}
 
@@ -78,7 +78,7 @@ Please respond ONLY with a valid JSON in the following format with the original 
 """
 
 # Score ========================
-score_no_highlight = """
+score_no_highlight_prompt = """
 CONTEXT: 
     I have the following text examples in a JSON:
     {examples_json}
@@ -105,7 +105,7 @@ TASK:
     }}
 """
 
-score_overall_topic = """
+score_overall_topic_prompt = """
 CONTEXT: 
     I have the following text examples in a JSON:
     {examples_json}
@@ -133,7 +133,7 @@ TASK:
     }}
 """
 
-concept_auto_eval = """
+concept_auto_eval_prompt = """
 I have this set of CONCEPTS:
 {concepts}
 

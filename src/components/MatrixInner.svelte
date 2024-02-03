@@ -21,6 +21,7 @@
 
     // Create the matrix visualization using the data
 	function renderMatrix(data_in) {
+        // console.log("MatrixInner numConcepts", numConcepts);  // TEMP
         if (data_in != undefined && numConcepts > 0) {
             let data_json = JSON.parse(data_in);
             const width = 675;
