@@ -14,6 +14,9 @@
 
     let chart;
     const dispatch = createEventDispatcher();
+    let minWidth = 450;
+    let minHeight = 300;
+    let perConceptHeight = 60;
 
     onMount(() => {
         renderMatrix(data);
@@ -21,11 +24,10 @@
 
     // Create the matrix visualization using the data
 	function renderMatrix(data_in) {
-        // console.log("MatrixInner numConcepts", numConcepts);  // TEMP
         if (data_in != undefined && numConcepts > 0) {
             let data_json = JSON.parse(data_in);
-            const width = 675;
-            const height = 300 + (60 * numConcepts);
+            const width = minWidth;
+            const height = minHeight + (perConceptHeight * numConcepts);
             const cur_color = "#82C1FB";
             chart = new BubbleMatrix(div)
                 .size([width, height])
@@ -38,7 +40,7 @@
                 })
                 .font({
                     family: "system-ui",
-                    size: 12,
+                    size: 10,
                 })
                 .columns({
                     row: "concept",
@@ -163,8 +165,8 @@
         render() {
             const options = this._options;
 
-            const detached = !this._container.isConnected;
-            if (detached) document.body.append(this._container);
+            // const detached = !this._container.isConnected;
+            // if (detached) document.body.append(this._container);
 
             this.chartData = new ChartData(this._dataset, this._fieldNames);
             this.chartData.numberIsPercentage = options.numberIsPercentage;
@@ -193,10 +195,10 @@
 
             this.partitions.adjustScrollableBlocks();
 
-            if (detached) {
-                this._container.remove();
-                return this._container;
-            }
+            // if (detached) {
+            //     this._container.remove();
+            //     return this._container;
+            // }
 
             return this;
         }
@@ -581,6 +583,8 @@
 
             this.columnHeight = max(chartData.columns.map(c => this.trim(c.name) + "M"));
             this.rowWidth = this.margin.left + max(chartData.rows.map(r => r.name + "MM"), this.font.clone().weight("bold"));
+            this.columnHeight = 150;  // Workaround
+            this.rowWidth = 175;  // Workaround
         }
 
         _calculateBubbleRadius(chartData, showSlider) {
@@ -698,6 +702,7 @@
             if (this._chart.options().showSlider) this.slider.style.height = `${measures.sliderHeight}px`;
             this.columns.style.height = `${measures.columnHeight}px`;
             this.columns.style.width = `${measures.width - measures.rowWidth - measures.margin.left}px`;
+            console.log("Partitions adjustSize width", measures.width, measures.rowWidth, measures.margin.left, this.columns.style.width);  // TEMP
             this.placeHolder.style.width = `${measures.rowWidth + measures.margin.left}px`;
             this.placeHolder.style.height = `${measures.columnHeight}px`;
             this.rows.style.width = `${measures.rowWidth + measures.margin.left}px`;
@@ -897,6 +902,7 @@
 
         render() {
             const c = this.chart;
+            console.log("ColumnRenderer width", c.scales.maxX, c.measures.rowWidth); // TEMP
             const bufferWidth = 0;
             const bufferHeight = 0;
             const g = d3.select(c.partitions.columns)

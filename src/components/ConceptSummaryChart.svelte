@@ -36,7 +36,8 @@
 		},
 		mark: {type: 'bar'},
         title: "Concept Prevalence",
-        width: 150,
+        width: 200, 
+        height: 150, 
 		encoding: {
 			y: { 
                 field: 'concept_score_orig', 

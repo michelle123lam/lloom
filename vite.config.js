@@ -13,7 +13,7 @@ export default defineConfig({
 		},
 	},
 	build: {
-        outDir: "lloom/static",
+        outDir: "lloom_ai/src/lloom_ai/static",
         lib: {
             entry: ["src/index.js"],
             formats: ["es"],

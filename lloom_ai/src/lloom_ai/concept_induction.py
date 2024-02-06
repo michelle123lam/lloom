@@ -25,12 +25,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from llm import multi_query_gpt_wrapper
     from prompts import *
-    # from __init__ import MatrixWidget
+    from __init__ import MatrixWidget
 else:
     # uses current package visibility
     from .llm import multi_query_gpt_wrapper
     from .prompts import *
-    # from .__init__ import MatrixWidget
+    from .__init__ import MatrixWidget
 
 # CONSTANTS ================================
 NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
@@ -1268,20 +1268,25 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 # - show_highlights: boolean (whether to show highlights)
 # - norm_by: string (column name to normalize by; either "group" or "concept"
 # - debug: boolean (whether to print debug statements)
-def visualize(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], custom_groups={}, show_highlights=False, norm_by="concept", debug=False):
+def visualize(df, score_df, res_dict, concepts, cols_to_show=[], custom_groups={}, show_highlights=False, norm_by="concept", debug=False):
+    doc_id_col=res_dict['doc_id_col']
+    doc_col=res_dict['doc_col']
+    score_col=res_dict['score_col']
+    df_filtered=res_dict['df_filtered']
+    df_bullets=res_dict['df_bullets']
     matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, custom_groups=custom_groups, show_highlights=show_highlights, norm_by=norm_by, debug=debug)
 
     data = matrix_df.to_json(orient='records')
     data_items = item_df.to_json(orient='records')
     data_items_wide = item_df_wide.to_json(orient='records')
     md = json.dumps(metadata_dict)
-    # w = MatrixWidget(
-    #     data=data, 
-    #     data_items=data_items,
-    #     data_items_wide=data_items_wide, 
-    #     metadata=md
-    # )
-    # return w
+    w = MatrixWidget(
+        data=data, 
+        data_items=data_items,
+        data_items_wide=data_items_wide, 
+        metadata=md
+    )
+    return w
 
 # Adds a new concept with the specified name and prompt
 # Input: 
@@ -1302,7 +1307,7 @@ def add_concept(concepts, name, prompt, ex_ids=[]):
     }
 
     # TODO: handle concept_df
-    return concepts
+    return concepts, concept_id
 
 # Edits an existing concept with the specified ID
 # Input: 
@@ -1328,3 +1333,136 @@ def edit_concept(concepts, concept_id, new_name=None, new_prompt=None, new_ex_id
 
     # TODO: handle concept_df
     return concepts
+
+
+# WRAPPER FUNCTIONS
+async def concept_gen(cur_df=None, seed=None, doc_col="text", doc_id_col="doc_id", save_id="", model_name="gpt-4", args=None, debug=True):
+    if args is None:
+        args = {
+            "filter_n_quotes": 2,
+            "summ_n_bullets": "2-4",
+            "cluster_batch_size1": 20,
+            "synth_n_concepts1": 10,
+            "cluster_batch_size2": 15,
+            "synth_n_concepts2": 10,
+        }
+
+    cur_df = cur_df.sample(frac=1).reset_index()  # shuffle order
+    
+    # Create session
+    s = Session(
+        df=cur_df,
+        ex_id_col=doc_id_col,  # TODO: edit for dataset (column containing example IDs)
+        ex_col=doc_col,  # TODO: edit for dataset (column containing example text)
+        save_path = f'../nb/exports/{save_id}',  # TODO: edit to the desired directory
+        debug=False, # Set True to only use cache for LLM results
+    )
+
+    # Run concept generation
+    df_filtered = await distill_filter(
+        s, i=0, 
+        text_df=None, 
+        n_quotes=args["filter_n_quotes"],
+        seed=seed,
+    )
+    if debug:
+        print("df_filtered")
+        display(df_filtered)
+    
+    df_bullets = await distill_summarize(
+        s, i=0, 
+        text_df=df_filtered, 
+        text_col="0_distill_filter",
+        n_bullets=args["summ_n_bullets"],
+        seed=seed,
+    )
+    if debug:
+        print("df_bullets")
+        display(df_bullets)
+
+    df_cluster = await cluster(
+        s, i=0, 
+        text_df=df_bullets, 
+        text_col="0_distill_summarize",
+        batch_size=args["cluster_batch_size1"],
+    )
+    if debug:
+        print("df_cluster")
+        display(df_cluster)
+    
+    concepts, df_concepts = await synthesize(
+        s, i=0, 
+        cluster_df=df_cluster, 
+        text_col="0_distill_summarize", 
+        cluster_id_col="0_cluster",
+        model_name=model_name, # use specified model for this step
+        n_concepts=args["synth_n_concepts1"],
+        pattern_phrase="unique topic",
+        seed=seed,
+    )
+    df_concepts["0_synthesize_namePrompt"] = df_concepts["0_synthesize_name"] + ": " + df_concepts["0_synthesize_prompt"]
+    df_concepts = dedupe_concepts(df_concepts, concept_col="0_synthesize_namePrompt")
+
+    if debug:
+        # Print results
+        print("=======\n\nAfter self-review")
+        for k, concept_dict in concepts.items():
+            concept = concept_dict["name"]
+            prompt = concept_dict["prompt"]
+            print(f'- Concept {k}: {concept}\n\t- Prompt: {prompt}')
+
+    res_dict = {
+        "df_filtered": df_filtered,
+        "df_bullets": df_bullets, 
+        "df_cluster": df_cluster,
+        "concepts": concepts, 
+        "df_concepts": df_concepts,
+        "text_df": "df_filtered",
+        "text_col": "0_distill_filter",
+        "doc_col": doc_col,
+        "doc_id_col": doc_id_col,
+        "score_col": "score",
+    }
+
+    if debug:
+        # Print final results
+        print(f"=======\n\nFinal concept names ({len(concepts)}):")
+        concept_dicts = [v for _, v in concepts.items()]
+        for c in concept_dicts:
+            print(f'- {c["name"]}')
+
+    return s, res_dict, concepts
+
+
+async def concept_score(s, res_dict, concepts, n_concepts_to_score=5):
+    # Limit to n_concepts_to_score; only score those concepts
+    concepts_lim = {}
+    i = 0
+    for k, v in concepts.items():
+        if i >= n_concepts_to_score:
+            break
+        concepts_lim[k] = v
+        i += 1
+    
+    # Run usual scoring
+    text_df_key = res_dict["text_df"]
+    score_df = await score(
+        s, i=1, 
+        text_df=res_dict[text_df_key], 
+        text_col=res_dict["text_col"], 
+        doc_id_col=res_dict["doc_id_col"],
+        concepts=concepts_lim,
+    )
+
+    return score_df, concepts_lim
+    
+async def concept_add(s, res_dict, concepts, score_df, name, prompt):
+    concepts, concept_id = add_concept(concepts, name, prompt)
+
+    # Run scoring
+    cur_concept_dict = {concept_id: concepts[concept_id]}
+    cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, n_concepts_to_score=1)
+
+    # Add results to score df
+    score_df = pd.concat([score_df, cur_score_df]).reset_index()
+    return concepts, score_df

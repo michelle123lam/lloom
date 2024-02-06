@@ -7,7 +7,6 @@
 
     // Properties
     export let data;
-    export let selectedMatrixElem;
     export let el;
     export let filterItems;
     export let selectedTitle;
@@ -71,9 +70,7 @@
                         {/each}
                     </div>
                     <div class="overview-card-right">
-                        {#if selectedMatrixElem == "concept"}
-                            <ConceptSummaryChart {rows} {filterItems} />
-                        {/if}
+                        <ConceptSummaryChart {rows} {filterItems} />
                     </div>
                 </div>
             {/if}
@@ -140,7 +137,7 @@
     }
 
     :global(.score-col) {
-        font-size: 16px;
+        font-size: 14px; 
         text-align: center;
         height: 100%;
     }
@@ -150,35 +147,35 @@
         padding-inline: 20px;
         border-radius: 10px;
         border: 1px solid #e6e6e6;
-        height: 40%;
+        height: 25%;
         font-size: 16px;
-        overflow-y: scroll;
+        overflow-y: scroll; 
     }
 
     :global(.overview-card-left) {
         float: left;
-        width: 65%;
-        height: 100%;
+        width: 35%;
+        height: 100%; 
     }
 
     :global(.overview-card-right) {
         float: right;
-        width: 30%;
+        width: 60%;
         height: 100%;
     }
 
     :global(.right-col) {
         float: left;
         width: 100%;
-        height: 90vh;
+        height: 100vh;
     }
 
     :global(.highlight-card) {
         padding-inline: 20px;
-        border-radius: 10px;
+        border-radius: 10px; 
         border: 1px solid #e6e6e6;
         overflow-y: scroll;
-        height: 40%;
+        height: 65%;
     }
 
     :global(.row) {

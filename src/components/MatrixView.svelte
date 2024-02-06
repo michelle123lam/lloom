@@ -30,21 +30,14 @@
     dataItems = model.get("data_items");
     dataItemsWide = model.get("data_items_wide");
     metadataOrig = model.get("metadata");
+    metadata = JSON.parse(metadataOrig);
+    numConcepts = Object.keys(metadata.concepts).length;
     
     // Set up enclosing div for matrix
     let matrixDiv = document.createElement("div");
     matrixDiv.classList.add("matrix");
     el.appendChild(matrixDiv);
 
-    onMount(() => {
-        // Parse the metadata (which is used to display details on GroupView)
-        // console.log("metadataOrig", metadataOrig); // TEMP
-        if (metadataOrig != undefined) {
-            metadata = JSON.parse(metadataOrig);
-            numConcepts = Object.keys(metadata.concepts).length;
-            // console.log("numConcepts", numConcepts); // TEMP
-        }
-	});
 
     function setToDefaultState() {
         // Reset
@@ -119,14 +112,15 @@
     }
 </script>
 
-<div class="">
+<div class="matrix-view">
     {#if numConcepts > 0}
-        <MatrixInner {data} div={matrixDiv} {numConcepts} on:message={handleMatrixEvent} />
+        {#key matrixDiv}
+            <MatrixInner {data} div={matrixDiv} {numConcepts} on:message={handleMatrixEvent} />
+        {/key}
         <div class="tables">
             {#if selectedMatrixElem == "cell" || selectedMatrixElem == "concept"}
                 <ConceptView
                     data={dataItems}
-                    {selectedMatrixElem}
                     {el}
                     {filterItems}
                     {selectedTitle}
@@ -149,6 +143,10 @@
 </div>
 
 <style>
+    :global(.matrix-view) {
+        min-height: 750px;
+    } 
+
     :global(.matrix) {
         float: left;
         width: 40%;
@@ -156,7 +154,18 @@
     }
 
     :global(.tables) {
-        float: right;
-        width: 60%;
+        float: right; 
+        width: 55%; 
+        padding: 0 20px;
+    }
+    :global(.tables p) {
+        font-size: 14px; 
+    }
+
+    :global(h2) {
+        font-size: 16px; 
+    }
+    :global(h3) {
+        font-size: 14px;
     }
 </style>
