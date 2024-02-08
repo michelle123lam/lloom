@@ -719,7 +719,7 @@ def parse_bucketed_score(x):
 def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_highlights):
     # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
     res_dict = json_load(res, top_level_key="pattern_results")
-    OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "highlight"]
+    OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight"]
     concept_name = concept["name"]
     concept_prompt = concept["prompt"]
     if res_dict is not None:
@@ -739,11 +739,15 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
             # else:
             #     doc_id = "" # Set example id to empty string
             #     text = ""
+                    if "rationale" in ex:
+                        rationale = ex["rationale"]
+                    else:
+                        rationale = ""
 
                     if get_highlights:
-                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, ex["quote"]]
+                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ex["quote"]]
                     else:
-                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, ""]  # Set quote to empty string
+                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ""]  # Set quote to empty string
                     rows.append(row)
         
         out_df = pd.DataFrame(rows, columns=OUT_COLS)
@@ -1050,6 +1054,8 @@ def clean_score(x, threshold):
     elif (x is False) or (x == "False"):
         return 0.0
     else:
+        if threshold is None:
+            return x
         if x < threshold:
             return 0.0
         return 1.0
@@ -1078,7 +1084,7 @@ def get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, c
 # Helper function for `visualize()` to generate the underlying dataframes
 # Parameters:
 # - threshold: float (minimum score of positive class)
-def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, custom_groups, show_highlights, norm_by, debug=False, threshold=0.75):
+def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, custom_groups, show_highlights, norm_by, debug=False, threshold=None, outlier_threshold=0.75):
     # TODO: codebook info
     # TODO: handle highlighting
 
@@ -1103,7 +1109,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     concept_cts = {}
     group_cts = {}
     concept_names = [c["name"] for c in concepts.values()]
-    df["Outlier"] = [is_outlier(row, concept_names, threshold) for _, row in df.iterrows()]
+    df["Outlier"] = [is_outlier(row, concept_names, outlier_threshold) for _, row in df.iterrows()]
     concept_names.append("Outlier")
     concept_cts["Outlier"] = sum(df["Outlier"])
 
@@ -1114,6 +1120,10 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 
     df_bullets[doc_id_col] = df_bullets[doc_id_col].astype(str)
     df_bullets = df_bullets.groupby(doc_id_col).agg(lambda x: list(x)).reset_index()
+
+    # Rationale df
+    rationale_col = "rationale"
+    rationale_df = score_df[[doc_id_col, "concept_name", rationale_col]]
 
     # Prep data for each group
     for group_name, group_filtering in groupings.items():
@@ -1150,11 +1160,11 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         cur_df[doc_col] = [textwrap.fill(orig, width=50) for orig in cur_df[doc_col]]
 
         # Item df
-        item_df_cols = [doc_col, filtered_ex_col, bullets_col] + cols_to_show
-        cur_item_df = pd.melt(cur_df, id_vars=item_df_cols, value_vars=concept_names, var_name="concept", value_name="concept_score")
+        item_df_cols = [doc_id_col, doc_col, filtered_ex_col, bullets_col] + cols_to_show
+        cur_item_df = pd.melt(cur_df, id_vars=item_df_cols, value_vars=concept_names, var_name="concept", value_name="concept score")
         cur_item_df["id"] = group_name # cols: ex_col, concept, concept_score, id (cluster id)
-        cur_item_df["concept_score_orig"] = [clean_score(x, threshold) for x in cur_item_df["concept_score"].tolist()]
-        cur_item_df["concept_score"] = [format_scores(x) for x in cur_item_df["concept_score_orig"].tolist()]
+        cur_item_df["concept_score_orig"] = [clean_score(x, threshold) for x in cur_item_df["concept score"].tolist()]
+        cur_item_df["concept score"] = [format_scores(x) for x in cur_item_df["concept_score_orig"].tolist()]
 
         # # Add highlight styling
         # if show_highlights:
@@ -1162,10 +1172,13 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         # Format bullets
         cur_item_df[bullets_col] = [format_bullets(orig) for orig in cur_item_df[bullets_col]]
 
+        # Add rationale
+        cur_item_df = cur_item_df.merge(rationale_df, left_on=[doc_id_col, "concept"], right_on=[doc_id_col, "concept_name"], how="left")
+
         if debug:
-            cur_item_df = cur_item_df[["id", "concept", "concept_score", "concept_score_orig", doc_col, filtered_ex_col, bullets_col] + cols_to_show]
+            cur_item_df = cur_item_df[["id", "concept", "concept score", "concept_score_orig", doc_col, filtered_ex_col, bullets_col, rationale_col] + cols_to_show]
         else:
-            cur_item_df = cur_item_df[["id", "concept", "concept_score", "concept_score_orig", doc_col, bullets_col] + cols_to_show]
+            cur_item_df = cur_item_df[["id", "concept", "concept score", "concept_score_orig", doc_col, bullets_col, rationale_col] + cols_to_show]
         if item_df is None:
             item_df = cur_item_df
         else:
@@ -1197,7 +1210,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         for concept in concept_names:
             cur_scores = [clean_score(x, threshold) for x in cur_df[concept].tolist()]
             if len(cur_scores) > 0:
-                matches = [x for x in cur_scores if x >= threshold]
+                matches = [x for x in cur_scores if x >= outlier_threshold]
                 n_matches = len(matches)
             else:
                 n_matches = 0

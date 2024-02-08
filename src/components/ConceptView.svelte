@@ -18,6 +18,8 @@
     let rowsNonMatch = [];
     let remount = true;
     let ignore_cols = ["concept_score_orig"];
+    let sortBy = "concept score";
+    let sortOrder = -1;
 
     onMount(() => {
         renderTable(data);
@@ -46,8 +48,11 @@
             el.appendChild(div);
 
             // Adjust filters for highlights
+            // rowsMatch = rows.filter(row => (row["id"] == "All"));
+
             rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0 && row["id"] == "All"));
-            rowsNonMatch = rows.filter(row => (row["concept_score_orig"] == 0.0 && row["id"] == "All"));
+            rowsNonMatch = rows.filter(row => (row["concept_score_orig"] < 1.0 && row["id"] == "All"));
+
             // rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0));
             // rowsNonMatch = rows.filter(row => (row["concept_score_orig"] == 0.0));
         }
@@ -87,17 +92,19 @@
                 {/if}
             </div>
 
-            <!-- <h3 class="card-title" style="margin-top: 20px">CONCEPT NON-MATCHES</h3>
+            <h3 class="card-title" style="margin-top: 20px">CONCEPT NON-MATCHES</h3>
             <div class="highlight-card">
                 {#if remount}
                     <SvelteTable
                         {columns}
                         rows={rowsNonMatch}
                         filterSelections={filterItems}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
                     >
                     </SvelteTable>
                 {/if}
-            </div> -->
+            </div>
         </div>
     </div>
     <!-- <div class="row">
@@ -147,27 +154,12 @@
         padding-inline: 20px;
         border-radius: 10px;
         border: 1px solid #e6e6e6;
-        height: 25%;
         font-size: 16px;
-        overflow-y: scroll; 
-    }
-
-    :global(.overview-card-left) {
-        float: left;
-        width: 35%;
-        height: 100%; 
-    }
-
-    :global(.overview-card-right) {
-        float: right;
-        width: 60%;
-        height: 100%;
     }
 
     :global(.right-col) {
         float: left;
         width: 100%;
-        height: 100vh;
     }
 
     :global(.highlight-card) {
@@ -175,7 +167,7 @@
         border-radius: 10px; 
         border: 1px solid #e6e6e6;
         overflow-y: scroll;
-        height: 65%;
+        max-height: 600px; 
     }
 
     :global(.row) {

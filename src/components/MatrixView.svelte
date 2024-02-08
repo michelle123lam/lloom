@@ -150,7 +150,6 @@
     :global(.matrix) {
         float: left;
         width: 40%;
-        overflow: scroll;
     }
 
     :global(.tables) {
