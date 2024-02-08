@@ -736,15 +736,13 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
                 if len(text_list) > 0:
                     # Document is in the dataset
                     text = text_list[0]
-            # else:
-            #     doc_id = "" # Set example id to empty string
-            #     text = ""
+
                     if "rationale" in ex:
                         rationale = ex["rationale"]
                     else:
-                        rationale = ""
+                        rationale = ""   # Set rationale to empty string
 
-                    if get_highlights:
+                    if get_highlights and ("quote" in ex):
                         row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ex["quote"]]
                     else:
                         row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ""]  # Set quote to empty string
@@ -784,7 +782,10 @@ async def score_helper(sess, concept, batch_i, concept_id, df, text_col, doc_id_
     ]
 
     # Run prompts in parallel to score each example
-    prompt_template = score_no_highlight_prompt
+    if get_highlights:
+        prompt_template = score_highlight_prompt
+    else:
+        prompt_template = score_no_highlight_prompt
     results, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, sess, batch_num=batch_i)
 
     # Parse results
@@ -1046,6 +1047,22 @@ def format_bullets(orig):
     lines = [f"<li>{line}</li>" for line in orig]
     return "<ul>" + "".join(lines) + "</ul>"
 
+# Adds color-background styling for highlight columns to match score value
+def format_highlight(orig: str, quotes, x: float):
+        color_str = f"rgba(130, 193, 251, {x*0.5})"
+        start_tag = f"<span style='background-color: {color_str}'>"
+        end_tag = "</span>"
+        if (not isinstance(quotes, str)):
+            # Skip if quotes are not a valid string
+            return orig
+        quotes = quotes.split("\n")
+        for quote in quotes:
+            quote = str(quote)  # Cast result to string
+            orig = str(orig)
+            if quote in orig:
+                orig = orig.replace(quote, f"{start_tag}{quote}{end_tag}")
+        return orig
+
 # Transforms scores to be between 0 and 1
 def clean_score(x, threshold):
     if pd.isna(x):
@@ -1087,7 +1104,6 @@ def get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, c
 # - threshold: float (minimum score of positive class)
 def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, custom_groups, show_highlights, norm_by, debug=False, threshold=None, outlier_threshold=0.75):
     # TODO: codebook info
-    # TODO: handle highlighting
 
     # Handle groupings
     # Add the "All" grouping by default
@@ -1124,7 +1140,8 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 
     # Rationale df
     rationale_col = "rationale"
-    rationale_df = score_df[[doc_id_col, "concept_name", rationale_col]]
+    highlight_col = "highlight"
+    rationale_df = score_df[[doc_id_col, "concept_name", rationale_col, highlight_col]]
     rationale_df[doc_id_col] = rationale_df[doc_id_col].astype(str)
 
     # Prep data for each group
@@ -1158,9 +1175,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         bullets_col = "bullets"
         cur_df = get_text_col_and_rename(cur_df, df_bullets, doc_id_col, new_col_name=bullets_col)
 
-        # Format text
-        cur_df[doc_col] = [textwrap.fill(orig, width=50) for orig in cur_df[doc_col]]
-
         # Item df
         item_df_cols = [doc_id_col, doc_col, filtered_ex_col, bullets_col] + cols_to_show
         cur_item_df = pd.melt(cur_df, id_vars=item_df_cols, value_vars=concept_names, var_name="concept", value_name="concept score")
@@ -1168,14 +1182,18 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         cur_item_df["concept_score_orig"] = [clean_score(x, threshold) for x in cur_item_df["concept score"].tolist()]
         cur_item_df["concept score"] = [format_scores(x) for x in cur_item_df["concept_score_orig"].tolist()]
 
-        # # Add highlight styling
-        # if show_highlights:
-        #     cur_item_df[doc_col] = [self.__add_highlight(orig, quotes, score) for orig, quotes, score in zip(cur_item_df[doc_col], cur_item_df[filtered_ex_col], cur_item_df["concept_score_orig"])]
         # Format bullets
         cur_item_df[bullets_col] = [format_bullets(orig) for orig in cur_item_df[bullets_col]]
 
         # Add rationale
         cur_item_df = cur_item_df.merge(rationale_df, left_on=[doc_id_col, "concept"], right_on=[doc_id_col, "concept_name"], how="left")
+
+        # Add highlight styling
+        if show_highlights:
+            cur_item_df[doc_col] = cur_item_df.apply(lambda x: format_highlight(x[doc_col], x[highlight_col], x["concept_score_orig"]), axis=1)
+
+        # Format text
+        cur_df[doc_col] = [textwrap.fill(orig, width=50) for orig in cur_df[doc_col]]
 
         if debug:
             cur_item_df = cur_item_df[["id", "concept", "concept score", "concept_score_orig", doc_col, filtered_ex_col, bullets_col, rationale_col] + cols_to_show]
@@ -1193,8 +1211,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
             cur_item_df_wide[concept] = [clean_score(x, threshold) for x in cur_item_df_wide[concept].tolist()]
             cur_item_df_wide[concept] = [format_scores(x) for x in cur_item_df_wide[concept].tolist()]
 
-        # if show_highlights:
-        #     cur_item_df_wide[doc_col] = [self.__add_highlight(orig, quotes, 1.0) for orig, quotes in zip(cur_item_df_wide[doc_col], cur_item_df_wide[filtered_ex_col])]
         cols_to_include = ["id", doc_col] + cols_to_show + concept_names
         cur_item_df_wide = cur_item_df_wide[cols_to_include]
         if item_df_wide is None:
@@ -1471,7 +1487,7 @@ async def concept_gen(cur_df=None, seed=None, doc_col="text", doc_id_col="doc_id
     return s, res_dict, concepts
 
 
-async def concept_score(s, res_dict, concepts, n_concepts_to_score=5):
+async def concept_score(s, res_dict, concepts, n_concepts_to_score=5, get_highlights=False):
     # Limit to n_concepts_to_score; only score those concepts
     concepts_lim = {}
     i = 0
@@ -1489,6 +1505,7 @@ async def concept_score(s, res_dict, concepts, n_concepts_to_score=5):
         text_col=res_dict["text_col"], 
         doc_id_col=res_dict["doc_id_col"],
         concepts=concepts_lim,
+        get_highlights=get_highlights,
     )
 
     return score_df, concepts_lim

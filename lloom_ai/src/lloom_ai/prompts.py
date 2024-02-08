@@ -105,6 +105,35 @@ TASK:
     }}
 """
 
+score_highlight_prompt = """
+CONTEXT: 
+    I have the following text examples in a JSON:
+    {examples_json}
+
+    I also have a pattern named {pattern_name} with the following PROMPT: 
+    {pattern_prompt}
+
+TASK:
+    For each example, please evaluate the PROMPT by generating a 1-sentence RATIONALE of your thought process and providing a resulting ANSWER of ONE of the following multiple-choice options, including just the letter: 
+    - A: Strongly agree
+    - B: Agree
+    - C: Neither agree nor disagree
+    - D: Disagree
+    - E: Strongly disagree
+    Please also include one 1-sentence QUOTE exactly copied from the example that illustrates this pattern.
+    Respond with ONLY a JSON with the following format, escaping any quotes within strings with a backslash:
+    {{
+        "pattern_results": [
+            {{
+                "example_id": "<example_id>",
+                "rationale": "<rationale>",
+                "answer": "<answer>",
+                "quote": "<quote>"
+            }}
+        ]
+    }}
+"""
+
 score_overall_topic_prompt = """
 CONTEXT: 
     I have the following text examples in a JSON:

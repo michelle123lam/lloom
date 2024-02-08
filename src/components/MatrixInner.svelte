@@ -702,7 +702,7 @@
             if (this._chart.options().showSlider) this.slider.style.height = `${measures.sliderHeight}px`;
             this.columns.style.height = `${measures.columnHeight}px`;
             this.columns.style.width = `${measures.width - measures.rowWidth - measures.margin.left}px`;
-            console.log("Partitions adjustSize width", measures.width, measures.rowWidth, measures.margin.left, this.columns.style.width);  // TEMP
+            // console.log("Partitions adjustSize width", measures.width, measures.rowWidth, measures.margin.left, this.columns.style.width);  // TEMP
             this.placeHolder.style.width = `${measures.rowWidth + measures.margin.left}px`;
             this.placeHolder.style.height = `${measures.columnHeight}px`;
             this.rows.style.width = `${measures.rowWidth + measures.margin.left}px`;
@@ -902,7 +902,7 @@
 
         render() {
             const c = this.chart;
-            console.log("ColumnRenderer width", c.scales.maxX, c.measures.rowWidth); // TEMP
+            // console.log("ColumnRenderer width", c.scales.maxX, c.measures.rowWidth); // TEMP
             const bufferWidth = 0;
             const bufferHeight = 0;
             const g = d3.select(c.partitions.columns)
