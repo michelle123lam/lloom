@@ -257,6 +257,10 @@ def get_orig_text_df(sess):
     text_df = sess.df.copy()
     return text_df[[sess.ex_id_col, sess.ex_col]]
 
+def filter_empty_rows(df, text_col_name):
+    # Remove rows where the specified column is empty
+    df_out = df[df[text_col_name].apply(lambda x: len(x) > 0)]
+    return df_out
 
 # CORE functions ================================
 
@@ -271,6 +275,9 @@ async def distill_filter(sess, i, text_df, n_quotes=3, seed=None):
     cur_col_name = f"{i}_distill_filter"
     if text_df is None:
         text_df = get_orig_text_df(sess)
+
+    # Filter to non-empty rows
+    text_df = filter_empty_rows(text_df, sess.ex_col)
 
     # Prepare prompts
     filtered_ex = []
@@ -317,6 +324,9 @@ async def distill_summarize(sess, i, text_df, text_col, n_bullets="2-4", n_words
     if text_df is None:
         text_df = get_orig_text_df(sess)
         text_col = sess.ex_col
+    
+    # Filter to non-empty rows
+    text_df = filter_empty_rows(text_df, text_col)
 
     # Prepare prompts
     rows = []
@@ -365,10 +375,13 @@ async def distill_summarize(sess, i, text_df, text_col, n_bullets="2-4", n_words
 #   --> text could be original, filtered (quotes), and/or summarized (bullets)
 # Parameters: n_clusters
 # Output: cluster_df (columns: doc_id, text, cluster_id)
-async def cluster(sess, i, text_df, text_col, n_clusters=None, min_cluster_size=None, batch_size=20, randomize=False):
+async def cluster(sess, i, text_df, text_col, min_cluster_size=None, batch_size=20, randomize=False):
     # Clustering operates on text_col
     start = time.time()
     cur_col_name = f"{i}_cluster"
+
+    # Filter to non-empty rows
+    text_df = filter_empty_rows(text_df, text_col)
 
     # Auto-set parameters
     n_items = len(text_df)
@@ -415,6 +428,9 @@ async def synthesize(sess, i, cluster_df, text_col, cluster_id_col, n_concepts=N
     cur_col_name = f"{i}_synthesize"
     if model_name is None:
         model_name = sess.model
+    
+    # Filter to non-empty rows
+    cluster_df = filter_empty_rows(cluster_df, text_col)
 
     # Auto-set parameters
     def get_n_concepts_phrase(cur_set):
@@ -792,6 +808,9 @@ async def score(sess, i, text_df, text_col, doc_id_col, concepts, model_name="gp
     cur_step_name = f"{i}_score"
 
     text_df = text_df.copy()
+    # Filter to non-empty rows
+    text_df = filter_empty_rows(text_df, text_col)
+
     text_df[doc_id_col] = text_df[doc_id_col].astype(str)
     tasks = [score_helper(sess, concept, concept_i, concept_id, text_df, text_col, doc_id_col, model_name, batch_size, get_highlights) for concept_i, (concept_id, concept) in enumerate(concepts.items())]
     score_dfs = await tqdm_asyncio.gather(*tasks, file=sys.stdout)
@@ -1016,7 +1035,9 @@ def format_scores(x: float):
     return f"{start_tag}{x}</div>"
 
 # Converts a list of bullet strings to a formatted unordered list
-def format_bullets(orig: str):
+def format_bullets(orig):
+    if (not isinstance(orig, list)) or len(orig) == 0:
+        return ""
     lines = [f"<li>{line}</li>" for line in orig]
     return "<ul>" + "".join(lines) + "</ul>"
 
@@ -1091,6 +1112,9 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     item_df = None
     item_df_wide = None
 
+    df_bullets[doc_id_col] = df_bullets[doc_id_col].astype(str)
+    df_bullets = df_bullets.groupby(doc_id_col).agg(lambda x: list(x)).reset_index()
+
     # Prep data for each group
     for group_name, group_filtering in groupings.items():
         filter_x = group_filtering["x"]
@@ -1118,8 +1142,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         cur_df = get_text_col_and_rename(cur_df, df_filtered, doc_id_col, new_col_name=filtered_ex_col)
 
         # Match with bullets
-        df_bullets[doc_id_col] = df_bullets[doc_id_col].astype(str)
-        df_bullets = df_bullets.groupby(doc_id_col).agg(lambda x: list(x)).reset_index()
         cur_df = cur_df.merge(df_bullets, on=doc_id_col, how="left")
         bullets_col = "bullets"
         cur_df = get_text_col_and_rename(cur_df, df_bullets, doc_id_col, new_col_name=bullets_col)
