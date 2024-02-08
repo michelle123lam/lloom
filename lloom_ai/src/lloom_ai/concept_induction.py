@@ -14,6 +14,7 @@ import sys
 import textwrap
 from itertools import chain
 import pickle
+import ipywidgets as widgets
 
 # Clustering
 from bertopic import BERTopic
@@ -1487,12 +1488,12 @@ async def concept_gen(cur_df=None, seed=None, doc_col="text", doc_id_col="doc_id
     return s, res_dict, concepts
 
 
-async def concept_score(s, res_dict, concepts, n_concepts_to_score=5, get_highlights=False):
-    # Limit to n_concepts_to_score; only score those concepts
+async def concept_score(s, res_dict, concepts, max_concepts_to_score=5, get_highlights=False):
+    # Limit to max_concepts_to_score; only score those concepts
     concepts_lim = {}
     i = 0
     for k, v in concepts.items():
-        if i >= n_concepts_to_score:
+        if i >= max_concepts_to_score:
             break
         concepts_lim[k] = v
         i += 1
@@ -1515,8 +1516,71 @@ async def concept_add(s, res_dict, concepts, score_df, name, prompt):
 
     # Run scoring
     cur_concept_dict = {concept_id: concepts[concept_id]}
-    cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, n_concepts_to_score=1)
+    cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, max_concepts_to_score=1)
 
     # Add results to score df
     score_df = pd.concat([score_df, cur_score_df]).reset_index()
     return concepts, score_df
+
+# CONCEPT SELECTION WIDGET
+
+def multi_checkbox_widget(options_dict):
+    """ Widget with a search field and lots of checkboxes """
+    search_widget = widgets.Text()
+    output_widget = widgets.Output()
+    options = [x for x in options_dict.values()]
+    options_layout = widgets.Layout(
+        overflow='auto',
+        border='1px solid grey',
+        width='300px',
+        height='300px',
+        flex_flow='column',
+        display='flex'
+    )
+    
+    options_widget = widgets.VBox(options, layout=options_layout)
+    multi_select = widgets.VBox([search_widget, options_widget])
+
+    @output_widget.capture()
+    def on_checkbox_change(change):
+        options_widget.children = sorted([x for x in options_widget.children], key = lambda x: x.value, reverse = True)
+        
+    for checkbox in options:
+        checkbox.observe(on_checkbox_change, names="value")
+
+    # Wire the search field to the checkboxes
+    @output_widget.capture()
+    def on_text_change(change):
+        search_input = change['new']
+        if search_input == '':
+            # Reset search field
+            new_options = sorted(options, key = lambda x: x.value, reverse = True)
+        else:
+            # Filter by search field using difflib.
+            close_matches = [x for x in list(options_dict.keys()) if str.lower(search_input.strip('')) in str.lower(x)]
+            new_options = sorted(
+                [x for x in options if x.description in close_matches], 
+                key = lambda x: x.value, reverse = True
+            )
+        options_widget.children = new_options
+
+    search_widget.observe(on_text_change, names='value')
+    display(output_widget)
+    return multi_select
+
+def concept_select(concepts):
+    options_dict = {
+        c['name']: widgets.Checkbox(
+            # description=f"{c['name']}: {c['prompt']}", 
+            description=c['name'],
+            value=False,
+            style={"description_width":"0px"}
+        ) for c_id, c in concepts.items()
+    }
+    ui = multi_checkbox_widget(options_dict)
+    return ui
+
+def get_selected(w, concepts):
+    c_names = [c.description for c in w.children[1].children if c.value]
+    selected_concepts = {c_id: c for c_id, c in concepts.items() if c['name'] in c_names}
+    return selected_concepts
