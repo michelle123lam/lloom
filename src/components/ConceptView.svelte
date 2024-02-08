@@ -14,8 +14,9 @@
 
     let rows = [];
     let columns = [];
+    let rowsMatchAll = [];
+    let rowsNonMatchAll = [];
     let rowsMatch = [];
-    let rowsNonMatch = [];
     let remount = true;
     let ignore_cols = ["concept_score_orig"];
     let sortBy = "concept score";
@@ -48,10 +49,9 @@
             el.appendChild(div);
 
             // Adjust filters for highlights
-            // rowsMatch = rows.filter(row => (row["id"] == "All"));
-
-            rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0 && row["id"] == "All"));
-            rowsNonMatch = rows.filter(row => (row["concept_score_orig"] < 1.0 && row["id"] == "All"));
+            rowsMatchAll = rows.filter(row => (row["concept_score_orig"] == 1.0 && row["id"] == "All"));
+            rowsNonMatchAll = rows.filter(row => (row["concept_score_orig"] < 1.0 && row["id"] == "All"));
+            rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0));
 
             // rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0));
             // rowsNonMatch = rows.filter(row => (row["concept_score_orig"] == 0.0));
@@ -75,7 +75,7 @@
                         {/each}
                     </div>
                     <div class="overview-card-right">
-                        <ConceptSummaryChart {rows} {filterItems} />
+                        <ConceptSummaryChart rows={rowsMatch} {filterItems} />
                     </div>
                 </div>
             {/if}
@@ -85,7 +85,7 @@
                 {#if remount}
                     <SvelteTable
                         {columns}
-                        rows={rowsMatch}
+                        rows={rowsMatchAll}
                         filterSelections={filterItems}
                     >
                     </SvelteTable>
@@ -97,7 +97,7 @@
                 {#if remount}
                     <SvelteTable
                         {columns}
-                        rows={rowsNonMatch}
+                        rows={rowsNonMatchAll}
                         filterSelections={filterItems}
                         sortBy={sortBy}
                         sortOrder={sortOrder}
@@ -155,6 +155,19 @@
         border-radius: 10px;
         border: 1px solid #e6e6e6;
         font-size: 16px;
+        overflow-y: scroll;
+    }
+
+    :global(.overview-card-left) {
+        float: left;
+        width: 35%;
+        height: 100%; 
+    }
+
+    :global(.overview-card-right) {
+        float: right;
+        width: 60%;
+        height: 100%;
     }
 
     :global(.right-col) {

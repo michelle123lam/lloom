@@ -760,6 +760,7 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
         out_df["concept_name"] = concept_name
         out_df["concept_prompt"] = concept_prompt
         out_df["score"] = NAN_SCORE
+        out_df["rationale"] = ""
         out_df["highlight"] = ""
         return out_df[OUT_COLS]
 
@@ -1124,6 +1125,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     # Rationale df
     rationale_col = "rationale"
     rationale_df = score_df[[doc_id_col, "concept_name", rationale_col]]
+    rationale_df[doc_id_col] = rationale_df[doc_id_col].astype(str)
 
     # Prep data for each group
     for group_name, group_filtering in groupings.items():
@@ -1210,7 +1212,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         for concept in concept_names:
             cur_scores = [clean_score(x, threshold) for x in cur_df[concept].tolist()]
             if len(cur_scores) > 0:
-                matches = [x for x in cur_scores if x >= outlier_threshold]
+                matches = [x for x in cur_scores if x > outlier_threshold]
                 n_matches = len(matches)
             else:
                 n_matches = 0
