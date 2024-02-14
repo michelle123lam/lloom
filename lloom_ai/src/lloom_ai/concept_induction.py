@@ -1511,12 +1511,12 @@ async def concept_score(s, res_dict, concepts, max_concepts_to_score=5, get_high
 
     return score_df, concepts_lim
     
-async def concept_add(s, res_dict, concepts, score_df, name, prompt):
+async def concept_add(s, res_dict, concepts, score_df, name, prompt, get_highlights=True):
     concepts, concept_id = add_concept(concepts, name, prompt)
 
     # Run scoring
     cur_concept_dict = {concept_id: concepts[concept_id]}
-    cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, max_concepts_to_score=1)
+    cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, max_concepts_to_score=1, get_highlights=get_highlights)
 
     # Add results to score df
     score_df = pd.concat([score_df, cur_score_df]).reset_index()
