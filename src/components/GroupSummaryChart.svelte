@@ -18,6 +18,9 @@
                     keep = false;
                 }
             }
+            if (row["concept_score_orig"] < 1.0) {
+                keep = false;
+            }
             return keep;
         });
         rows = filteredRows;
@@ -40,10 +43,10 @@
 			x: { 
                 field: 'concept_score_orig', 
                 type: 'quantitative' , 
-                aggregate: "mean",
-                scale: {
-                    domain: [0, 1]
-                },
+                aggregate: "sum",
+                // scale: {
+                //     domain: [0, 1]
+                // },
                 title: "Concept Prevalence"
             },
 			y: { 
@@ -62,8 +65,8 @@
             tooltip:  {
                 field: 'concept_score_orig',
                 type: 'quantitative',
-                aggregate: 'mean',
-                format: '.2f',
+                aggregate: 'sum',
+                // format: '.2f',
             }
 		}
 	};

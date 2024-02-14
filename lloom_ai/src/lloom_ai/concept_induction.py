@@ -1519,7 +1519,7 @@ async def concept_add(s, res_dict, concepts, score_df, name, prompt, get_highlig
     cur_score_df, _ = await concept_score(s, res_dict, cur_concept_dict, max_concepts_to_score=1, get_highlights=get_highlights)
 
     # Add results to score df
-    score_df = pd.concat([score_df, cur_score_df]).reset_index()
+    score_df = pd.concat([score_df, cur_score_df]).reset_index(drop=True)
     return concepts, score_df
 
 # CONCEPT SELECTION WIDGET
