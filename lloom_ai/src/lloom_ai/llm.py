@@ -27,7 +27,6 @@ SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns 
 
 RATE_LIMITS = {
     # (n_requests, wait_time_secs)
-    # "gpt-3.5-turbo": (50, 30), # = 50*2 = 100 rpm (max 10k requests per minute for org)
     "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
     "gpt-3.5-turbo-1106": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
     "gpt-4": (10, 10), # = 10*6 = 60 rpm (max 10k requests per minute for org)
@@ -199,7 +198,7 @@ def get_prompt_hash(p):
     return hash
 
 # Main function making calls to LLM
-async def multi_query_gpt(sess, chat_model, prompt_template, arg_dict, batch_num=None, wait_time=None, cache=True, debug=False):
+async def multi_query_gpt(chat_model, prompt_template, arg_dict, batch_num=None, wait_time=None, cache=False, debug=False):
     # Run a single query using LangChain OpenAI Chat API
 
     # System
@@ -216,25 +215,10 @@ async def multi_query_gpt(sess, chat_model, prompt_template, arg_dict, batch_num
     chat_prompt_formatted = chat_prompt.format_prompt(**arg_dict).to_messages()
     prompt_hash = get_prompt_hash(chat_prompt_formatted)
 
-    if debug or sess.debug:
-        # Debug mode
-        if prompt_hash in sess.llm_cache:
-            # Fetch cached result
-            res_full = sess.llm_cache[prompt_hash]
-        else:
-            print(f"Prompt not found in cache: {chat_prompt_formatted} (hash={prompt_hash})")
-            res_full = ""
-    else:
-        # Run LLM generation
-        res_full = await chat_model.agenerate([chat_prompt_formatted])
+    # Run LLM generation
+    res_full = await chat_model.agenerate([chat_prompt_formatted])
     
-    # Cache results
-    if cache:
-        if prompt_hash not in sess.llm_cache:
-            sess.llm_cache[prompt_hash] = res_full
-        if prompt_hash not in sess.prompt_cache:
-            sess.prompt_cache[prompt_hash] = chat_prompt_formatted
-
+    # TODO: Add back caching
     return res_full
 
 def process_results(results):
@@ -242,7 +226,7 @@ def process_results(results):
     res_text = [res.generations[0][0].text for res in results]
     return res_text
 
-async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, sess, temperature=0, batch_num=None, batched=True, debug=False):
+async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temperature=0, batch_num=None, batched=True, debug=False):
     # Multi-query using LangChain OpenAI Chat API
     chat_model = ChatOpenAI(temperature=temperature, model_name=model_name)
     if debug:
@@ -251,7 +235,7 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, sess, 
 
     if not batched:
         # Non-batched version
-        tasks = [multi_query_gpt(sess, chat_model, prompt_template, args) for args in arg_dicts]
+        tasks = [multi_query_gpt(chat_model, prompt_template, args) for args in arg_dicts]
     else:
         # Batched version
         n_requests, wait_time_secs = RATE_LIMITS[model_name]
@@ -263,9 +247,9 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, sess, 
                 wait_time = wait_time_secs * inner_batch_num
             else:
                 wait_time = wait_time_secs * batch_num
-            if sess.debug:
+            if debug:
                 wait_time = 0 # Debug mode
-            cur_tasks = [multi_query_gpt(sess, chat_model, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
+            cur_tasks = [multi_query_gpt(chat_model, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
             tasks.extend(cur_tasks)
 
     res_full = await asyncio.gather(*tasks)
