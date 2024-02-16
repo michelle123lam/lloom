@@ -1,3 +1,3 @@
-# LLooM Core Operators
+# LLooM Operators
 
 TODO

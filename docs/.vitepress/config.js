@@ -54,8 +54,8 @@ export default defineConfig({
           text: 'API Reference',
           items: [
             { text: 'Overview', link: '/api/' },
-            { text: 'LLooM Core Operators', link: '/api/core' },
             { text: 'LLooM Workbench', link: '/api/workbench' },
+            { text: 'LLooM Operators', link: '/api/core' },
           ]
         }
       ]
