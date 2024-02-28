@@ -122,9 +122,9 @@ def estimate_cost(results, model_name, sess, debug=True):
     if results is None:
         return
     COSTS = {
-        "gpt-3.5-turbo": [0.0010/1000, 0.002/1000],
-        "gpt-3.5-turbo-1106": [0.0010/1000, 0.002/1000],
-        "gpt-4": [0.03/1000, 0.06/1000]
+        "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
+        "gpt-4": [0.03/1000, 0.06/1000],
+        "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
     }
     # Cost estimation
     in_tokens = [res.llm_output["token_usage"]["prompt_tokens"] for res in results]
@@ -667,6 +667,12 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
             score_df = pd.concat([score_df, cur_score_df])
 
     save_progress(sess, score_df, step_name="score_helper", start=None, res=res_full, model_name=model_name)
+    if sess is not None:
+        # Save to session if provided
+        sess.results[concept_id] = score_df
+    
+        # Generate summary
+        cur_summary = await summarize_concept(score_df, concept_id, model_name, sess=sess)
     return score_df
 
 # Performs scoring for all concepts
@@ -732,46 +738,36 @@ def refine(score_df, concepts, threshold=1, generic_threshold=0.75, rare_thresho
     
     return concepts
 
-async def summarize_concept(score_df, in_df, model_name, doc_id_col, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight", debug=False):
+async def summarize_concept(score_df, concept_id, model_name, sess=None, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight"):
     # Summarizes behavior in each concept
     df = score_df.copy()
     df = df[df[score_col] >= threshold]
-    concept_ids = df["concept_id"].unique().tolist()
 
     # Prepare inputs
     arg_dicts = []
-    for c_id in concept_ids:
-        cur_df = df[df["concept_id"] == c_id]
-        concept_name = cur_df["concept_name"].iloc[0]
-        concept_prompt = cur_df["concept_prompt"].iloc[0]
+    cur_df = df[df["concept_id"] == concept_id]
+    concept_name = cur_df["concept_name"].iloc[0]
+    concept_prompt = cur_df["concept_prompt"].iloc[0]
 
-        arg_dict = {
-            "concept_name": concept_name,
-            "concept_prompt": concept_prompt,
-            "examples": df[df["concept_id"] == c_id][highlight_col].tolist(),
-            "summary_length": summary_length
-        }
-        arg_dicts.append(arg_dict)
+    arg_dicts = [{
+        "concept_name": concept_name,
+        "concept_prompt": concept_prompt,
+        "examples": cur_df[highlight_col].tolist(),
+        "summary_length": summary_length
+    }]
     
     # Run prompts
     prompt_template = summarize_concept_prompt
     res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
 
     # Process results
-    rows = []
-    for c_id, res in zip(concept_ids, res_text):
-        cur_res = json_load(res, top_level_key="summary")
-        if cur_res is not None:
-            rows.append([c_id, cur_res])
-
-    summary_df = pd.DataFrame(rows, columns=["concept_id", "summary"])
-    out_df = df.merge(summary_df, on="concept_id", how="left")
-    df_counts = out_df.groupby(by=["concept_id"]).count().reset_index()[["concept_id", doc_id_col]]
-    df_counts = df_counts.rename(columns={doc_id_col: "n_matches"})
-    out_df = out_df.merge(df_counts, on="concept_id", how="left")
-    out_df = out_df[["concept_name", "summary", "concept_prompt", "n_matches"]].drop_duplicates()
-    # TODO: streamline above processing
-    return out_df
+    res = res_text[0]
+    cur_summary = json_load(res, top_level_key="summary")
+    if cur_summary is not None:
+        if sess is not None:
+            sess.concepts[concept_id].summary = cur_summary
+        else:
+            return cur_summary
 
 # Returns ids of not-covered documents
 def get_not_covered(score_df, doc_id_col, threshold=0.75, debug=False):
@@ -1197,6 +1193,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
             ex = []
         res = {
             "Criteria": f"<br>{c.prompt}",
+            "Summary": f"<br>{c.summary}",
             "Matches": f"{concept_cts[c.name]} examples",
             "Representative examples": f"{format_bullets(ex, add_quotes=True)}"
         }

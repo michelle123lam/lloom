@@ -249,7 +249,7 @@ class Session:
                 if c_id in active_concepts:
                     concepts[c_id] = active_concepts[c_id]
         
-        # Run usual scoring
+        # Run usual scoring; results are stored to self.results within the function
         score_df = await score_concepts(
             text_df=self.df_to_score, 
             text_col=self.doc_col, 
@@ -258,9 +258,7 @@ class Session:
             get_highlights=get_highlights,
             sess=self,
         )
-        # Store results for each concept
-        for c_id in concepts.keys():
-            self.results[c_id] = score_df[score_df['concept_id'] == c_id]
+
         return score_df
 
     def __get_concept_from_name(self, name):
@@ -302,7 +300,9 @@ class Session:
         ex = score_df[score_df["doc_id"].isin(ex_ids)]["highlight"].tolist()
         return ex
 
-    def __get_prevalence_df(self, item_df, threshold=0.75, include_outliers=False):
+    def __get_df_for_export(self, item_df, threshold=0.75, include_outliers=False):
+        # Prepares a dataframe meant for exporting the current session results
+        # Includes concept, criteria, summary, representative examples, prevalence, and highlights
         matched = item_df[(item_df.concept_score_orig > threshold)]
         if not include_outliers:
             matched = matched[item_df.concept != "Outlier"]
@@ -310,11 +310,12 @@ class Session:
         df = matched.groupby(by=["id", "concept"]).count().reset_index()[["concept", self.doc_col]]
         concepts = [self.__get_concept_from_name(c_name) for c_name in df.concept.tolist()]
         df["criteria"] = [c.prompt for c in concepts]
+        df["summary"] = [c.summary for c in concepts]
         df["rep_examples"] = [self.__get_rep_examples(c) for c in concepts]
         df["highlights"] = [self.__get_concept_highlights(c, threshold) for c in concepts]
         df = df.rename(columns={self.doc_col: "n_matches"})
         df["prevalence"] = np.round(df["n_matches"] / len(self.in_df), 2)
-        df = df[["concept", "criteria", "prevalence", "highlights", "rep_examples"]]
+        df = df[["concept", "criteria", "summary", "rep_examples", "prevalence", "highlights"]]
         return df
         
 
@@ -337,16 +338,12 @@ class Session:
             norm_by=norm_by,
         )
         if export_df:
-            return self.__get_prevalence_df(item_df)
+            return self.__get_df_for_export(item_df)
         
         return widget
 
-    async def summarize(self, model_name="gpt-4"):
-        score_df = self.get_score_df()
-        summary_df = await summarize_concept(score_df, self.in_df, model_name, self.doc_id_col)
-        prevalence_df = self.vis(export_df=True)[["concept", "rep_examples", "highlights"]]
-        out_df = summary_df.merge(prevalence_df, left_on="concept_name", right_on="concept", how="left")
-        return out_df[["concept_name", "summary", "rep_examples", "concept_prompt", "n_matches", "highlights"]]
+    def export_df(self):
+        return self.vis(export_df=True)
 
     async def add(self, name, prompt, ex_ids=[], get_highlights=True):
         # Add concept

@@ -26,11 +26,11 @@ from langchain.prompts.chat import (
 SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns in text examples."
 
 RATE_LIMITS = {
+    # https://platform.openai.com/account/limits
     # (n_requests, wait_time_secs)
     "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
-    "gpt-3.5-turbo-1106": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
     "gpt-4": (10, 10), # = 10*6 = 60 rpm (max 10k requests per minute for org)
-    "gpt-4-1106-preview": (1, 30), # = 1*2 = 2 rpm, testing purposes
+    "gpt-4-turbo-preview": (10, 10), # = 10*6 = 60 rpm, testing purposes
     "palm": (9, 10), # = 9*6 = 54 rpm (max 90 requests per minute)
 }
 
@@ -49,7 +49,7 @@ def retry_with_exponential_backoff(
     initial_delay: float = 1,
     exponential_base: float = 2,
     jitter: bool = True,
-    max_retries: int = 10,
+    max_retries: int = 3,
     errors: tuple = (openai.error.RateLimitError,),
 ):
     """Retry a function with exponential backoff."""
