@@ -14,3 +14,13 @@ class Concept:
         self.example_ids = example_ids
         self.active = active
         self.summary = summary
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "prompt": self.prompt,
+            "example_ids": list(self.example_ids),
+            "active": self.active,
+            "summary": self.summary
+        }

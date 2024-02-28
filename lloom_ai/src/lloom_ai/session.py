@@ -13,10 +13,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
+    from __init__ import ConceptSelectWidget
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
+    from .__init__ import ConceptSelectWidget
 
 # SESSION class ================================
 class Session:
@@ -52,6 +54,7 @@ class Session:
         self.results = {}  # maps from concept_id to its score_df
         self.df_filtered = None  # Current quotes df
         self.df_bullets = None  # Current bullet points df
+        self.select_widget = None  # Widget for selecting concepts
         
         # Cost/Time tracking
         self.time = {}  # Stores time required for each step
@@ -63,18 +66,23 @@ class Session:
     
     def save(self):
         # Saves current session to file
+        select_widget = self.select_widget
+        self.select_widget = None  # Remove widget before saving (can't be pickled)
+
         t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
         cur_path = f"{self.save_path}__{t}.pkl"
         with open(cur_path, "wb") as f:
             pickle.dump(self, f)
         print(f"Saved session to {cur_path}")
 
+        self.select_widget = select_widget  # Restore widget after saving
+
     def get_save_key(self, step_name):
         t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
         k = (step_name, t)  # Key of step name and current time
         return k
     
-    def show_session_summary(self):
+    def summary(self):
         # Time
         total_time = np.sum(list(self.time.values()))
         print(f"Total time: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
@@ -91,7 +99,7 @@ class Session:
         total_tokens =  in_tokens + out_tokens
         print(f"\n\nTokens: total={total_tokens}, in={in_tokens}, out={out_tokens}")
 
-    def print_active_concepts(self):
+    def show_selected(self):
         active_concepts = self.__get_active_concepts()
         print(f"Active concepts (n={len(active_concepts)}):")
         for c_id, c in active_concepts.items():
@@ -165,73 +173,32 @@ class Session:
             for k, c in self.concepts.items():
                 print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
 
-    def __get_selection_widget(self, options_dict):
-        # Widget with a search field and lots of checkboxes
-        search_widget = widgets.Text()
-        output_widget = widgets.Output()
-        options = [x for x in options_dict.values()]
-        options_layout = widgets.Layout(
-            overflow='auto',
-            border='1px solid grey',
-            height='300px',
-            flex_flow='column',
-            display='flex',
-        )
-        
-        options_widget = widgets.VBox(options, layout=options_layout)
-        multi_select = widgets.VBox([search_widget, options_widget])
-
-        @output_widget.capture()
-        def on_checkbox_change(change):
-            c_descriptions = [c.description for c in options_widget.children if c.value]
-            selected_concepts = {c_id: c for c_id, c in self.concepts.items() if self.format_desc(c) in c_descriptions}
-            for c_id, c in self.concepts.items():
-                c.active = (c_id in selected_concepts)
-            
-        for checkbox in options:
-            checkbox.observe(on_checkbox_change, names="value")
-
-        # Wire the search field to the checkboxes
-        @output_widget.capture()
-        def on_text_change(change):
-            search_input = change['new']
-            if search_input == '':
-                # Reset search field
-                new_options = sorted(options, key = lambda x: x.value, reverse = True)
-            else:
-                # Filter by search field using difflib.
-                c_descriptions = [c.description for c in options_widget.children]
-                close_matches = [x for x in c_descriptions if str.lower(search_input.strip('')) in str.lower(x)]
-                new_options = sorted(
-                    [x for x in options if x.description in close_matches], 
-                    key = lambda x: x.value, reverse = True
-                )
-            options_widget.children = new_options
-
-        search_widget.observe(on_text_change, names='value')
-        display(output_widget)
-        return multi_select
-
-    def format_desc(self, c):
-        return f"{c.name}:\n{c.prompt}"
+    def __concepts_to_json(self):
+        concept_dict = {c_id: c.to_dict() for c_id, c in self.concepts.items()}
+        # Get examples from example IDs
+        for c_id, c in concept_dict.items():
+            ex_ids = c["example_ids"]
+            in_df = self.df_filtered.copy()
+            in_df[self.doc_id_col] = in_df[self.doc_id_col].astype(str)
+            examples = in_df[in_df[self.doc_id_col].isin(ex_ids)][self.doc_col].tolist()
+            c["examples"] = examples
+        return json.dumps(concept_dict)
     
     def select(self):
-        options_dict = {
-            c.name: widgets.Checkbox(
-                description=self.format_desc(c),
-                value=c.active,
-                style={"description_width":"0px"},
-                layout=widgets.Layout(
-                    width='100%',
-                    text_overflow='initial',
-                    overflow='visible',
-                ),
-            ) for c_id, c in self.concepts.items()
-        }
-        ui = self.__get_selection_widget(options_dict)
-        return ui
+        concepts_json = self.__concepts_to_json()
+        w = ConceptSelectWidget(
+            data=concepts_json,
+        )
+        self.select_widget = w
+        return w
 
     def __get_active_concepts(self):
+        # Update based on widget
+        if self.select_widget is not None:
+            widget_data = json.loads(self.select_widget.data)
+            for c_id, c in self.concepts.items():
+                widget_active = widget_data[c_id]["active"]
+                c.active = widget_active
         return {c_id: c for c_id, c in self.concepts.items() if c.active}
 
     # Score the specified concepts
@@ -295,9 +262,10 @@ class Session:
             return []
         if c.id not in self.results:
             return []
-        score_df = self.results[c.id].copy()
+        df = self.df_filtered.copy()
+        df[self.doc_id_col] = df[self.doc_id_col].astype(str)
         ex_ids = c.example_ids
-        ex = score_df[score_df["doc_id"].isin(ex_ids)]["highlight"].tolist()
+        ex = df[df[self.doc_id_col].isin(ex_ids)][self.doc_col].tolist()
         return ex
 
     def __get_df_for_export(self, item_df, threshold=0.75, include_outliers=False):
@@ -349,6 +317,9 @@ class Session:
         # Add concept
         c = Concept(name=name, prompt=prompt, example_ids=ex_ids, active=True)
         self.concepts[c.id] = c
+
+        # Update widget
+        self.select_widget = self.select()
 
         # Run scoring
         cur_score_df = await self.score(c_ids=[c.id], get_highlights=get_highlights)

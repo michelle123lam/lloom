@@ -14,12 +14,14 @@ _DEV = False # switch to False for production
 if _DEV:
   # from `npx vite`
   ESM = "http://localhost:5173/src/index.js?anywidget"
+  ESM_select = "http://localhost:5173/src/index_select.js?anywidget"
   CSS = ""
 else:
   # from `npx vite build`
   # Path to static from lloom_ai/src/lloom_ai (the python package)
   bundled_assets_dir = pathlib.Path(__file__).parent / "static"
   ESM = (bundled_assets_dir / "index.js").read_text()
+  ESM_select = (bundled_assets_dir / "index_select.js").read_text()
   CSS = (bundled_assets_dir / "style.css").read_text()
   
 
@@ -36,3 +38,14 @@ class MatrixWidget(anywidget.AnyWidget):
     data_items = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data_items` property
     data_items_wide = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data_items_wide` property
     metadata = traitlets.Unicode().tag(sync=True)  # syncs the widget's `metadata` property
+  
+"""
+CONCEPT SELECT WIDGET
+Widget instantiated with anywidget that displays the concepts for selection
+"""
+class ConceptSelectWidget(anywidget.AnyWidget):
+    _esm = ESM_select
+    _css = CSS
+    name = traitlets.Unicode().tag(sync=True)
+
+    data = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data` property

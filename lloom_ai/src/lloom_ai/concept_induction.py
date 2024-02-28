@@ -135,7 +135,7 @@ def estimate_cost(results, model_name, sess, debug=True):
     out_token_cost = out_token_sum * COSTS[model_name][1]
     total_cost = in_token_cost + out_token_cost
     if debug:
-        print(f"Total: {total_cost} | In: {in_token_cost} | Out: {out_token_cost}")
+        print(f"\nTotal: {total_cost} | In: {in_token_cost} | Out: {out_token_cost}")
     if sess is not None:
         # Save to session if provided
         sess.tokens["in_tokens"].append(in_token_sum)
@@ -738,7 +738,7 @@ def refine(score_df, concepts, threshold=1, generic_threshold=0.75, rare_thresho
     
     return concepts
 
-async def summarize_concept(score_df, concept_id, model_name, sess=None, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight"):
+async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-preview", sess=None, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight"):
     # Summarizes behavior in each concept
     df = score_df.copy()
     df = df[df[score_col] >= threshold]
