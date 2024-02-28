@@ -37,6 +37,7 @@ else:
 
 # CONSTANTS ================================
 NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
+OUTLIER_CRITERIA = "Did the example not match any of the above concepts?"
 
 
 # HELPER functions ================================
@@ -731,6 +732,47 @@ def refine(score_df, concepts, threshold=1, generic_threshold=0.75, rare_thresho
     
     return concepts
 
+async def summarize_concept(score_df, in_df, model_name, doc_id_col, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight", debug=False):
+    # Summarizes behavior in each concept
+    df = score_df.copy()
+    df = df[df[score_col] >= threshold]
+    concept_ids = df["concept_id"].unique().tolist()
+
+    # Prepare inputs
+    arg_dicts = []
+    for c_id in concept_ids:
+        cur_df = df[df["concept_id"] == c_id]
+        concept_name = cur_df["concept_name"].iloc[0]
+        concept_prompt = cur_df["concept_prompt"].iloc[0]
+
+        arg_dict = {
+            "concept_name": concept_name,
+            "concept_prompt": concept_prompt,
+            "examples": df[df["concept_id"] == c_id][highlight_col].tolist(),
+            "summary_length": summary_length
+        }
+        arg_dicts.append(arg_dict)
+    
+    # Run prompts
+    prompt_template = summarize_concept_prompt
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+
+    # Process results
+    rows = []
+    for c_id, res in zip(concept_ids, res_text):
+        cur_res = json_load(res, top_level_key="summary")
+        if cur_res is not None:
+            rows.append([c_id, cur_res])
+
+    summary_df = pd.DataFrame(rows, columns=["concept_id", "summary"])
+    out_df = df.merge(summary_df, on="concept_id", how="left")
+    df_counts = out_df.groupby(by=["concept_id"]).count().reset_index()[["concept_id", doc_id_col]]
+    df_counts = df_counts.rename(columns={doc_id_col: "n_matches"})
+    out_df = out_df.merge(df_counts, on="concept_id", how="left")
+    out_df = out_df[["concept_name", "summary", "concept_prompt", "n_matches"]].drop_duplicates()
+    # TODO: streamline above processing
+    return out_df
+
 # Returns ids of not-covered documents
 def get_not_covered(score_df, doc_id_col, threshold=0.75, debug=False):
     # Convert to thresholded scores; sum scores across concepts for each doc
@@ -1155,7 +1197,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     
     concept_metadata = {c.name: get_concept_metadata(c) for c in concepts.values()}
     concept_metadata["Outlier"] = {
-        "Criteria": "Did the example not match any of the above concepts?",
+        "Criteria": OUTLIER_CRITERIA,
         "Concept matches": f"{concept_cts['Outlier']} examples",
     }
     metadata_dict = {
@@ -1196,7 +1238,7 @@ def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_b
         data_items_wide=data_items_wide, 
         metadata=md
     )
-    return w
+    return w, matrix_df, item_df, item_df_wide
 
 # Edits an existing concept with the specified ID
 # Input: 

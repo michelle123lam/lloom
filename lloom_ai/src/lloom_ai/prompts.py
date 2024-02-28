@@ -12,10 +12,10 @@ Please extract {n_quotes} QUOTES exactly copied from this EXAMPLE that are {seed
 
 # Distill - Summarize ========================
 summarize_prompt = """
-I have this sample text:
+I have the following TEXT EXAMPLE:
 {ex}
 
-Please summarize the main point of this text {seeding_phrase} into {n_bullets} bullet points, where each bullet point is a {n_words} word phrase. Please respond ONLY with a valid JSON in the following format:
+Please summarize the main point of this EXAMPLE {seeding_phrase} into {n_bullets} bullet points, where each bullet point is a {n_words} word phrase. Please respond ONLY with a valid JSON in the following format:
 {{
     "bullets": [ "<BULLET_1>", "<BULLET_2>", ... ]
 }}
@@ -160,6 +160,18 @@ TASK:
             }}
         ]
     }}
+"""
+
+# Summarize Concept ========================
+summarize_concept_prompt = """
+Please write a BRIEF {summary_length} executive summary of the theme "{concept_name}" as it appears in the following examples.
+{examples}
+
+DO NOT write the summary as a third party using terms like "the text examples" or "they discuss", but write the summary from the perspective of the text authors making the points directly.
+Please respond ONLY with a valid JSON in the following format:
+{{
+    "summary": "<SUMMARY>"
+}}
 """
 
 concept_auto_eval_prompt = """
