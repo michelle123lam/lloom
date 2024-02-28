@@ -945,10 +945,13 @@ def format_scores(x: float):
     return f"{start_tag}{x}</div>"
 
 # Converts a list of bullet strings to a formatted unordered list
-def format_bullets(orig):
+def format_bullets(orig, add_quotes=False):
     if (not isinstance(orig, list)) or len(orig) == 0:
         return ""
-    lines = [f"<li>{line}</li>" for line in orig]
+    if add_quotes:
+        lines = [f"<li>\"{line}\"</li>" for line in orig]
+    else:
+        lines = [f"<li>{line}</li>" for line in orig]
     return "<ul>" + "".join(lines) + "</ul>"
 
 # Adds color-background styling for highlight columns to match score value
@@ -1187,9 +1190,15 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     def get_concept_metadata(c):
         # Fetch other codebook info
         # codebook_info = format_codebook_entry(c["name"]) if c["name"] in cb else None
+        ex_ids = c.example_ids
+        if len(ex_ids) > 0:
+            ex = score_df[score_df[doc_id_col].isin(ex_ids)][highlight_col].unique().tolist()
+        else:
+            ex = []
         res = {
             "Criteria": f"<br>{c.prompt}",
-            "Concept matches": f"{concept_cts[c.name]} examples",
+            "Matches": f"{concept_cts[c.name]} examples",
+            "Representative examples": f"{format_bullets(ex, add_quotes=True)}"
         }
         # if codebook_info is not None:
         #     res["Subconcepts and examples"] = codebook_info

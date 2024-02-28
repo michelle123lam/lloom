@@ -59,69 +59,52 @@
     }
 </script>
 
-<div class="">
+<div>
     {#if selectedTitle}
         <h2>{selectedTitle}</h2>
     {/if}
     
     <div class="row">
-        <div class="right-col">
-            {#if selectedMetadata}
-                <h3 class="card-title">CONCEPT SUMMARY</h3>
-                <div class="overview-card">  
-                    <div class="overview-card-left">
-                        {#each Object.entries(selectedMetadata) as [key, value]}
-                            <p><b>{key}</b>: {@html value}</p>
-                        {/each}
-                    </div>
-                    <div class="overview-card-right">
-                        <ConceptSummaryChart rows={rowsMatch} {filterItems} />
-                    </div>
+        {#if selectedMetadata}
+            <h3 class="card-title">CONCEPT SUMMARY</h3>
+            <div class="overview-card">  
+                <div class="overview-card-left">
+                    {#each Object.entries(selectedMetadata) as [key, value]}
+                        <p><b>{key}</b>: {@html value}</p>
+                    {/each}
                 </div>
-            {/if}
-
-            <h3 class="card-title">POTENTIAL CONCEPT MATCHES</h3>
-            <div class="highlight-card">  
-                {#if remount}
-                    <SvelteTable
-                        {columns}
-                        rows={rowsMatchAll}
-                        filterSelections={filterItems}
-                    >
-                    </SvelteTable>
-                {/if}
+                <div class="overview-card-right">
+                    <ConceptSummaryChart rows={rowsMatch} {filterItems} />
+                </div>
             </div>
+        {/if}
 
-            <h3 class="card-title" style="margin-top: 20px">CONCEPT NON-MATCHES</h3>
-            <div class="highlight-card">
-                {#if remount}
-                    <SvelteTable
-                        {columns}
-                        rows={rowsNonMatchAll}
-                        filterSelections={filterItems}
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                    >
-                    </SvelteTable>
-                {/if}
-            </div>
-        </div>
-    </div>
-    <!-- <div class="row">
-        <div class="table-card-wide">
-            <h3>CONCEPT EXAMPLES</h3>  
+        <h3 class="card-title">POTENTIAL CONCEPT MATCHES</h3>
+        <div class="highlight-card">  
             {#if remount}
                 <SvelteTable
                     {columns}
-                    {rows}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
+                    rows={rowsMatchAll}
                     filterSelections={filterItems}
                 >
                 </SvelteTable>
             {/if}
         </div>
-    </div> -->
+
+        <h3 class="card-title" style="margin-top: 20px">CONCEPT NON-MATCHES</h3>
+        <div class="highlight-card">
+            {#if remount}
+                <SvelteTable
+                    {columns}
+                    rows={rowsNonMatchAll}
+                    filterSelections={filterItems}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                >
+                </SvelteTable>
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style>
@@ -160,19 +143,14 @@
 
     :global(.overview-card-left) {
         float: left;
-        width: 35%;
+        width: 60%;
         height: 100%; 
     }
 
     :global(.overview-card-right) {
         float: right;
-        width: 60%;
+        width: 30%; 
         height: 100%;
-    }
-
-    :global(.right-col) {
-        float: left;
-        width: 100%;
     }
 
     :global(.highlight-card) {

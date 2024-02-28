@@ -11,13 +11,16 @@
     export let data;  // data for matrix
     export let div;  // div containing the matrix
     export let numConcepts;  // total number of concepts (for dynamic sizing)
+    export let numSlices; // total number of slices (for dynamic sizing)
 
     let chart;
     const dispatch = createEventDispatcher();
-    let minWidth = 450;
-    let minHeight = 300;
+    let rowLabelWidth = 200;
+    let rowLabelHeight = 150;
+    let perSliceWidth = 80;
+    let colLabelHeight = 300;
     let perConceptHeight = 60;
-
+    
     onMount(() => {
         renderMatrix(data);
 	});
@@ -26,8 +29,8 @@
 	function renderMatrix(data_in) {
         if (data_in != undefined && numConcepts > 0) {
             let data_json = JSON.parse(data_in);
-            const width = minWidth;
-            const height = minHeight + (perConceptHeight * numConcepts);
+            const width = rowLabelWidth + (perSliceWidth * numSlices);
+            const height = colLabelHeight + (perConceptHeight * numConcepts);
             const cur_color = "#82C1FB";
             chart = new BubbleMatrix(div)
                 .size([width, height])
@@ -583,8 +586,8 @@
 
             this.columnHeight = max(chartData.columns.map(c => this.trim(c.name) + "M"));
             this.rowWidth = this.margin.left + max(chartData.rows.map(r => r.name + "MM"), this.font.clone().weight("bold"));
-            this.columnHeight = 150;  // Workaround
-            this.rowWidth = 175;  // Workaround
+            this.columnHeight = rowLabelHeight;  // Workaround
+            this.rowWidth = rowLabelWidth;  // Workaround
         }
 
         _calculateBubbleRadius(chartData, showSlider) {

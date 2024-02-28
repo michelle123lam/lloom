@@ -17,6 +17,7 @@
     let metadataOrig;
     let metadata;
     let numConcepts;
+    let numSlices;
 
     // Variables: interaction settings
     let selectedMatrixElem;
@@ -32,11 +33,13 @@
     metadataOrig = model.get("metadata");
     metadata = JSON.parse(metadataOrig);
     numConcepts = Object.keys(metadata.concepts).length;
+    numSlices = Object.keys(metadata.items).length;
     
     // Set up enclosing div for matrix
     let matrixDiv = document.createElement("div");
     matrixDiv.classList.add("matrix");
     el.appendChild(matrixDiv);
+    el.classList.add("matrix-widget");
 
 
     function setToDefaultState() {
@@ -112,50 +115,52 @@
     }
 </script>
 
-<div class="matrix-view">
-    {#if numConcepts > 0}
-        {#key matrixDiv}
-            <MatrixInner {data} div={matrixDiv} {numConcepts} on:message={handleMatrixEvent} />
-        {/key}
-        <div class="tables">
-            {#if selectedMatrixElem == "cell" || selectedMatrixElem == "concept"}
-                <ConceptView
-                    data={dataItems}
-                    {el}
-                    {filterItems}
-                    {selectedTitle}
-                    {selectedMetadata}
-                />
-            {:else if selectedMatrixElem == "group"}
-                <GroupView
-                    data={dataItemsWide}
-                    dataLong={dataItems}
-                    {el}
-                    {filterItems}
-                    {sortBy}
-                    {sortOrder}
-                    {selectedTitle}
-                    {selectedMetadata}
-                />
-            {/if}
-        </div>
-    {/if}
-</div>
+{#if numConcepts > 0}
+    {#key matrixDiv}
+        <MatrixInner {data} div={matrixDiv} {numConcepts} {numSlices} on:message={handleMatrixEvent} />
+    {/key}
+    <div class="tables">
+        {#if selectedMatrixElem == "cell" || selectedMatrixElem == "concept"}
+            <ConceptView
+                data={dataItems}
+                {el}
+                {filterItems}
+                {selectedTitle}
+                {selectedMetadata}
+            />
+        {:else if selectedMatrixElem == "group"}
+            <GroupView
+                data={dataItemsWide}
+                dataLong={dataItems}
+                {el}
+                {filterItems}
+                {sortBy}
+                {sortOrder}
+                {selectedTitle}
+                {selectedMetadata}
+            />
+        {/if}
+    </div>
+{/if}
 
 <style>
+    :global(.matrix-widget) {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between; 
+    }
+
     :global(.matrix-view) {
         min-height: 750px;
     } 
 
     :global(.matrix) {
         float: left;
-        width: 40%;
     }
 
     :global(.tables) {
         float: right; 
-        width: 55%; 
-        padding: 0 20px;
+        padding: 0 20px;  
     }
     :global(.tables p) {
         font-size: 14px; 
