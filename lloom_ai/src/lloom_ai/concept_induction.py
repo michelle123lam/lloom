@@ -27,13 +27,13 @@ if __package__ is None or __package__ == '':
     from llm import multi_query_gpt_wrapper
     from prompts import *
     from concept import Concept
-    from __init__ import MatrixWidget
+    from __init__ import MatrixWidget, ConceptSelectWidget
 else:
     # uses current package visibility
     from .llm import multi_query_gpt_wrapper
     from .prompts import *
     from .concept import Concept
-    from .__init__ import MatrixWidget
+    from .__init__ import MatrixWidget, ConceptSelectWidget
 
 # CONSTANTS ================================
 NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
@@ -1245,6 +1245,12 @@ def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_b
         metadata=md
     )
     return w, matrix_df, item_df, item_df_wide
+
+def get_select_widget(concepts_json):
+    w = ConceptSelectWidget(
+        data=concepts_json,
+    )
+    return w
 
 # Edits an existing concept with the specified ID
 # Input: 

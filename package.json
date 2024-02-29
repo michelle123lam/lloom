@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev": "npm run build -- --sourcemap=inline --watch",
-    "build": "esbuild src/index.js --minify --format=esm --bundle --outdir=lloom/static",
+    "build": "vite build -c vite.config-select.js && vite build -c vite.config.js",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

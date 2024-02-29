@@ -16,13 +16,15 @@ if _DEV:
   ESM = "http://localhost:5173/src/index.js?anywidget"
   ESM_select = "http://localhost:5173/src/index_select.js?anywidget"
   CSS = ""
+  CSS_select = ""
 else:
   # from `npx vite build`
   # Path to static from lloom_ai/src/lloom_ai (the python package)
   bundled_assets_dir = pathlib.Path(__file__).parent / "static"
   ESM = (bundled_assets_dir / "index.js").read_text()
+  CSS = (bundled_assets_dir / "index.css").read_text()
   ESM_select = (bundled_assets_dir / "index_select.js").read_text()
-  CSS = (bundled_assets_dir / "style.css").read_text()
+  CSS_select = (bundled_assets_dir / "index_select.css").read_text()
   
 
 """
@@ -45,7 +47,7 @@ Widget instantiated with anywidget that displays the concepts for selection
 """
 class ConceptSelectWidget(anywidget.AnyWidget):
     _esm = ESM_select
-    _css = CSS
+    _css = CSS_select
     name = traitlets.Unicode().tag(sync=True)
 
     data = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data` property

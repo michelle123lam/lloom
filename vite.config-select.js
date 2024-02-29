@@ -14,16 +14,15 @@ export default defineConfig({
 	},
 	build: {
         outDir: "lloom_ai/src/lloom_ai/static",
-        emptyOutDir: false,
         lib: {
             entry: {
-                index: "src/index.js",
+                index_select: "src/index_select.js",
             },
             formats: ["es"],
         },
         rollupOptions: {
             output: {
-                assetFileNames: "index.[ext]",
+                assetFileNames: "index_select.[ext]",
             }
         }
     },

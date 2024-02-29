@@ -13,12 +13,10 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from __init__ import ConceptSelectWidget
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .__init__ import ConceptSelectWidget
 
 # SESSION class ================================
 class Session:
@@ -186,9 +184,7 @@ class Session:
     
     def select(self):
         concepts_json = self.__concepts_to_json()
-        w = ConceptSelectWidget(
-            data=concepts_json,
-        )
+        w = get_select_widget(concepts_json)
         self.select_widget = w
         return w
 
