@@ -199,7 +199,7 @@ class Session:
 
     # Score the specified concepts
     # Only score the concepts that are active
-    async def score(self, c_ids=None, get_highlights=True):
+    async def score(self, c_ids=None, get_highlights=True, ignore_existing=True):
         concepts = {}
         active_concepts = self.__get_active_concepts()
         if c_ids is None:
@@ -212,6 +212,10 @@ class Session:
                 if c_id in active_concepts:
                     concepts[c_id] = active_concepts[c_id]
         
+        # Ignore concepts that already have existing results
+        if ignore_existing:
+            concepts = {c_id: c for c_id, c in concepts.items() if c_id not in self.results}
+
         # Run usual scoring; results are stored to self.results within the function
         score_df = await score_concepts(
             text_df=self.df_to_score, 

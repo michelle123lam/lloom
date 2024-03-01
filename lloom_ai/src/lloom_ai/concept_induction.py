@@ -746,6 +746,9 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
     # Prepare inputs
     arg_dicts = []
     cur_df = df[df["concept_id"] == concept_id]
+    if len(cur_df) == 0:
+        # No concept matches to summarize
+        return None
     concept_name = cur_df["concept_name"].iloc[0]
     concept_prompt = cur_df["concept_prompt"].iloc[0]
 
@@ -768,6 +771,7 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
             sess.concepts[concept_id].summary = cur_summary
         else:
             return cur_summary
+    return None
 
 # Returns ids of not-covered documents
 def get_not_covered(score_df, doc_id_col, threshold=0.75, debug=False):
