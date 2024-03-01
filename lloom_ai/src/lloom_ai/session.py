@@ -30,7 +30,7 @@ class Session:
     ):
         # Settings
         self.model_name = "gpt-3.5-turbo"
-        self.synth_model_name = "gpt-4"
+        self.synth_model_name = "gpt-4-turbo-preview"
         self.use_base_api = True
         self.debug = debug  # Whether to run in debug mode
 

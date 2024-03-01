@@ -12,8 +12,8 @@ import time
 import random
 from pathos.multiprocessing import Pool
 import hashlib
+import numpy as np
 
-# from langchain.llms import OpenAI
 import asyncio
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import (
@@ -21,6 +21,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+import tiktoken
 
 # CONSTANTS ================================
 SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns in text examples."
@@ -29,14 +30,47 @@ RATE_LIMITS = {
     # https://platform.openai.com/account/limits
     # (n_requests, wait_time_secs)
     "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
-    "gpt-4": (10, 10), # = 10*6 = 60 rpm (max 10k requests per minute for org)
-    "gpt-4-turbo-preview": (10, 10), # = 10*6 = 60 rpm, testing purposes
+    "gpt-4": (20, 10), # = 20*6 = 120 rpm (max 10k requests per minute for org)
+    "gpt-4-turbo-preview": (20, 10), # = 20*6 = 120 rpm, testing purposes
     "palm": (9, 10), # = 9*6 = 54 rpm (max 90 requests per minute)
+}
+
+CONTEXT_WINDOW = {
+    # https://platform.openai.com/docs/models
+    # Total tokens shared between input and output
+    "gpt-3.5-turbo": 16385,  # Max 4096 output tokens
+    "gpt-4": 8192, 
+    "gpt-4-turbo-preview": 128000,  # Max 4096 output tokens
+    "palm": 8000,
 }
 
 def get_system_prompt():
     system_message_prompt = SystemMessagePromptTemplate.from_template(SYS_TEMPLATE)
     return system_message_prompt
+
+def get_token_estimate(text, model_name):
+    # Fetch the number of tokens used by a prompt
+    encoding = tiktoken.encoding_for_model(model_name)
+    tokens = encoding.encode(text)
+    num_tokens = len(tokens)
+    return num_tokens
+
+def get_token_estimate_list(text_list, model_name):
+    # Fetch the number of tokens used by a list of prompts
+    token_list = [get_token_estimate(text, model_name) for text in text_list]
+    return np.sum(token_list)
+
+def truncate_text_tokens(text, model_name, max_tokens):
+    # Truncate a prompt to fit within a maximum number of tokens
+    encoding = tiktoken.encoding_for_model(model_name)
+    tokens = encoding.encode(text)
+    n_tokens = len(tokens)
+    if max_tokens is not None and n_tokens > max_tokens:
+        # Truncate the prompt
+        tokens = tokens[:max_tokens]
+        n_tokens = max_tokens
+    text = encoding.decode(tokens)
+    return text, n_tokens
 
 # RETRYING + MULTIPROCESSING ================================
 
@@ -197,8 +231,17 @@ def get_prompt_hash(p):
     hash = hashlib.sha256(user_message.encode()).hexdigest()
     return hash
 
+def truncate_prompt(prompt, model_name, out_token_alloc):
+    # Truncate a prompt to fit within a maximum number of tokens
+    max_tokens = CONTEXT_WINDOW[model_name] - out_token_alloc
+    for i, message in enumerate(prompt):
+        trunc_message, n_tokens = truncate_text_tokens(message.content, model_name, max_tokens)
+        prompt[i].content = trunc_message
+        max_tokens -= n_tokens
+    return prompt
+
 # Main function making calls to LLM
-async def multi_query_gpt(chat_model, prompt_template, arg_dict, batch_num=None, wait_time=None, cache=False, debug=False):
+async def multi_query_gpt(chat_model, model_name, prompt_template, arg_dict, batch_num=None, wait_time=None, cache=False, debug=False):
     # Run a single query using LangChain OpenAI Chat API
 
     # System
@@ -213,17 +256,23 @@ async def multi_query_gpt(chat_model, prompt_template, arg_dict, batch_num=None,
             print(f"Batch {batch_num}, wait time {wait_time}")
         await asyncio.sleep(wait_time)  # wait asynchronously
     chat_prompt_formatted = chat_prompt.format_prompt(**arg_dict).to_messages()
+    chat_prompt_formatted = truncate_prompt(chat_prompt_formatted, model_name, out_token_alloc=1500)
     prompt_hash = get_prompt_hash(chat_prompt_formatted)
 
     # Run LLM generation
-    res_full = await chat_model.agenerate([chat_prompt_formatted])
+    try: 
+        res_full = await chat_model.agenerate([chat_prompt_formatted])
+    except Exception as e:
+        print("Error", e)
+        return None
     
     # TODO: Add back caching
     return res_full
 
 def process_results(results):
     # Extract just the text generation from the LangChain OpenAI Chat results
-    res_text = [res.generations[0][0].text for res in results]
+    # Insert None if the result is None
+    res_text = [(res.generations[0][0].text if res else None) for res in results]
     return res_text
 
 async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temperature=0, batch_num=None, batched=True, debug=False):
@@ -235,7 +284,7 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temper
 
     if not batched:
         # Non-batched version
-        tasks = [multi_query_gpt(chat_model, prompt_template, args) for args in arg_dicts]
+        tasks = [multi_query_gpt(chat_model, model_name, prompt_template, args) for args in arg_dicts]
     else:
         # Batched version
         n_requests, wait_time_secs = RATE_LIMITS[model_name]
@@ -249,7 +298,7 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temper
                 wait_time = wait_time_secs * batch_num
             if debug:
                 wait_time = 0 # Debug mode
-            cur_tasks = [multi_query_gpt(chat_model, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
+            cur_tasks = [multi_query_gpt(chat_model, model_name, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
             tasks.extend(cur_tasks)
 
     res_full = await asyncio.gather(*tasks)
