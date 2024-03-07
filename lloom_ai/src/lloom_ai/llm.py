@@ -44,6 +44,13 @@ CONTEXT_WINDOW = {
     "palm": 8000,
 }
 
+COSTS = {
+    # https://openai.com/pricing
+    "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
+    "gpt-4": [0.03/1000, 0.06/1000],
+    "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
+}
+
 def get_system_prompt():
     system_message_prompt = SystemMessagePromptTemplate.from_template(SYS_TEMPLATE)
     return system_message_prompt
@@ -71,6 +78,12 @@ def truncate_text_tokens(text, model_name, max_tokens):
         n_tokens = max_tokens
     text = encoding.decode(tokens)
     return text, n_tokens
+
+def calc_cost_by_tokens(model_name, in_tokens, out_tokens):
+    # Calculate cost with the tokens and model name
+    in_cost = in_tokens * COSTS[model_name][0]
+    out_cost = out_tokens * COSTS[model_name][1]
+    return in_cost, out_cost
 
 # RETRYING + MULTIPROCESSING ================================
 

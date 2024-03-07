@@ -13,12 +13,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from llm import *
+    from llm import get_token_estimate
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .llm import *
+    from .llm import get_token_estimate
 
 # SESSION class ================================
 class Session:
@@ -59,7 +59,7 @@ class Session:
         
         # Cost/Time tracking
         self.time = {}  # Stores time required for each step
-        self.cost = []  # Stores result of cost estimation
+        self.cost = {}  # Stores cost incurred by each step
         self.tokens = {
             "in_tokens": [],
             "out_tokens": [],
@@ -145,16 +145,20 @@ class Session:
         print(f"Estimated cost: {np.round(total_cost, 2)}")
         return est_cost
     
-    def summary(self):
+    def summary(self, show_detail=True):
         # Time
         total_time = np.sum(list(self.time.values()))
         print(f"Total time: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
-        for step_name, time in self.time.items():
-            print(f"\t{step_name}: {time:0.2f} sec")
+        if show_detail:
+            for step_name, time in self.time.items():
+                print(f"\t{step_name}: {time:0.2f} sec")
 
         # Cost
-        total_cost = np.sum(self.cost)
+        total_cost = np.sum(list(self.cost.values()))
         print(f"\n\nTotal cost: {total_cost:0.2f}")
+        if show_detail:
+            for step_name, cost in self.cost.items():
+                print(f"\t{step_name}: {cost:0.2f}")
 
         # Tokens
         in_tokens = np.sum(self.tokens["in_tokens"])
