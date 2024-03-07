@@ -39,6 +39,14 @@ else:
 NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
 OUTLIER_CRITERIA = "Did the example not match any of the above concepts?"
 
+# https://openai.com/pricing
+# https://platform.openai.com/docs/models/gpt-3-5
+COSTS = {
+    "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
+    "gpt-4": [0.03/1000, 0.06/1000],
+    "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
+}
+
 
 # HELPER functions ================================
 
@@ -103,7 +111,7 @@ def save_progress(sess, df, step_name, start, res, model_name, debug=True):
     get_timing(start, step_name, sess, debug=debug)
 
     # Gets cost
-    estimate_cost(res, model_name, sess, debug=debug)
+    calc_cost(res, model_name, sess, debug=debug)
 
 def get_timing(start, step_name, sess, debug=True):
     if start is None:
@@ -116,16 +124,10 @@ def get_timing(start, step_name, sess, debug=True):
         k = sess.get_save_key(step_name)
         sess.time[k] = elapsed
 
-def estimate_cost(results, model_name, sess, debug=True):
-    # https://openai.com/pricing
-    # https://platform.openai.com/docs/models/gpt-3-5
+def calc_cost(results, model_name, sess, debug=True):
+    # Calculate cost with API results and model name
     if results is None:
         return
-    COSTS = {
-        "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
-        "gpt-4": [0.03/1000, 0.06/1000],
-        "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
-    }
     # Cost estimation
     in_tokens = [res.llm_output["token_usage"]["prompt_tokens"] for res in results]
     out_tokens = [res.llm_output["token_usage"]["completion_tokens"] for res in results]
@@ -141,6 +143,12 @@ def estimate_cost(results, model_name, sess, debug=True):
         sess.tokens["in_tokens"].append(in_token_sum)
         sess.tokens["out_tokens"].append(out_token_sum)
         sess.cost.append(total_cost)
+
+def calc_cost_by_tokens(model_name, in_tokens, out_tokens):
+    # Calculate cost with the tokens and model name
+    in_cost = in_tokens * COSTS[model_name][0]
+    out_cost = out_tokens * COSTS[model_name][1]
+    return in_cost, out_cost
 
 def filter_empty_rows(df, text_col_name):
     # Remove rows where the specified column is empty

@@ -13,10 +13,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
+    from llm import *
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
+    from .llm import *
 
 # SESSION class ================================
 class Session:
@@ -31,6 +33,7 @@ class Session:
         # Settings
         self.model_name = "gpt-3.5-turbo"
         self.synth_model_name = "gpt-4-turbo-preview"
+        self.score_model_name = "gpt-3.5-turbo"
         self.use_base_api = True
         self.debug = debug  # Whether to run in debug mode
 
@@ -79,6 +82,68 @@ class Session:
         t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
         k = (step_name, t)  # Key of step name and current time
         return k
+
+    # Estimate cost of generation for the given args
+    def estimate_gen_cost(self, args):
+        # Conservative estimates based on empirical data
+        # TODO: change to gather estimates from test cases programmatically
+        est_quote_tokens = 40  # Tokens for a quote
+        est_bullet_tokens = 10  # Tokens for a bullet point
+        est_n_clusters = 4  # Estimate of number of clusters
+        est_concept_tokens = 40  # Tokens for one generated concept JSON
+
+        # Filter: generate filter_n_quotes for each doc
+        est_cost = {}
+        
+        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.model_name) for doc in self.in_df[self.doc_col].tolist()])
+        quotes_tokens_per_doc = args["filter_n_quotes"] * est_quote_tokens 
+        filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
+        est_cost["distill_filter"] = calc_cost_by_tokens(self.model_name, filter_in_tokens, filter_out_tokens)
+
+        # Summarize: create n_bullets for each doc
+        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.model_name)
+        summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
+        bullets_tokens_per_doc = args["summ_n_bullets"] * est_bullet_tokens
+        summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
+        est_cost["distill_summarize"] = calc_cost_by_tokens(self.model_name, summ_in_tokens, summ_out_tokens)
+
+        # Cluster: embed each bullet point
+        cluster_rate = (0.00010 / 1000)  # Price for text-embedding-ada-002
+        cluster_tokens = bullets_tokens_per_doc * len(self.in_df) * cluster_rate
+        est_cost["cluster"] = (cluster_tokens, 0)
+
+        # Synthesize: create n_concepts for each of the est_n_clusters
+        n_bullets_per_cluster = (args["summ_n_bullets"] * len(self.in_df)) / est_n_clusters
+        synth_prompt_tokens = get_token_estimate(synthesize_prompt, self.synth_model_name)
+        synth_in_tokens = np.sum([(synth_prompt_tokens + (est_bullet_tokens * n_bullets_per_cluster)) for _ in range(est_n_clusters)])
+        synth_out_tokens = args["synth_n_concepts"] * est_n_clusters * est_concept_tokens
+        est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model_name, synth_in_tokens, synth_out_tokens)
+        
+        total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
+        print(f"Estimated cost: {np.round(total_cost, 2)}")
+        return est_cost
+
+    # Estimate cost of scoring for the given number of concepts
+    def estimate_score_cost(self, n_concepts, batch_size=5, get_highlights=True):
+        if get_highlights:
+            score_prompt = score_highlight_prompt
+        else:
+            score_prompt = score_no_highlight_prompt
+        
+        # TODO: change to gather estimates from test cases programmatically
+        est_concept_tokens = 20  # Tokens for concept name + prompt
+        est_score_json_tokens = 100  # Tokens for score JSON for one document
+            
+        score_prompt_tokens = get_token_estimate(score_prompt, self.score_model_name)
+        n_batches = math.ceil(len(self.in_df) / batch_size)
+        all_doc_tokens = np.sum([get_token_estimate(doc, self.score_model_name) for doc in self.df_to_score[self.doc_col].tolist()])  # Tokens to encode all documents
+        score_in_tokens = all_doc_tokens + (n_batches * (score_prompt_tokens + est_concept_tokens))
+        score_out_tokens = est_score_json_tokens * n_concepts * len(self.in_df)
+        est_cost = calc_cost_by_tokens(self.score_model_name, score_in_tokens, score_out_tokens)
+
+        total_cost = np.sum(est_cost)
+        print(f"Estimated cost: {np.round(total_cost, 2)}")
+        return est_cost
     
     def summary(self):
         # Time
@@ -109,7 +174,7 @@ class Session:
         if args is None:
             args = {
                 "filter_n_quotes": 2,
-                "summ_n_bullets": "2-4",
+                "summ_n_bullets": 3,
                 "cluster_batch_size": 20,
                 "synth_n_concepts": 10,
             }
@@ -222,6 +287,7 @@ class Session:
             text_col=self.doc_col, 
             doc_id_col=self.doc_id_col,
             concepts=concepts,
+            model_name=self.score_model_name,
             get_highlights=get_highlights,
             sess=self,
         )
