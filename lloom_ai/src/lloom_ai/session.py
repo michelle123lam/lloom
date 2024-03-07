@@ -6,8 +6,10 @@ import time
 import pandas as pd
 import ipywidgets as widgets
 import random
+import nltk
+from nltk.tokenize import sent_tokenize
 
-# TODO(MSL): check on relative imports in package
+
 # Local imports
 if __package__ is None or __package__ == '':
     # uses current directory visibility
@@ -83,8 +85,8 @@ class Session:
         k = (step_name, t)  # Key of step name and current time
         return k
 
-    # Estimate cost of generation for the given args
-    def estimate_gen_cost(self, args):
+    # Estimate cost of generation for the given params
+    def estimate_gen_cost(self, params):
         # Conservative estimates based on empirical data
         # TODO: change to gather estimates from test cases programmatically
         est_quote_tokens = 40  # Tokens for a quote
@@ -96,14 +98,14 @@ class Session:
         est_cost = {}
         
         filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.model_name) for doc in self.in_df[self.doc_col].tolist()])
-        quotes_tokens_per_doc = args["filter_n_quotes"] * est_quote_tokens 
+        quotes_tokens_per_doc = params["filter_n_quotes"] * est_quote_tokens 
         filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
         est_cost["distill_filter"] = calc_cost_by_tokens(self.model_name, filter_in_tokens, filter_out_tokens)
 
         # Summarize: create n_bullets for each doc
         summ_prompt_tokens = get_token_estimate(summarize_prompt, self.model_name)
         summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
-        bullets_tokens_per_doc = args["summ_n_bullets"] * est_bullet_tokens
+        bullets_tokens_per_doc = params["summ_n_bullets"] * est_bullet_tokens
         summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
         est_cost["distill_summarize"] = calc_cost_by_tokens(self.model_name, summ_in_tokens, summ_out_tokens)
 
@@ -113,10 +115,10 @@ class Session:
         est_cost["cluster"] = (cluster_tokens, 0)
 
         # Synthesize: create n_concepts for each of the est_n_clusters
-        n_bullets_per_cluster = (args["summ_n_bullets"] * len(self.in_df)) / est_n_clusters
+        n_bullets_per_cluster = (params["summ_n_bullets"] * len(self.in_df)) / est_n_clusters
         synth_prompt_tokens = get_token_estimate(synthesize_prompt, self.synth_model_name)
         synth_in_tokens = np.sum([(synth_prompt_tokens + (est_bullet_tokens * n_bullets_per_cluster)) for _ in range(est_n_clusters)])
-        synth_out_tokens = args["synth_n_concepts"] * est_n_clusters * est_concept_tokens
+        synth_out_tokens = params["synth_n_concepts"] * est_n_clusters * est_concept_tokens
         est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model_name, synth_in_tokens, synth_out_tokens)
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
@@ -144,6 +146,34 @@ class Session:
         total_cost = np.sum(est_cost)
         print(f"Estimated cost: {np.round(total_cost, 2)}")
         return est_cost
+
+    def auto_suggest_parameters(self, sample_size=None, target_n_concepts=20, debug=False):
+        # Suggests concept generation parameters based on rough heuristics
+        # TODO: Use more sophisticated methods to suggest parameters
+        if sample_size is not None:
+            sample_docs = self.in_df[self.doc_col].sample(sample_size).tolist()
+        else:
+            sample_docs = self.in_df[self.doc_col].tolist()
+
+        # Get number of sentences in each document
+        n_sents = [len(sent_tokenize(doc)) for doc in sample_docs]
+        avg_n_sents = int(np.median(n_sents))
+        if debug:
+            print(f"N sentences: Median={avg_n_sents}, Std={np.std(n_sents):0.2f}")
+        quote_per_sent = 0.75  # Average number of quotes per sentence
+        filter_n_quotes = max(1, math.ceil(avg_n_sents * quote_per_sent))
+
+        bullet_per_quote = 0.75  # Average number of bullet points per quote
+        summ_n_bullets = max(1, math.floor(filter_n_quotes * bullet_per_quote))
+
+        est_n_clusters = 3
+        synth_n_concepts = math.floor(target_n_concepts / est_n_clusters)
+        params = {
+            "filter_n_quotes": filter_n_quotes,
+            "summ_n_bullets": summ_n_bullets,
+            "synth_n_concepts": synth_n_concepts,
+        }
+        return params
     
     def summary(self, show_detail=True):
         # Time
@@ -173,38 +203,40 @@ class Session:
             print(f"- {c.name}: {c.prompt}")
 
     # HELPER FUNCTIONS ================================
-    async def gen(self, seed=None, args=None, debug=True):
-        # TODO: modify to automatically determine args
-        if args is None:
-            args = {
-                "filter_n_quotes": 2,
-                "summ_n_bullets": 3,
-                "cluster_batch_size": 20,
-                "synth_n_concepts": 10,
-            }
+    async def gen(self, seed=None, params=None, debug=True):
+        if params is None:
+            params = self.auto_suggest_parameters(debug=debug)
+            if debug:
+                print(f"Auto-suggested parameters: {params}")
+                self.estimate_gen_cost(params)
 
         # Run concept generation
-        df_filtered = await distill_filter(
-            text_df=self.in_df, 
-            doc_col=self.doc_col,
-            doc_id_col=self.doc_id_col,
-            model_name=self.model_name,
-            n_quotes=args["filter_n_quotes"],
-            seed=seed,
-            sess=self,
-        )
-        self.df_to_score = df_filtered
-        self.df_filtered = df_filtered
-        if debug:
-            print("df_filtered")
-            display(df_filtered)
+        filter_n_quotes = params["filter_n_quotes"]
+        if filter_n_quotes > 1:
+            df_filtered = await distill_filter(
+                text_df=self.in_df, 
+                doc_col=self.doc_col,
+                doc_id_col=self.doc_id_col,
+                model_name=self.model_name,
+                n_quotes=params["filter_n_quotes"],
+                seed=seed,
+                sess=self,
+            )
+            self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
+            self.df_filtered = df_filtered
+            if debug:
+                print("df_filtered")
+                display(df_filtered)
+        else:
+            # Just use original df to generate bullets
+            self.df_filtered = self.in_df
         
         df_bullets = await distill_summarize(
             text_df=df_filtered, 
             doc_col=self.doc_col,
             doc_id_col=self.doc_id_col,
             model_name=self.model_name,
-            n_bullets=args["summ_n_bullets"],
+            n_bullets=params["summ_n_bullets"],
             seed=seed,
             sess=self,
         )
@@ -217,7 +249,6 @@ class Session:
             text_df=df_bullets, 
             doc_col=self.doc_col,
             doc_id_col=self.doc_id_col,
-            batch_size=args["cluster_batch_size"],
             sess=self,
         )
         if debug:
@@ -229,7 +260,7 @@ class Session:
             doc_col=self.doc_col,
             doc_id_col=self.doc_id_col,
             model_name=self.synth_model_name,
-            n_concepts=args["synth_n_concepts"],
+            n_concepts=params["synth_n_concepts"],
             pattern_phrase="unique topic",
             seed=seed,
             sess=self,
