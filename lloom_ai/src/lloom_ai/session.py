@@ -15,12 +15,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from llm import get_token_estimate
+    from llm import get_token_estimate, EMBED_COSTS
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .llm import get_token_estimate
+    from .llm import get_token_estimate, EMBED_COSTS
 
 # SESSION class ================================
 class Session:
@@ -34,6 +34,7 @@ class Session:
     ):
         # Settings
         self.model_name = "gpt-3.5-turbo"
+        self.embed_model_name = "text-embedding-3-large"
         self.synth_model_name = "gpt-4-turbo-preview"
         self.score_model_name = "gpt-3.5-turbo"
         self.use_base_api = True
@@ -54,6 +55,7 @@ class Session:
         # Output data
         self.saved_dfs = {}  # maps from (step_name, time_str) to df
         self.concepts = {}  # maps from concept_id to Concept 
+        self.concept_history = {}  # maps from iteration number to concept dictionary
         self.results = {}  # maps from concept_id to its score_df
         self.df_filtered = None  # Current quotes df
         self.df_bullets = None  # Current bullet points df
@@ -86,7 +88,10 @@ class Session:
         return k
 
     # Estimate cost of generation for the given params
-    def estimate_gen_cost(self, params):
+    def estimate_gen_cost(self, params=None):
+        if params is None:
+            params = self.auto_suggest_parameters()
+            print(f"No parameters provided, so using auto-suggested parameters: {params}")
         # Conservative estimates based on empirical data
         # TODO: change to gather estimates from test cases programmatically
         est_quote_tokens = 40  # Tokens for a quote
@@ -110,7 +115,7 @@ class Session:
         est_cost["distill_summarize"] = calc_cost_by_tokens(self.model_name, summ_in_tokens, summ_out_tokens)
 
         # Cluster: embed each bullet point
-        cluster_rate = (0.00010 / 1000)  # Price for text-embedding-ada-002
+        cluster_rate = EMBED_COSTS[self.embed_model_name] 
         cluster_tokens = bullets_tokens_per_doc * len(self.in_df) * cluster_rate
         est_cost["cluster"] = (cluster_tokens, 0)
 
@@ -203,7 +208,7 @@ class Session:
             print(f"- {c.name}: {c.prompt}")
 
     # HELPER FUNCTIONS ================================
-    async def gen(self, seed=None, params=None, debug=True):
+    async def gen(self, seed=None, params=None, n_synth=1, debug=True):
         if params is None:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
@@ -244,32 +249,49 @@ class Session:
         if debug:
             print("df_bullets")
             display(df_bullets)
-
-        df_cluster = await cluster(
-            text_df=df_bullets, 
-            doc_col=self.doc_col,
-            doc_id_col=self.doc_id_col,
-            sess=self,
-        )
-        if debug:
-            print("df_cluster")
-            display(df_cluster)
         
-        df_concepts = await synthesize(
-            cluster_df=df_cluster, 
-            doc_col=self.doc_col,
-            doc_id_col=self.doc_id_col,
-            model_name=self.synth_model_name,
-            n_concepts=params["synth_n_concepts"],
-            pattern_phrase="unique topic",
-            seed=seed,
-            sess=self,
-        )
-        if debug:
-            # Print results
-            print("synthesize")
-            for k, c in self.concepts.items():
-                print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
+        df_cluster_in = df_bullets
+        synth_doc_col = self.doc_col
+        synth_n_concepts = params["synth_n_concepts"]
+        concept_col_prefix = "concept"
+        # Perform synthesize step n_synth times
+        for i in range(n_synth):
+            self.concepts = {}
+            df_cluster = await cluster(
+                text_df=df_cluster_in, 
+                doc_col=synth_doc_col,
+                doc_id_col=self.doc_id_col,
+                embed_model_name=self.embed_model_name,
+                sess=self,
+            )
+            if debug:
+                print("df_cluster")
+                display(df_cluster)
+            
+            df_concepts = await synthesize(
+                cluster_df=df_cluster, 
+                doc_col=synth_doc_col,
+                doc_id_col=self.doc_id_col,
+                model_name=self.synth_model_name,
+                concept_col_prefix=concept_col_prefix,
+                n_concepts=synth_n_concepts,
+                pattern_phrase="unique topic",
+                seed=seed,
+                sess=self,
+            )
+
+            self.concept_history[i] = self.concepts
+            if debug:
+                # Print results
+                print(f"synthesize {i + 1}: (n={len(self.concepts)})")
+                for k, c in self.concepts.items():
+                    print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
+            
+            # Update synthesize params for next iteration
+            df_concepts["synth_doc_col"] = df_concepts[f"{concept_col_prefix}_name"] + ": " + df_concepts[f"{concept_col_prefix}_prompt"]
+            df_cluster_in = df_concepts
+            synth_doc_col = "synth_doc_col"
+            synth_n_concepts = math.floor(synth_n_concepts * 0.75)
 
     def __concepts_to_json(self):
         concept_dict = {c_id: c.to_dict() for c_id, c in self.concepts.items()}

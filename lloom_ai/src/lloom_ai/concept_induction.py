@@ -69,9 +69,9 @@ def pretty_print_dict_list(d_list):
     # Print all dictionaries in a list of dictionaries
     return "\n\t" + "\n\t".join([pretty_print_dict(d) for d in d_list])
 
-def cluster_helper(in_df, doc_col, doc_id_col, min_cluster_size, cluster_id_col):
+def cluster_helper(in_df, doc_col, doc_id_col, min_cluster_size, cluster_id_col, embed_model_name):
     # OpenAI embeddings with HDBSCAN clustering
-    embedding_model = OpenAIBackend("text-embedding-ada-002")
+    embedding_model = OpenAIBackend(embed_model_name)
 
     hdbscan_model = HDBSCAN(
         min_cluster_size=min_cluster_size, 
@@ -242,7 +242,7 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
 #   --> text could be original, filtered (quotes), and/or summarized (bullets)
 # Parameters: n_clusters
 # Output: cluster_df (columns: doc_id, doc, cluster_id)
-async def cluster(text_df, doc_col, doc_id_col, cluster_id_col="cluster_id", min_cluster_size=None, batch_size=20, randomize=False, sess=None):
+async def cluster(text_df, doc_col, doc_id_col, cluster_id_col="cluster_id", min_cluster_size=None, embed_model_name="text-embedding-ada-002", batch_size=20, randomize=False, sess=None):
     # Clustering operates on text_col
     start = time.time()
 
@@ -268,7 +268,7 @@ async def cluster(text_df, doc_col, doc_id_col, cluster_id_col="cluster_id", min
         cluster_df[cluster_id_col] = cluster_ids
     else:
         # Cluster and group by clusters
-        cluster_df = cluster_helper(text_df, doc_col, doc_id_col, min_cluster_size=min_cluster_size, cluster_id_col=cluster_id_col)
+        cluster_df = cluster_helper(text_df, doc_col, doc_id_col, min_cluster_size=min_cluster_size, cluster_id_col=cluster_id_col, embed_model_name=embed_model_name)
 
     save_progress(sess, cluster_df, step_name="cluster", start=start, res=None, model_name=None)
     return cluster_df

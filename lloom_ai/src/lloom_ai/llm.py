@@ -51,6 +51,12 @@ COSTS = {
     "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
 }
 
+EMBED_COSTS = {
+    "text-embedding-ada-002": (0.00010/1000),
+    "text-embedding-3-small": (0.00002/1000),
+    "text-embedding-3-large": (0.00013/1000),
+}
+
 def get_system_prompt():
     system_message_prompt = SystemMessagePromptTemplate.from_template(SYS_TEMPLATE)
     return system_message_prompt
