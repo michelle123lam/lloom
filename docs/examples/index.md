@@ -1,3 +1,7 @@
+---
+template: demo
+---
+
 # Examples
 
 LLooM can assist with a range of data analysis goals—from preliminary exploratory analysis to theory-driven confirmatory analysis. Analysts can review LLooM concepts to interpret emergent trends in the data, but they can also author and edit concepts to actively seek out certain phenomena in the data. Concepts can be compared with existing metadata or other concepts to calculate statistics, generate plots, or train a model.
@@ -9,7 +13,7 @@ LLooM can assist with a range of data analysis goals—from preliminary explorat
  3. Explore correlations between social distrust and partisan animosity.
 
 TODO: replace with graphical representation of the above
-![The full LLooM Process](../media/lloom_process_full.svg)
+<!-- ![The full LLooM Process](../media/lloom_process_full.svg) -->
 :::
 
 ::: info EXAMPLE 2
@@ -30,4 +34,11 @@ TODO: replace with graphical representation of the above
 1. Author concepts to separate excerpts related to benefits and those discussing risks.
 2. Run concept induction on both datasets with a seed of `rhetorical strategies`.
 3. Compare the concepts for the two datasets.
+:::
+
+::: info EXAMPLE 5
+#### What critiques and notable points have students made in their commentaries for an assigned course reading?
+1. Run concept induction on the dataset with a seed of `critiques and notable points`.
+2. Review the resulting concepts and identify interesting ones worth discussing in class.
+3. Export concepts and highlighted excerpts of commentaries to include in slides.
 :::
