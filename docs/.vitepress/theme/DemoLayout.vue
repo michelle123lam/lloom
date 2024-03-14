@@ -2,6 +2,7 @@
 import DefaultTheme from 'vitepress/theme'
 import { useData } from 'vitepress'
 const { page, frontmatter } = useData()
+import Example from './Example.vue';
 
 // TEMP: pre=defined data for the demo
 let testData = [
@@ -19,21 +20,25 @@ let concepts = [
         "name": "Government Critique",
         "criteria": "Does this text criticize government actions or policies?",
         "summary": "Critique of government actions, policies, and officials, advocating for accountability, transparency, and reform.",
+        "frac": 49/200,
     },
     {
         "name": "Social and Economic Inequality",
         "criteria": "Does this text discuss social or economic disparities?",
         "summary": "Advocating for social justice, economic equality, healthcare access, and accountability in government and society.",
+        "frac": 32/200,
     },
     {
         "name": "Trust in Institutions",
         "criteria": "Does this text address trust or distrust in social or governmental institutions?",
         "summary": "Emphasizing trust in institutions through healthcare access, equality, disaster preparedness, combat readiness, and justice initiatives.",
+        "frac": 34/200,
     },
     {
         "name": "Policy and Healthcare Concerns",
         "criteria": "Does this text express concerns about healthcare policies or costs?",
         "summary": "Advocating for healthcare access, protecting abortion rights, lowering drug prices, and investigating federal agency corruption.",
+        "frac": 6/200,
     }
 ]
 </script>
@@ -42,11 +47,14 @@ let concepts = [
     <DefaultTheme.Layout>
         <template #doc-top>
             <div v-if="frontmatter.template === 'demo'">
-                <div class="vp-doc"><h1>LLooM Examples</h1></div>
+                <div class="vp-doc">
+                    <h1>LLooM Examples</h1>
+                </div>
                 <div class="full-width">
                     <!-- Jumbotron -->
                     <div class="jumbotron-wrapper">
                         <h2>Text Documents</h2>
+                        <div class="jumbotron-gradient"></div>
                         <div class="jumbotron">
                             <div class="marquee marquee--hover-pause">
                                 <div class="marquee__content">
@@ -71,6 +79,9 @@ let concepts = [
                     <!-- Concepts -->
                     <div class="concepts-wrapper">
                         <h2>Concepts</h2>
+                        <div class="concepts-hist">
+                            <Example :data="concepts" />
+                        </div>
                         <div class="concepts">
                             <div v-for="c in concepts" class="concept">
                                 <h3>{{ c.name }}</h3>
@@ -94,11 +105,10 @@ let concepts = [
     margin: 20px 0;
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
 .arrow {
-    width: 10%;
+    width: 14%;
     margin: auto;
     display: flex;
     flex-direction: row;
@@ -112,17 +122,23 @@ let concepts = [
 
 .concepts-wrapper {
     width: 45%;
+    height: 100%;
     margin-right: 20px;
-    float: right;   
+    float: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .concepts {
-    border-radius: 5px; 
+    border-radius: 5px;
     padding: 0 10px;
     opacity: 0.7;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+}
+
+.concepts-hist {
+    margin: auto;
+    max-height: 30%;
 }
 
 .concept {
@@ -139,17 +155,27 @@ let concepts = [
 
 .jumbotron-wrapper {
     width: 35%;
-    height: 90%;
+    height: 100%;
     margin-left: 20px;
+    position: relative;
+}
+
+.jumbotron-gradient {
+    background: linear-gradient(white 2%, transparent 5%, transparent 95%, white 98%);
+    z-index: 100;
+    height: 95%;
+    width: 100%;
+    position: absolute;
 }
 
 .jumbotron {
-    height: 100%;
-    background-color: #f5f5f5;
-    border: 1px solid gray;
+    height: 95%;
+    /* background-color: #f5f5f5; */
+    /* border: 1px solid gray; */
     border-radius: 5px;
     padding: 0 10px;
     opacity: 0.7;
+    position: absolute;
 }
 
 .doc {
@@ -165,53 +191,54 @@ let concepts = [
 
 /* Marquee styles */
 .marquee {
-  --gap: 0.25rem;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  user-select: none;
-  gap: var(--gap);
-  height: 100%;
+    --gap: 0.25rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    gap: var(--gap);
+    height: 100%;
 }
 
 .marquee__content {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: var(--gap);
-  min-height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: var(--gap);
+    min-height: 100%;
 }
 
 @keyframes scroll {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-  }
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(calc(-100% - var(--gap)));
+    }
 }
 
 /* Pause animation when reduced-motion is set */
 @media (prefers-reduced-motion: reduce) {
-  .marquee__content {
-    animation-play-state: paused !important;
-  }
+    .marquee__content {
+        animation-play-state: paused !important;
+    }
 }
 
 /* Enable animation */
 .marquee__content {
-  animation: scroll 100s linear infinite;
+    animation: scroll 100s linear infinite;
 }
 
 /* Pause on hover */
 .marquee--hover-pause:hover .marquee__content {
-  animation-play-state: paused;
+    animation-play-state: paused;
 }
 
 /* Attempt to size parent based on content. Keep in mind that the parent width is equal to both content containers that stretch to fill the parent. */
 .marquee--fit-content {
-  max-width: fit-content;
+    max-width: fit-content;
 }
 </style>

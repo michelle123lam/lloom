@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@anywidget/svelte": "^0.0.3",
+    "@observablehq/plot": "^0.6.14",
     "svelte-table": "^0.6.1",
     "svelte-vega": "^2.1.0"
   }
