@@ -4,41 +4,48 @@ import * as Plot from "@observablehq/plot";
 
 export default {
     props: {
-        data: Array
+        curConcepts: Object,
+        key: Number,
     },
     mounted() {
+        const data = this.curConcepts.data;
         const plot = Plot.plot({
             marks: [
-                Plot.barY(this.data, { x: 'name', y: 'frac', fill: '#679de5' }),
+                Plot.gridY(),
+                Plot.barY(data, {
+                    x: 'name', 
+                    y: 'n', 
+                    fill: '#A1D1FC', 
+                    tip: true, 
+                    sort: { x: "y", reverse: true, limit: 20 }
+                }),
+                Plot.axisX({
+                    label: "",
+                    lineWidth: 4,
+                }),
+                Plot.axisY({
+                    label: "Prevalence",
+                    // percent: true,
+                })
             ],
-            x: {
-                label: "Concepts",
-                tickRotate: -30,
-                tip: true,
-            },
-            y: {
-                label: "Prevalence (%)",
-                grid: true,
-                percent: true,
-            },
-            marginBottom: 100,
+            marginBottom: 50,
             width: 400,
-            height: 200,
+            height: 180,
         });
         this.$refs.view.replaceChildren(plot);
     }
 }
 </script>
 
-<style>
-.plot {
-    margin-top: 1.5em;
-    margin-bottom: 1em;
-}
-</style>
-
 <template>
     <div class="plot" ref="view">
         <em>Loading Example...</em>
     </div>
 </template>
+
+<style>
+.plot {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+</style>

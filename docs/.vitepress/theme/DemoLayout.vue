@@ -2,45 +2,45 @@
 import DefaultTheme from 'vitepress/theme'
 import { useData } from 'vitepress'
 const { page, frontmatter } = useData()
-import Example from './Example.vue';
+import { reactive } from "vue";
+import DemoConcepts from './DemoConcepts.vue';
 
-// TEMP: pre=defined data for the demo
-let testData = [
-    "New year, new chance to sign up for a quality ACA healthcare plan. Before January 15, take some time to find a plan that works for you and #GetCovered in 2023 at",
-    "It's been incredible to meet with so many New Yorkers today as we celebrate #MLKDay and as we work to honor the life and legacy of Reverend Dr. Martin Luther King, Jr. by continuing his march toward equality for all.",
-    "Glad to be at the historic opening of the Alief Multi-Service Center; joined by Mayor @sylvesterturner and Councilmember @tiffanydeshellthomas . From swimming pools, to tennis courts, to skate parks, this facility will serve our city greatly for years to come.",
-    "I obtained $1,800,000 for the Roe Road Extension Project in Paradise and $1,400,000 for the Cohasset Road Widening and Fire Safety Project to improve evacuation routes in those areas. These projects are focused on increasing road capacity to help people more quickly evacuate areas threatened by natural disasters, such as wildfires. This also aids first responders and emergency services to get to a disaster scene more expeditiously. These improvements to evacuation infrastructure will improve the safety and quality of life for the residents of Paradise and Butte County. Learning from previous disasters and expanding our ability to react and respond helps us prepare for potential new ones.",
-    "The fatal beating of Tyre Nichols is horrifying. I'm devastated for his family and the Memphis community. We must fight for a world that ends this injustice and inhumane brutality at last.",
-    "I am honored to continue serving on the Transportation and Infrastructure Committee Republicans. Solid infrastructure is critical to Florida's economy, which is dependent on moving goods and people efficiently and effectively. There's important work to be done in improving our infrastructure, and I look forward to working with Sam Graves, the members and applying my nearly 40 years of transportation policy and program experience to invest in our infrastructure system with creative funding ideas and innovative programs.",
-    "I am grateful for the opportunity to represent the citizens of South Carolina's Second Congressional District and remain accessible to them.",
-];
+import data from '../../public/data/demo_text.json'
+import concepts from '../../public/data/demo_concepts.json'
 
-let concepts = [
-    {
-        "name": "Government Critique",
-        "criteria": "Does this text criticize government actions or policies?",
-        "summary": "Critique of government actions, policies, and officials, advocating for accountability, transparency, and reform.",
-        "frac": 49/200,
-    },
-    {
-        "name": "Social and Economic Inequality",
-        "criteria": "Does this text discuss social or economic disparities?",
-        "summary": "Advocating for social justice, economic equality, healthcare access, and accountability in government and society.",
-        "frac": 32/200,
-    },
-    {
-        "name": "Trust in Institutions",
-        "criteria": "Does this text address trust or distrust in social or governmental institutions?",
-        "summary": "Emphasizing trust in institutions through healthcare access, equality, disaster preparedness, combat readiness, and justice initiatives.",
-        "frac": 34/200,
-    },
-    {
-        "name": "Policy and Healthcare Concerns",
-        "criteria": "Does this text express concerns about healthcare policies or costs?",
-        "summary": "Advocating for healthcare access, protecting abortion rights, lowering drug prices, and investigating federal agency corruption.",
-        "frac": 6/200,
-    }
-]
+// Variables
+let curDataset;
+let curData;
+const curSeed = reactive({ data: [] });
+const curSeedOptions = reactive({ data: [] });
+const curConcepts = reactive({ data: null });
+
+function updateData(dataset) {
+    curDataset = dataset;
+    curData = data[curDataset];
+    curSeedOptions.data = Object.keys(concepts[curDataset]);
+
+    // When changing datasets, use first seed
+    curSeed.data = curSeedOptions.data[0];
+    curConcepts.data = concepts[curDataset][curSeed.data];
+}
+
+function updateSeed(seed) {
+    curSeed.data = seed;
+    curConcepts.data = concepts[curDataset][curSeed.data];
+}
+
+function isActiveSeed(seed) {
+    return seed === curSeed.data;
+}
+
+function isActiveDataset(dataset) {
+    return dataset === curDataset;
+}
+
+const initialDataset = "Political social media";
+updateData(initialDataset);
+
 </script>
 
 <template>
@@ -50,46 +50,53 @@ let concepts = [
                 <div class="vp-doc">
                     <h1>LLooM Examples</h1>
                 </div>
+                <div class="dataset-buttons">
+                    <div id="dataset-button-text">
+                        <p>Select dataset</p>
+                    </div>
+                    <button v-for="dataset in Object.keys(data)" @click="updateData(dataset)" class="dataset-button btn"
+                        :class="{ active: isActiveDataset(dataset) }">
+                        {{ dataset }}
+                    </button>
+                </div>
                 <div class="full-width">
                     <!-- Jumbotron -->
                     <div class="jumbotron-wrapper">
-                        <h2>Text Documents</h2>
+                        <h2><b>Text Documents</b></h2>
                         <div class="jumbotron-gradient"></div>
                         <div class="jumbotron">
                             <div class="marquee marquee--hover-pause">
                                 <div class="marquee__content">
-                                    <div v-for="doc in testData" class="doc">
+                                    <div v-for="doc in curData" class="doc">
                                         {{ doc }}
                                     </div>
                                 </div>
 
                                 <div aria-hidden="true" class="marquee__content">
-                                    <div v-for="doc in testData" class="doc">
+                                    <div v-for="doc in curData" class="doc">
                                         {{ doc }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <!-- Seed selection -->
                     <div class="arrow">
-                        –
-                        <img src="../../media/lloom.svg" alt="LLooM Logo">
-                        →
+                        <div class="arrow-lloom">
+                            –<img src="../../media/lloom.svg" alt="LLooM Logo">→
+                        </div>
+                        <div class="seed-buttons">
+                            <div id="seed-button-text">
+                                <p>Select seed</p>
+                            </div>
+                            <button v-for="seedOpt in curSeedOptions.data" @click="updateSeed(seedOpt)"
+                                class="seed-button btn" :class="{ active: isActiveSeed(seedOpt) }">
+                                "{{ seedOpt }}"
+                            </button>
+                        </div>
                     </div>
                     <!-- Concepts -->
-                    <div class="concepts-wrapper">
-                        <h2>Concepts</h2>
-                        <div class="concepts-hist">
-                            <Example :data="concepts" />
-                        </div>
-                        <div class="concepts">
-                            <div v-for="c in concepts" class="concept">
-                                <h3>{{ c.name }}</h3>
-                                <p><strong>Criteria:</strong> {{ c.criteria }}</p>
-                                <p><strong>Summary:</strong> {{ c.summary }}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <DemoConcepts :curConcepts="curConcepts" />
                 </div>
             </div>
         </template>
@@ -108,11 +115,7 @@ let concepts = [
 }
 
 .arrow {
-    width: 14%;
-    margin: auto;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+    width: 15%;
 }
 
 .arrow img {
@@ -120,41 +123,78 @@ let concepts = [
     display: inline;
 }
 
-.concepts-wrapper {
-    width: 45%;
-    height: 100%;
-    margin-right: 20px;
-    float: right;
+.arrow-lloom {
+    font-size: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#seed-button-text {
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    line-height: normal;
+    text-align: center;
+}
+
+.seed-buttons {
+    margin: 20px 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: space-around;
+    align-items: center;
 }
 
-.concepts {
-    border-radius: 5px;
-    padding: 0 10px;
-    opacity: 0.7;
-}
-
-.concepts-hist {
-    margin: auto;
-    max-height: 30%;
-}
-
-.concept {
-    margin: 10px auto;
-    background-color: #c1e0fd;
-    border: 1px solid #d5d5d5;
-    border-radius: 5px;
-    font-size: 11px;
-    line-height: normal;
-    text-align: left;
-    padding: 10px;
+.seed-button {
     width: 100%;
+    margin: 5px;
+    padding: 5px 5px;
+    border-radius: 5px;
+    background-color: white;
+    border: 1px solid #d5d5d5;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+button.active {
+    background-color: #679de5;
+    color: white;
+}
+
+.dataset-buttons {
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#dataset-button-text {
+    width: 75px;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    line-height: normal;
+    text-align: right;
+}
+
+.dataset-button {
+    margin: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: white;
+    border: 1px solid #d5d5d5;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    opacity: 0.75;
 }
 
 .jumbotron-wrapper {
-    width: 35%;
+    width: 30%;
     height: 100%;
     margin-left: 20px;
     position: relative;
@@ -162,7 +202,7 @@ let concepts = [
 
 .jumbotron-gradient {
     background: linear-gradient(white 2%, transparent 5%, transparent 95%, white 98%);
-    z-index: 100;
+    z-index: 10;
     height: 95%;
     width: 100%;
     position: absolute;
