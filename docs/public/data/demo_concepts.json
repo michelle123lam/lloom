@@ -1,0 +1,200 @@
+{
+    "Political social media": {
+        "social distrust": [
+            {
+                "name": "Government Critique",
+                "criteria": "Does this text criticize government actions or policies?",
+                "summary": "Critique of government actions, policies, and officials, advocating for accountability, transparency, and reform.",
+                "n": 49
+            },
+            {
+                "name": "Trust in Institutions",
+                "criteria": "Does this text address trust or distrust in social or governmental institutions?",
+                "summary": "Emphasizing trust in institutions through healthcare access, equality, disaster preparedness, combat readiness, and justice initiatives.",
+                "n": 34
+            },
+            {
+                "name": "Social and Economic Inequality",
+                "criteria": "Does this text discuss social or economic disparities?",
+                "summary": "Advocating for social justice, economic equality, healthcare access, and accountability in government and society.",
+                "n": 32
+            },
+            {
+                "name": "Policy and Healthcare Concerns",
+                "criteria": "Does this text express concerns about healthcare policies or costs?",
+                "summary": "Advocating for healthcare access, protecting abortion rights, lowering drug prices, and investigating federal agency corruption.",
+                "n": 6
+            }
+        ],
+        "political candidates": [
+            {
+                "name": "Election and Advocacy",
+                "criteria": "Does this text relate to elections, leadership, or political advocacy by candidates or officials?",
+                "summary": "Various political figures advocate for healthcare, infrastructure, abortion rights, and energy security, emphasizing bipartisanship and honoring Dr. Martin Luther King Jr.",
+                "n": 113
+            },
+            {
+                "name": "Legislative and Social Actions",
+                "criteria": "Is this text about legislative actions, social justice, or environmental concerns by government officials?",
+                "summary": "Advocating for legislative actions such as healthcare plans, infrastructure funding, and social justice initiatives to improve communities and protect rights.",
+                "n": 83
+            },
+            {
+                "name": "Political Accountability",
+                "criteria": "Does this text call for accountability or mention an investigation related to government officials?",
+                "summary": "Emphasizes the importance of political accountability through legislative actions, investigations, and calls for transparency and justice.",
+                "n": 17
+            }
+        ]
+    },
+    "Content Moderation": {
+        "metaphorical language": [
+            {
+                "name": "Emotional Metaphors",
+                "criteria": "Does this text express emotions using metaphorical language?",
+                "summary": "Women are objectified, lack control, and are seen as tribal and revenge-minded. Feminism is criticized as promoting hostility and entitlement.",
+                "n": 127
+            },
+            {
+                "name": "Gender Stereotype Metaphors",
+                "criteria": "Identify if metaphorical language reinforces gender stereotypes.",
+                "summary": "Gender stereotype metaphors perpetuate harmful beliefs about women's appearance, behavior, and worth, reinforcing societal biases and inequalities.",
+                "n": 124
+            },
+            {
+                "name": "Patriarchy Metaphor",
+                "criteria": "Is metaphorical language used to discuss patriarchy?",
+                "summary": "The examples highlight the negative impact of patriarchy, objectification of women, gender discrimination, and societal expectations on women.",
+                "n": 81
+            },
+            {
+                "name": "Metaphorical Personification",
+                "criteria": "Does this text use personification as a form of metaphorical language?",
+                "summary": "Using metaphorical personification, we depict women as tribal, men as evil, and society as oppressive.",
+                "n": 39
+            }
+        ],
+        "specific instances of metaphors": [
+            {
+                "name": "Dehumanization Metaphors",
+                "criteria": "Evaluate if the text uses metaphors that dehumanize or objectify individuals based on gender.",
+                "summary": "Dehumanization metaphors are used to criticize women's behavior, appearance, and actions, portraying them as inferior, manipulative, and untrustworthy.",
+                "n": 133
+            },
+            {
+                "name": "Patriarchy Critique",
+                "criteria": "Is patriarchy criticized through metaphorical language in this text?",
+                "summary": "Critique of patriarchy includes objectification, control, lack of rights, oppression, discrimination, and gender stereotypes.",
+                "n": 74
+            },
+            {
+                "name": "Emotional Expression",
+                "criteria": "Does this text use metaphors to express complex emotions?",
+                "summary": "Women are portrayed negatively, seen as emotional, manipulative, and inferior by the authors.",
+                "n": 53
+            },
+            {
+                "name": "Fragility Metaphors",
+                "criteria": "Does this text use metaphors that compare feminists to being weak or fragile?",
+                "summary": "Women are portrayed as fragile, untrustworthy, burdensome, and inferior in various contexts and discussions.",
+                "n": 39
+            }
+        ]
+    },
+    "AI Broader Impact Statements": {
+        "seed1": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 1
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            }
+        ],
+        "seed2": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 4
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            }
+        ]
+    },
+    "Academic Paper Abstracts": {
+        "artificial intelligence": [
+            {
+                "name": "Gesture & Touch Interaction",
+                "criteria": "Is the example related to enhancing user experience through gesture or touch-based interactions?",
+                "summary": "We explore innovative methods for gesture and touch interaction, enabling diverse applications from direct pointing to virtual structure building.",
+                "n": 20
+            },
+            {
+                "name": "Speech & Audio Processing",
+                "criteria": "Does this text involve speech recognition or audio processing enhancements through AI?",
+                "summary": "We explore various innovative methods in speech and audio processing, including automated capture, user modeling, gesture tracking, multimodal integration, and interactive systems.",
+                "n": 7
+            },
+            {
+                "name": "AI in Design",
+                "criteria": "Is the example focused on using artificial intelligence for design or layout purposes?",
+                "summary": "Exploring AI applications in design, from intelligent keyboards to automated layout systems and novel interfaces for user interaction.",
+                "n": 7
+            },
+            {
+                "name": "AI for Content Creation",
+                "criteria": "Does the text discuss AI applications in content creation, such as drawing, music, or video?",
+                "summary": "We explore AI applications for enhancing content creation through interactive interfaces, gesture recognition, and automated data processing.",
+                "n": 4
+            }
+        ],
+        "evaluation methods": [
+            {
+                "name": "Experimental Validation",
+                "criteria": "Does the example involve experimental validation to measure system performance or accuracy?",
+                "summary": "Our experiments and user studies validate the effectiveness and feasibility of various interactive technologies and systems.",
+                "n": 30
+            },
+            {
+                "name": "Informal Feedback",
+                "criteria": "Is informal feedback or evaluation from users or researchers mentioned?",
+                "summary": "Informal feedback from users and researchers positively influences the development and evaluation of various interactive systems.",
+                "n": 29
+            },
+            {
+                "name": "Performance Metrics",
+                "criteria": "Does the text example detail specific performance metrics or outcomes from an evaluation?",
+                "summary": "We demonstrate various performance metrics improvements in VR, animation creation, data visualization, user interaction, software development, and motion recognition.",
+                "n": 16
+            },
+            {
+                "name": "Algorithm Evaluation",
+                "criteria": "Does this text discuss evaluating an algorithm's performance or effectiveness?",
+                "summary": "Evaluation methods such as controlled experiments and user studies are crucial for assessing algorithm performance and user interaction.",
+                "n": 15
+            }
+        ]
+    }
+}

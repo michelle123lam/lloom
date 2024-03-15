@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "LLooM",
   description: "Concept Induction: Analyzing Unstructured Text with High-Level Concepts",
+  base: "/lloom/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: {

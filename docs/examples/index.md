@@ -12,7 +12,7 @@ LLooM can assist with a range of data analysis goals—from preliminary explorat
  3. Explore correlations between social distrust and partisan animosity.
 
 TODO: replace with graphical representation of the above
-<!-- ![The full LLooM Process](../media/lloom_process_full.svg) -->
+<!-- ![The full LLooM Process](/media/lloom_process_full.svg) -->
 :::
 
 ::: info EXAMPLE 2

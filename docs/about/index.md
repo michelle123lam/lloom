@@ -19,14 +19,14 @@ TODO
 - Briefly describe tasks you can achieve with LLooM
 - Show screenshots/gif of the LLooM Workbench
 
-![LLooM overview](../media/pull_figure.svg)
+![LLooM overview](/media/pull_figure.svg)
 
 ## How does it work?
 TODO
 - Briefly describe the operators involved
 - Add image summarizing the process
 
-![The full LLooM Process](../media/lloom_process_full.svg)
+![The full LLooM Process](/media/lloom_process_full.svg)
 
 ## Learn more
 LLooM is a research prototype! You can learn more about the project, the method, and a variety of evaluations in our CHI 2024 publication.

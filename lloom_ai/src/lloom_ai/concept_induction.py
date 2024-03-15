@@ -738,6 +738,7 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
     # Prepare inputs
     arg_dicts = []
     cur_df = df[df["concept_id"] == concept_id]
+    cur_df = cur_df.sample(frac=1)  # shuffle order
     if len(cur_df) == 0:
         # No concept matches to summarize
         return None
@@ -1165,26 +1166,12 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     matrix_df["value"] = [NAN_SCORE if x == 0 else x for x in matrix_df["value"].tolist()]
 
     # Metadata
-    # def format_codebook_entry(x):
-    #     entry = cb[x]
-    #     lo_themes = entry["lo_themes"]
-    #     full_str = ""
-    #     for lo_theme_name, lo_theme in lo_themes.items():
-    #         cur_str = f"<li><b>{lo_theme['name']}</b>: {lo_theme['prompt']}</li>"
-    #         ex_str = ""
-    #         for ex in lo_theme["examples"]:
-    #             ex_str += f"<li><i>\"{ex}\"</i></li>"
-    #         if len(ex_str) > 0:
-    #             cur_str += f"<ul>{ex_str}</ul>"
-    #         full_str += f"{cur_str}<br>"
-    #     full_str = f"<ul>{full_str}<ul>"
-    #     return full_str
     def get_concept_metadata(c):
-        # Fetch other codebook info
-        # codebook_info = format_codebook_entry(c["name"]) if c["name"] in cb else None
         ex_ids = c.example_ids
+        
         if len(ex_ids) > 0:
-            ex = score_df[score_df[doc_id_col].isin(ex_ids)][highlight_col].unique().tolist()
+            cur_df = score_df[(score_df["concept_id"] == c.id) & (score_df[doc_id_col].isin(ex_ids))]
+            ex = cur_df[highlight_col].unique().tolist()
         else:
             ex = []
         res = {
@@ -1193,8 +1180,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
             "Matches": f"{concept_cts[c.name]} examples",
             "Representative examples": f"{format_bullets(ex, add_quotes=True)}"
         }
-        # if codebook_info is not None:
-        #     res["Subconcepts and examples"] = codebook_info
         return res
     
     concept_metadata = {c.name: get_concept_metadata(c) for c in concepts.values()}

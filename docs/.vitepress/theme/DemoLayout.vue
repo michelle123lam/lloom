@@ -83,7 +83,7 @@ updateData(initialDataset);
                     <!-- Seed selection -->
                     <div class="arrow">
                         <div class="arrow-lloom">
-                            –<img src="../../media/lloom.svg" alt="LLooM Logo">→
+                            –<img src="/media/lloom.svg" alt="LLooM Logo">→
                         </div>
                         <div class="seed-buttons">
                             <div id="seed-button-text">

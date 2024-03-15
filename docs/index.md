@@ -6,7 +6,7 @@ hero:
   text: From unstructured text to interpretable concepts
   tagline: LLooM automatically surfaces high-level concepts to analyze unstructured text
   image:
-    src: media/lloom_process.svg
+    src: /media/lloom_process.svg
     alt: Summary of the LLooM Concept Induction process from Data to Concepts to an interactive LLooM Workbench visualization
   actions:
     - theme: brand
