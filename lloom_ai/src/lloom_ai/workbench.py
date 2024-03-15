@@ -7,6 +7,7 @@ import pandas as pd
 import ipywidgets as widgets
 import random
 import nltk
+nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 
 
@@ -22,8 +23,8 @@ else:
     from .concept import Concept
     from .llm import get_token_estimate, EMBED_COSTS
 
-# SESSION class ================================
-class Session:
+# WORKBENCH class ================================
+class lloom:
     def __init__(
         self,
         in_df: pd.DataFrame,
@@ -131,7 +132,10 @@ class Session:
         return est_cost
 
     # Estimate cost of scoring for the given number of concepts
-    def estimate_score_cost(self, n_concepts, batch_size=5, get_highlights=True):
+    def estimate_score_cost(self, n_concepts=None, batch_size=5, get_highlights=True):
+        if n_concepts is None:
+            active_concepts = self.__get_active_concepts()
+            n_concepts = len(active_concepts)
         if get_highlights:
             score_prompt = score_highlight_prompt
         else:

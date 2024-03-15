@@ -13,13 +13,13 @@ pip install lloom_ai
 ### Import package
 First, import the LLooM package:
 ```py
-import lloom_ai.session as lloom
+import lloom_ai.workbench as wb
 ```
 
 ### Create a loom
 Then, after loading your data as a Pandas DataFrame, create a new loom:
 ```py
-l = lloom.Session(
+l = wb.lloom(
     in_df=in_df,
     doc_id_col="your_doc_id_col",
     doc_col="your_doc_col",
