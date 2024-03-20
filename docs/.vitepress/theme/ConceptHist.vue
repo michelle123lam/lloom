@@ -24,13 +24,13 @@ export default {
                     lineWidth: 4,
                 }),
                 Plot.axisY({
-                    label: "Prevalence",
+                    label: "Number of documents",
                     // percent: true,
                 })
             ],
             marginBottom: 50,
             width: 400,
-            height: 180,
+            height: 135,
         });
         this.$refs.view.replaceChildren(plot);
     }

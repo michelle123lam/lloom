@@ -1,6 +1,6 @@
 <script setup>
 import { withBase } from 'vitepress'
-import Example from './Example.vue';
+import ConceptHist from './ConceptHist.vue';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
@@ -19,11 +19,9 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
 </script>
 
 <template>
-    <!-- Concepts -->
     <div class="concepts-wrapper">
-        <h2><b>Concepts</b></h2>
         <div class="concepts-hist">
-            <Example :curConcepts="curConcepts" :key="componentKey" />
+            <ConceptHist :curConcepts="curConcepts" :key="componentKey" />
         </div>
         <div class="concepts">
             <div v-for="c in curConcepts.data" class="concept">
@@ -37,10 +35,8 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
 
 <style>
 .concepts-wrapper {
-    width: 45%;
-    height: 100%;
-    margin-left: 10px;
-    margin-right: 20px;
+    width: 100%;
+    height: 90%;
     float: right;
     display: flex;
     flex-direction: column;
@@ -48,17 +44,22 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
 }
 
 .concepts {
-    border-radius: 5px;
     padding: 0 10px;
+    /* display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start; */
+    margin: 5px auto;
 }
 
 .concepts-hist {
-    max-height: 40%;
+    max-height: 45%;
     overflow: scroll;
+    margin: 10px auto;
 }
 
 .concept {
-    margin: 15px auto;
+    margin: 5px auto;
     background-color: #c1e0fd;
     border: 1px solid #dedede;
     border-radius: 5px;

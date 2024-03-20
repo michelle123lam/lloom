@@ -45,9 +45,49 @@
                 "summary": "Emphasizes the importance of political accountability through legislative actions, investigations, and calls for transparency and justice.",
                 "n": 17
             }
+        ],
+        "no seed": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 4
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            }
         ]
     },
     "Content Moderation": {
+        "no seed": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 4
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            }
+        ],
         "metaphorical language": [
             {
                 "name": "Emotional Metaphors",
@@ -102,6 +142,26 @@
         ]
     },
     "AI Broader Impact Statements": {
+        "no seed": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 4
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            }
+        ],
         "seed1": [
             {
                 "name": "A",
@@ -144,6 +204,26 @@
         ]
     },
     "Academic Paper Abstracts": {
+        "no seed": [
+            {
+                "name": "A",
+                "criteria": "B",
+                "summary": "C",
+                "n": 4
+            },
+            {
+                "name": "B",
+                "criteria": "B",
+                "summary": "C",
+                "n": 3
+            },
+            {
+                "name": "C",
+                "criteria": "B",
+                "summary": "C",
+                "n": 2
+            }
+        ],
         "artificial intelligence": [
             {
                 "name": "Gesture & Touch Interaction",

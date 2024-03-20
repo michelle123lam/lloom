@@ -13,11 +13,12 @@ hero:
       text: Examples
       link: /examples/
     - theme: alt
+      text: What is LLooM?
+      link: /about/
+    - theme: alt
       text: Get Started
       link: /about/get-started
-    - theme: alt
-      text: API Reference
-      link: /api/
+    
 
 features:
   - icon: 🔍

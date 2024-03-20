@@ -27,9 +27,9 @@ else:
 class lloom:
     def __init__(
         self,
-        in_df: pd.DataFrame,
-        doc_id_col: str,
-        doc_col: str,
+        df: pd.DataFrame,
+        id_col: str,
+        text_col: str,
         save_path: str = None,
         debug: bool = False,
     ):
@@ -48,10 +48,10 @@ class lloom:
         self.save_path = save_path
 
         # Input data
-        self.in_df = in_df
-        self.doc_id_col = doc_id_col
-        self.doc_col = doc_col
-        self.df_to_score = in_df  # Default to in_df for concept scoring
+        self.in_df = df
+        self.doc_id_col = id_col
+        self.doc_col = text_col
+        self.df_to_score = df  # Default to df for concept scoring
 
         # Output data
         self.saved_dfs = {}  # maps from (step_name, time_str) to df

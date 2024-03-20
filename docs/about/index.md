@@ -4,7 +4,7 @@ LLooM is a **data analysis tool** for **unstructured text** data, such as social
 
 By contrast, the LLooM algorithm turns unstructured text into meaningful **high-level concepts** that are defined by explicit inclusion criteria in **natural language**. For example, on a dataset of toxic online comments, while a BERTopic model outputs `"women, power, female"`, LLooM produces concepts such as `"Criticism of gender roles"` and `"Dismissal of women's concerns"`. We call this process **concept induction**: a computational process that produces high-level concepts from unstructured text.
 
-We introduce the **LLooM Workbench** as an interactive text analysis tool that visualizes data in terms of the concepts that LLooM surfaces. With the LLooM Workbench, data analysts can inspect the automatically-generated concepts and author their own custom concepts to explore the data.
+The **LLooM Workbench** is an interactive text analysis tool that visualizes data in terms of the concepts that LLooM surfaces. With the LLooM Workbench, data analysts can inspect the automatically-generated concepts and author their own custom concepts to explore the data.
 
 ::: info LLooM Components
 The LLooM Python package consists of two components:
@@ -15,13 +15,15 @@ The LLooM Python package consists of two components:
 Check out the [Get Started](./get-started) page to try out LLooM.
 
 ## What can I do with LLooM?
-TODO
+TODO: link to examples here
+
+Check out the [Examples](/examples/index) page to walk through case studies using LLooM.
 - Briefly describe tasks you can achieve with LLooM
 - Show screenshots/gif of the LLooM Workbench
 
 ![LLooM overview](/media/pull_figure.svg)
 
-## How does it work?
+## How does LLooM work?
 TODO
 - Briefly describe the operators involved
 - Add image summarizing the process

@@ -3,7 +3,7 @@
 LLooM is currently designed as a Python package for computational notebooks.
 
 ## Installation
-First, install the LLooM package:
+Install the LLooM Python package:
 ```
 pip install lloom_ai
 ```
@@ -16,13 +16,13 @@ First, import the LLooM package:
 import lloom_ai.workbench as wb
 ```
 
-### Create a loom
-Then, after loading your data as a Pandas DataFrame, create a new loom:
+### Create a LLooM instance
+Then, after loading your data as a Pandas DataFrame, create a new LLooM instance:
 ```py
 l = wb.lloom(
-    in_df=in_df,
-    doc_id_col="your_doc_id_col",
-    doc_col="your_doc_col",
+    df=df,
+    id_col="your_doc_id_col",
+    text_col="your_doc_text_col",
 )
 ```
 

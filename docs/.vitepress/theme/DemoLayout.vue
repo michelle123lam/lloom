@@ -8,22 +8,29 @@ import DemoConcepts from './DemoConcepts.vue';
 import data from '../../public/data/demo_text.json'
 import concepts from '../../public/data/demo_concepts.json'
 
+const props = defineProps({
+    curDataset: String,
+    curScrollSpeed: String
+})
+
 // Variables
-let curDataset;
+let curDataset = props.curDataset;
+let curScrollSpeed = props.curScrollSpeed;
+curScrollSpeed = (curScrollSpeed ? curScrollSpeed : "100s");
 let curData;
 const curSeed = reactive({ data: [] });
 const curSeedOptions = reactive({ data: [] });
 const curConcepts = reactive({ data: null });
 
-function updateData(dataset) {
-    curDataset = dataset;
-    curData = data[curDataset];
-    curSeedOptions.data = Object.keys(concepts[curDataset]);
+// Initialize data
+curData = data[curDataset];
+curSeedOptions.data = Object.keys(concepts[curDataset]);
+curSeed.data = curSeedOptions.data[0];
+curConcepts.data = concepts[curDataset][curSeed.data];
 
-    // When changing datasets, use first seed
-    curSeed.data = curSeedOptions.data[0];
-    curConcepts.data = concepts[curDataset][curSeed.data];
-}
+// Set scroll speed
+var r = document.querySelector(':root');
+r.style.setProperty('--scroll-speed', curScrollSpeed);
 
 function updateSeed(seed) {
     curSeed.data = seed;
@@ -38,72 +45,82 @@ function isActiveDataset(dataset) {
     return dataset === curDataset;
 }
 
-const initialDataset = "Political social media";
-updateData(initialDataset);
-
 </script>
 
 <template>
-    <DefaultTheme.Layout>
-        <template #doc-top>
-            <div v-if="frontmatter.template === 'demo'">
-                <div class="vp-doc">
-                    <h1>LLooM Examples</h1>
-                </div>
-                <div class="dataset-buttons">
-                    <div id="dataset-button-text">
-                        <p>Select dataset</p>
+    <div class="full-width demo">
+        <!-- Jumbotron -->
+        <div class="jumbotron-wrapper">
+            <h2><b>Example Text Documents</b></h2>
+            <div class="jumbotron-gradient"></div>
+            <div class="jumbotron">
+                <div class="marquee marquee--hover-pause">
+                    <div class="marquee__content">
+                        <div v-for="doc in curData" class="doc">
+                            {{ doc }}
+                        </div>
                     </div>
-                    <button v-for="dataset in Object.keys(data)" @click="updateData(dataset)" class="dataset-button btn"
-                        :class="{ active: isActiveDataset(dataset) }">
-                        {{ dataset }}
-                    </button>
-                </div>
-                <div class="full-width">
-                    <!-- Jumbotron -->
-                    <div class="jumbotron-wrapper">
-                        <h2><b>Text Documents</b></h2>
-                        <div class="jumbotron-gradient"></div>
-                        <div class="jumbotron">
-                            <div class="marquee marquee--hover-pause">
-                                <div class="marquee__content">
-                                    <div v-for="doc in curData" class="doc">
-                                        {{ doc }}
-                                    </div>
-                                </div>
 
-                                <div aria-hidden="true" class="marquee__content">
-                                    <div v-for="doc in curData" class="doc">
-                                        {{ doc }}
-                                    </div>
-                                </div>
-                            </div>
+                    <div aria-hidden="true" class="marquee__content">
+                        <div v-for="doc in curData" class="doc">
+                            {{ doc }}
                         </div>
                     </div>
-                    <!-- Seed selection -->
-                    <div class="arrow">
-                        <div class="arrow-lloom">
-                            –<img src="/media/lloom.svg" alt="LLooM Logo">→
-                        </div>
-                        <div class="seed-buttons">
-                            <div id="seed-button-text">
-                                <p>Select seed</p>
-                            </div>
-                            <button v-for="seedOpt in curSeedOptions.data" @click="updateSeed(seedOpt)"
-                                class="seed-button btn" :class="{ active: isActiveSeed(seedOpt) }">
-                                "{{ seedOpt }}"
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Concepts -->
-                    <DemoConcepts :curConcepts="curConcepts" />
                 </div>
             </div>
-        </template>
-    </DefaultTheme.Layout>
+        </div>
+        <!-- Results -->
+        <div class="result-wrapper">
+            <div class="logo-lloom">
+                <img src="/media/lloom.svg" alt="LLooM Logo">
+                <h2><b>Example Concepts</b></h2>
+            </div>
+            <!-- Seed selection -->
+            <div id="seed-button-text">
+                <p>Select seed</p>
+            </div>
+            <div class="seed-buttons">
+                <button v-for="seedOpt in curSeedOptions.data" @click="updateSeed(seedOpt)" class="seed-button btn"
+                    :class="{ active: isActiveSeed(seedOpt) }">
+                    <span class="code">{{ seedOpt }}</span>
+                </button>
+            </div>
+            <!-- Concepts -->
+            <DemoConcepts :curConcepts="curConcepts" />
+        </div>
+    </div>
 </template>
 
 <style>
+
+/* Text styles */
+.demo h2, .demo h3, .demo p {
+    margin: 0;
+    border: none;
+    padding: 0;
+    line-height: normal;
+}
+
+.demo h2 {
+    font-size: 16px;
+}
+
+.demo h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.demo p {
+    line-height: normal;
+    margin-bottom: 5px;
+}
+
+.code {
+    font-family: monospace;
+    font-size: 10px;
+}
+
+/* Layout styles */
 .full-width {
     width: 100%;
     height: 75vh;
@@ -114,21 +131,24 @@ updateData(initialDataset);
     justify-content: space-between;
 }
 
-.arrow {
-    width: 15%;
+/* Result styles */
+.result-wrapper {
+    width: 65%;
+    float: right;
 }
 
-.arrow img {
-    width: 80%;
-    display: inline;
+.logo-lloom img {
+    max-height: 20px;
 }
 
-.arrow-lloom {
+.logo-lloom {
     font-size: 20px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-bottom: 20px;
+    gap: 5px;
+    justify-content: center;
 }
 
 #seed-button-text {
@@ -140,22 +160,21 @@ updateData(initialDataset);
 }
 
 .seed-buttons {
-    margin: 20px 0;
+    margin: 5px 0;
     display: flex;
-    flex-direction: column;
-    justify-content: space-around;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
+    gap: 10px;
 }
 
 .seed-button {
-    width: 100%;
-    margin: 5px;
-    padding: 5px 5px;
-    border-radius: 5px;
+    padding: 5px 8px;
+    border-radius: 15px;
     background-color: white;
     border: 1px solid #d5d5d5;
-    font-size: 12px;
     cursor: pointer;
+    line-height: normal;
 }
 
 button.active {
@@ -193,10 +212,11 @@ button.active {
     opacity: 0.75;
 }
 
+
+/* Jumbotron styles */
 .jumbotron-wrapper {
     width: 30%;
     height: 100%;
-    margin-left: 20px;
     position: relative;
 }
 
@@ -210,16 +230,14 @@ button.active {
 
 .jumbotron {
     height: 95%;
-    /* background-color: #f5f5f5; */
-    /* border: 1px solid gray; */
     border-radius: 5px;
-    padding: 0 10px;
+    padding: 10px 0;
     opacity: 0.7;
     position: absolute;
 }
 
 .doc {
-    margin: 10px;
+    margin: 10px 0;
     background-color: white;
     border: 1px solid #d5d5d5;
     border-radius: 5px;
@@ -269,7 +287,7 @@ button.active {
 
 /* Enable animation */
 .marquee__content {
-    animation: scroll 100s linear infinite;
+    animation: scroll var(--scroll-speed) linear infinite;
 }
 
 /* Pause on hover */
