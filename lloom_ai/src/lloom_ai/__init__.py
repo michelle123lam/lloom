@@ -18,7 +18,7 @@ if _DEV:
   CSS = ""
   CSS_select = ""
 else:
-  # from `npx vite build`
+  # from `npm run build`
   # Path to static from lloom_ai/src/lloom_ai (the python package)
   bundled_assets_dir = pathlib.Path(__file__).parent / "static"
   ESM = (bundled_assets_dir / "index.js").read_text()

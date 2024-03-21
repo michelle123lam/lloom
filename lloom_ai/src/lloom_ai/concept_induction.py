@@ -1155,6 +1155,8 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
             return 0
         return row[val_col] / concept_ct
 
+    # Add absolute count
+    matrix_df["n"] = [row["value"] for _, row in matrix_df.iterrows()]
     if norm_by == "group":
         # Normalize by group
         matrix_df["value"] = [calc_norm_by_group(row) for _, row in matrix_df.iterrows()]

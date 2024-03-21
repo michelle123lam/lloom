@@ -56,7 +56,7 @@
     
     <div class="row">
         {#if selectedMetadata}
-            <h3 class="card-title">SLICE SUMMARY</h3>
+            <h3 class="card-title">SLICE DETAILS</h3>
             <div class="overview-card"> 
                 {#each Object.entries(selectedMetadata) as [key, value]}
                     <p><b>{key}</b>: {value}</p>

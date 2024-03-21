@@ -57,8 +57,6 @@
         border-radius: 10px;
         border: 1px solid #e6e6e6; 
         width: 95%;
-        max-height: 25px;
-        overflow-y: clip;
     }
 
     :global(.concept-detail) {

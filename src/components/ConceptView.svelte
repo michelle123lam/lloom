@@ -66,7 +66,7 @@
     
     <div class="row">
         {#if selectedMetadata}
-            <h3 class="card-title">CONCEPT SUMMARY</h3>
+            <h3 class="card-title">CONCEPT DETAILS</h3>
             <div class="overview-card">  
                 <div class="overview-card-left">
                     {#each Object.entries(selectedMetadata) as [key, value]}

@@ -4,7 +4,7 @@
     import MatrixInner from "./MatrixInner.svelte";
     import ConceptView from "./ConceptView.svelte";
     import GroupView from "./GroupView.svelte";
-    import { onMount } from "svelte";
+    import OverviewHistogram from "./OverviewHistogram.svelte";
 
     // Properties
     export let model;
@@ -34,13 +34,10 @@
     metadata = JSON.parse(metadataOrig);
     numConcepts = Object.keys(metadata.concepts).length;
     numSlices = Object.keys(metadata.items).length;
-    
-    // Set up enclosing div for matrix
-    let matrixDiv = document.createElement("div");
-    matrixDiv.classList.add("matrix");
-    el.appendChild(matrixDiv);
-    el.classList.add("matrix-widget");
 
+    // // Set up enclosing div for overview and matrix
+    let histDiv;
+    let matrixDiv;
 
     function setToDefaultState() {
         // Reset
@@ -61,11 +58,14 @@
                 setToDefaultState();
             } else {
                 selectedMatrixElem = "cell";
-                filterItems = { id: col , concept: row };
+                filterItems = { id: col, concept: row };
                 selectedTitle = "Slice: " + col + ", Concept: " + row;
                 let groupMetadata = metadata.items[col];
                 let conceptMetadata = metadata.concepts[row];
-                selectedMetadata = Object.assign(groupMetadata, conceptMetadata)
+                selectedMetadata = Object.assign(
+                    groupMetadata,
+                    conceptMetadata,
+                );
             }
             // Reset sorting
             sortBy = null;
@@ -77,7 +77,7 @@
                 setToDefaultState();
             } else {
                 selectedMatrixElem = "group";
-                filterItems = { id: col};
+                filterItems = { id: col };
                 selectedTitle = "Slice: " + col;
                 selectedMetadata = metadata.items[col];
 
@@ -115,12 +115,39 @@
     }
 </script>
 
+<div>
 {#if numConcepts > 0}
-    {#key matrixDiv}
-        <MatrixInner {data} div={matrixDiv} {numConcepts} {numSlices} on:message={handleMatrixEvent} />
-    {/key}
-    <div class="tables">
+    <h2 class="card-title">CONCEPT OVERVIEW</h2>
+    <div id="histDiv" class="overview-hist" bind:this={histDiv}>
+        {#key histDiv}
+                {#if histDiv == undefined}
+                    <p>Loading...</p>
+                {:else}
+                    <OverviewHistogram data={data} div={histDiv} />
+                {/if}
+        {/key}
+    </div>
+
+    <h2 class="card-title">CONCEPT MATRIX</h2>
+    <div id="matrixWidget" class="matrix-widget">
+        <div id="matrixDiv" class="matrix" bind:this={matrixDiv}>
+            {#key matrixDiv}
+                {#if matrixDiv == undefined}
+                    <p>Loading...</p>
+                {:else}
+                    <MatrixInner
+                        {data}
+                        div={matrixDiv}
+                        {numConcepts}
+                        {numSlices}
+                        on:message={handleMatrixEvent}
+                    />
+                    
+                {/if}
+            {/key}
+        </div>
         {#if selectedMatrixElem == "cell" || selectedMatrixElem == "concept"}
+        <div id="tableDiv" class="tables">
             <ConceptView
                 data={dataItems}
                 {el}
@@ -128,7 +155,9 @@
                 {selectedTitle}
                 {selectedMetadata}
             />
+        </div>
         {:else if selectedMatrixElem == "group"}
+        <div id="tableDiv" class="tables">
             <GroupView
                 data={dataItemsWide}
                 dataLong={dataItems}
@@ -139,35 +168,48 @@
                 {selectedTitle}
                 {selectedMetadata}
             />
+        </div>
         {/if}
     </div>
 {/if}
+</div>
 
 <style>
+    :global(.overview-hist) {
+        max-width: 100%;  
+    }
+
     :global(.matrix-widget) {
         display: flex;
         flex-direction: row;
-        justify-content: space-between; 
+        justify-content: space-between;
     }
 
     :global(.matrix-view) {
         min-height: 750px;
-    } 
+    }
 
     :global(.matrix) {
         float: left;
+        /* max-width: 40%; */
+        overflow-x: scroll;  
     }
 
     :global(.tables) {
-        float: right; 
-        padding: 0 20px;  
+        float: right;
+        padding: 0 20px;
+        overflow-x: scroll;
+        max-width: 70%;
+        border-radius: 10px;
+        border: 1px solid #e6e6e6; 
+        /* max-width: 60%; */
     }
     :global(.tables p) {
-        font-size: 14px; 
+        font-size: 14px;
     }
 
     :global(h2) {
-        font-size: 16px; 
+        font-size: 16px;
     }
     :global(h3) {
         font-size: 14px;
