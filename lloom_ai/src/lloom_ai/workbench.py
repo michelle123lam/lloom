@@ -459,10 +459,18 @@ class lloom:
         df["highlights"] = [self.__get_concept_highlights(c, threshold) for c in concepts]
         df = df.rename(columns={self.doc_col: "n_matches"})
         df["prevalence"] = np.round(df["n_matches"] / len(self.in_df), 2)
-        df = df[["concept", "criteria", "summary", "rep_examples", "prevalence", "highlights"]]
+        df = df[["concept", "criteria", "summary", "rep_examples", "prevalence", "n_matches", "highlights"]]
         return df
         
-
+    # Visualize concept induction results
+    # Parameters:
+    # - cols_to_show: list (additional column names to show in the tables)
+    # - slice_col: str (column name with which to slice data)
+    # - max_slice_bins: int (Optional: for numeric columns, the maximum number of bins to create)
+    # - slice_bounds: list (Optional: for numeric columns, manual bin boundaries to use)
+    # - show_highlights: bool (whether to show text highlights)
+    # - norm_by: str (how to normalize scores: "concept" or "slice")
+    # - export_df: bool (whether to return a dataframe for export)
     def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by="concept", export_df=False):
         active_concepts = self.__get_active_concepts()
         score_df = self.get_score_df()
@@ -490,6 +498,23 @@ class lloom:
 
     def export_df(self):
         return self.vis(export_df=True)
+    
+    def export_json(self, threshold=0.75):
+        def format_dict(c):
+            c["criteria"] = c["prompt"]
+            cur_score_df = self.results[c["id"]]
+            matched = cur_score_df[cur_score_df.score > threshold]
+            c["n"] = len(matched)
+            # Remove unused columns
+            del c["prompt"]
+            del c["id"]
+            del c["active"]
+            del c["example_ids"]
+            return c
+        active_concepts = self.__get_active_concepts()
+        concepts_dict = [format_dict(c.to_dict()) for c_id, c in active_concepts.items()]
+        concepts_json = json.dumps(concepts_dict)
+        return concepts_json
 
     async def add(self, name, prompt, ex_ids=[], get_highlights=True):
         # Add concept

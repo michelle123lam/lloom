@@ -1080,7 +1080,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     # cb = self.get_codebook_info()
 
     concept_cts = {}
-    group_cts = {}
+    slice_cts = {}
     concept_names = [c.name for c in concepts.values()]
     df["Outlier"] = [is_outlier(row, concept_names, outlier_threshold) for _, row in df.iterrows()]
     concept_names.append("Outlier")
@@ -1110,7 +1110,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         else:
             group_matches = [filter_func(x, *filter_args) for x in df[filter_x].tolist()]
         cur_df = df[group_matches]
-        group_cts[group_name] = len(cur_df)
+        slice_cts[group_name] = len(cur_df)
 
         def get_text_col_and_rename(orig_df, doc_id_col, new_col_name):
             # Internal helper to get the text column and rename it
@@ -1199,12 +1199,12 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     matrix_df = pd.DataFrame(matrix_df_rows, columns=["id", "value", "example", "_my_score", "concept"])
 
     # Perform normalization
-    def calc_norm_by_group(row):
+    def calc_norm_by_slice(row):
         g = row["id"]
-        group_ct = group_cts[g]
-        if group_ct == 0:
+        slice_ct = slice_cts[g]
+        if slice_ct == 0:
             return 0
-        return row["value"] / group_ct
+        return row["value"] / slice_ct
         
     def calc_norm_by_concept(row, val_col):
         c = row["concept"]
@@ -1215,9 +1215,9 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 
     # Add absolute count
     matrix_df["n"] = [row["value"] for _, row in matrix_df.iterrows()]
-    if norm_by == "group":
-        # Normalize by group
-        matrix_df["value"] = [calc_norm_by_group(row) for _, row in matrix_df.iterrows()]
+    if norm_by == "slice":
+        # Normalize by slice
+        matrix_df["value"] = [calc_norm_by_slice(row) for _, row in matrix_df.iterrows()]
     else:
         # Normalize by concept
         matrix_df["value"] = [calc_norm_by_concept(row, "value") for _, row in matrix_df.iterrows()]
@@ -1272,7 +1272,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 # - max_slice_bins: int (maximum number of slices to show)
 # - slice_bounds: list of numbers (manual boundaries for slices)
 # - show_highlights: boolean (whether to show highlights)
-# - norm_by: string (column name to normalize by; either "group" or "concept")
+# - norm_by: string (column name to normalize by; either "slice" or "concept")
 # - debug: boolean (whether to print debug statements)
 def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], slice_col=None, max_slice_bins=None, slice_bounds=None, show_highlights=False, norm_by="concept", debug=False):
     matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(in_df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, slice_col=slice_col, max_slice_bins=max_slice_bins, slice_bounds=slice_bounds,show_highlights=show_highlights, norm_by=norm_by, debug=debug)
