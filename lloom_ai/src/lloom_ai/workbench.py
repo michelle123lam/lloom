@@ -26,8 +26,8 @@ class lloom:
     def __init__(
         self,
         df: pd.DataFrame,
-        id_col: str,
         text_col: str,
+        id_col: str = None,
         save_path: str = None,
         debug: bool = False,
     ):
@@ -46,9 +46,10 @@ class lloom:
         self.save_path = save_path
 
         # Input data
-        self.in_df = df
         self.doc_id_col = id_col
         self.doc_col = text_col
+        df = self.preprocess_df(df)
+        self.in_df = df
         self.df_to_score = df  # Default to df for concept scoring
 
         # Output data
@@ -68,6 +69,26 @@ class lloom:
             "out_tokens": [],
         }
     
+    # Preprocesses input dataframe
+    def preprocess_df(self, df):
+        # Handle missing ID column
+        if self.doc_id_col is None:
+            print("No `id_col` provided. Created an ID column named 'id'.")
+            df = df.copy()
+            self.doc_id_col = "id"
+            df[self.doc_id_col] = range(len(df))  # Create an ID column
+
+        # Handle rows with missing values
+        main_cols = [self.doc_id_col, self.doc_col]
+        if df[main_cols].isnull().values.any():
+            print("Missing values detected. Dropping rows with missing values.")
+            df = df.copy()
+            len_orig = len(df)
+            df = df.dropna(subset=main_cols)
+            print(f"\tOriginally: {len_orig} rows, Now: {len(df)} rows")
+        
+        return df
+
     def save(self):
         # Saves current session to file
         select_widget = self.select_widget
@@ -259,7 +280,7 @@ class lloom:
             self.df_filtered = self.in_df
         
         df_bullets = await distill_summarize(
-            text_df=df_filtered, 
+            text_df=self.df_filtered, 
             doc_col=self.doc_col,
             doc_id_col=self.doc_id_col,
             model_name=self.model_name,
