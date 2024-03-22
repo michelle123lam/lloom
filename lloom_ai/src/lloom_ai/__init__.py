@@ -4,6 +4,9 @@ import pathlib
 import anywidget
 import traitlets
 
+import nltk
+nltk.download('punkt')
+
 try:
     __version__ = importlib.metadata.version("lloom")
 except importlib.metadata.PackageNotFoundError:

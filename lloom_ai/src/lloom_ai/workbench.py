@@ -6,8 +6,6 @@ import time
 import pandas as pd
 import ipywidgets as widgets
 import random
-import nltk
-nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 
 
@@ -89,7 +87,7 @@ class lloom:
         return k
 
     # Estimate cost of generation for the given params
-    def estimate_gen_cost(self, params=None):
+    def estimate_gen_cost(self, params=None, verbose=False):
         if params is None:
             params = self.auto_suggest_parameters()
             print(f"No parameters provided, so using auto-suggested parameters: {params}")
@@ -129,10 +127,16 @@ class lloom:
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
         print(f"Estimated cost: {np.round(total_cost, 2)}")
-        return est_cost
+        print("**Please note that this is only an approximate cost estimate**")
+
+        if verbose:
+            print(f"\nEstimated cost breakdown:")
+            for step_name, cost in est_cost.items():
+                total_cost = np.sum(cost)
+                print(f"\t{step_name}: {total_cost:0.4f}")
 
     # Estimate cost of scoring for the given number of concepts
-    def estimate_score_cost(self, n_concepts=None, batch_size=5, get_highlights=True):
+    def estimate_score_cost(self, n_concepts=None, batch_size=5, get_highlights=True, verbose=False):
         if n_concepts is None:
             active_concepts = self.__get_active_concepts()
             n_concepts = len(active_concepts)
@@ -153,8 +157,14 @@ class lloom:
         est_cost = calc_cost_by_tokens(self.score_model_name, score_in_tokens, score_out_tokens)
 
         total_cost = np.sum(est_cost)
+        print(f"Scoring {n_concepts} concepts for {len(self.in_df)} documents")
         print(f"Estimated cost: {np.round(total_cost, 2)}")
-        return est_cost
+        print("**Please note that this is only an approximate cost estimate**")
+
+        if verbose:
+            print(f"\nEstimated cost breakdown:")
+            for step_name, cost in zip(["Input", "Output"], est_cost):
+                print(f"\t{step_name}: {cost:0.4f}")
 
     def auto_suggest_parameters(self, sample_size=None, target_n_concepts=20, debug=False):
         # Suggests concept generation parameters based on rough heuristics
@@ -217,7 +227,15 @@ class lloom:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
                 print(f"Auto-suggested parameters: {params}")
-                self.estimate_gen_cost(params)
+        
+        # Run cost estimation
+        self.estimate_gen_cost(params)
+        
+        # Confirm to proceed
+        user_input = input("\nProceed with generation? (y/n): ")
+        if user_input.lower() != "y":
+            print("Cancelled generation")
+            return
 
         # Run concept generation
         filter_n_quotes = params["filter_n_quotes"]
@@ -325,7 +343,7 @@ class lloom:
 
     # Score the specified concepts
     # Only score the concepts that are active
-    async def score(self, c_ids=None, get_highlights=True, ignore_existing=True):
+    async def score(self, c_ids=None, batch_size=5, get_highlights=True, ignore_existing=True):
         concepts = {}
         active_concepts = self.__get_active_concepts()
         if c_ids is None:
@@ -341,6 +359,15 @@ class lloom:
         # Ignore concepts that already have existing results
         if ignore_existing:
             concepts = {c_id: c for c_id, c in concepts.items() if c_id not in self.results}
+        
+        # Run cost estimation
+        self.estimate_score_cost(n_concepts=len(concepts), batch_size=batch_size, get_highlights=get_highlights)
+
+        # Confirm to proceed
+        user_input = input("\nProceed with scoring? (y/n): ")
+        if user_input.lower() != "y":
+            print("Cancelled scoring")
+            return
 
         # Run usual scoring; results are stored to self.results within the function
         score_df = await score_concepts(
@@ -349,6 +376,7 @@ class lloom:
             doc_id_col=self.doc_id_col,
             concepts=concepts,
             model_name=self.score_model_name,
+            batch_size=batch_size,
             get_highlights=get_highlights,
             sess=self,
         )
