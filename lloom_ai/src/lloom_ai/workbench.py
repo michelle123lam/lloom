@@ -364,7 +364,7 @@ class lloom:
 
     # Score the specified concepts
     # Only score the concepts that are active
-    async def score(self, c_ids=None, batch_size=5, get_highlights=True, ignore_existing=True):
+    async def score(self, c_ids=None, batch_size=1, get_highlights=True, ignore_existing=True):
         concepts = {}
         active_concepts = self.__get_active_concepts()
         if c_ids is None:

@@ -38,6 +38,7 @@ else:
 # CONSTANTS ================================
 NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
 OUTLIER_CRITERIA = "Did the example not match any of the above concepts?"
+SCORE_DF_OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight"]
 
 
 # HELPER functions ================================
@@ -583,7 +584,6 @@ def parse_bucketed_score(x):
 def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_highlights):
     # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
     res_dict = json_load(res, top_level_key="pattern_results")
-    OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight"]
     concept_name = concept.name
     concept_prompt = concept.prompt
     if res_dict is not None:
@@ -612,19 +612,26 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
                         row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ""]  # Set quote to empty string
                     rows.append(row)
         
-        out_df = pd.DataFrame(rows, columns=OUT_COLS)
+        out_df = pd.DataFrame(rows, columns=SCORE_DF_OUT_COLS)
         return out_df
     else:
-        out_df = in_df.copy()
-        out_df["doc_id"] = out_df[doc_id_col]
-        out_df["text"] = out_df[text_col]
-        out_df["concept_id"] = concept_id
-        out_df["concept_name"] = concept_name
-        out_df["concept_prompt"] = concept_prompt
-        out_df["score"] = NAN_SCORE
-        out_df["rationale"] = ""
-        out_df["highlight"] = ""
-        return out_df[OUT_COLS]
+        out_df = get_empty_score_df(in_df, concept, concept_id, text_col, doc_id_col)
+        return out_df[SCORE_DF_OUT_COLS]
+
+def get_empty_score_df(in_df, concept, concept_id, text_col, doc_id_col):
+    # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
+    concept_name = concept.name
+    concept_prompt = concept.prompt
+    out_df = in_df.copy()
+    out_df["doc_id"] = out_df[doc_id_col]
+    out_df["text"] = out_df[text_col]
+    out_df["concept_id"] = concept_id
+    out_df["concept_name"] = concept_name
+    out_df["concept_prompt"] = concept_prompt
+    out_df["score"] = NAN_SCORE
+    out_df["rationale"] = ""
+    out_df["highlight"] = ""
+    return out_df[SCORE_DF_OUT_COLS]
 
 # Performs scoring for one concept
 async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, model_name, batch_size, get_highlights, sess):
@@ -657,6 +664,13 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
             score_df = cur_score_df
         else:
             score_df = pd.concat([score_df, cur_score_df])
+
+    # Fill in missing rows if necessary
+    # TODO: Add automatic retries in case of missing rows
+    if len(score_df) < len(df):
+        missing_rows = df[~df[doc_id_col].isin(score_df["doc_id"])]
+        missing_rows = get_empty_score_df(missing_rows, concept, concept_id, text_col, doc_id_col)
+        score_df = pd.concat([score_df, missing_rows])
 
     save_progress(sess, score_df, step_name="score_helper", start=None, res=res_full, model_name=model_name)
     if sess is not None:
