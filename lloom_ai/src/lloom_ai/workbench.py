@@ -463,7 +463,7 @@ class lloom:
         return df
         
 
-    def vis(self, cols_to_show=[], custom_groups={}, show_highlights=True, norm_by="concept", export_df=False):
+    def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by="concept", export_df=False):
         active_concepts = self.__get_active_concepts()
         score_df = self.get_score_df()
 
@@ -477,7 +477,9 @@ class lloom:
             df_bullets=self.df_bullets,
             concepts=active_concepts,
             cols_to_show=cols_to_show,
-            custom_groups=custom_groups,
+            slice_col=slice_col,
+            max_slice_bins=max_slice_bins,
+            slice_bounds=slice_bounds,
             show_highlights=show_highlights,
             norm_by=norm_by,
         )

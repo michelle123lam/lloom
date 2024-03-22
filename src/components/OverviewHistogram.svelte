@@ -35,6 +35,7 @@
                 y: "n",
                 fill: "#A1D1FC",
                 tip: true,
+                sort: { x: "y", reverse: true, limit: 20 }
             }),
             Plot.axisX({
                 label: "",

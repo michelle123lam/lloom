@@ -4,6 +4,7 @@
 # Imports
 import yaml
 import pandas as pd
+from pandas.api.types import is_string_dtype, is_numeric_dtype
 import time
 from tqdm.asyncio import tqdm_asyncio
 import numpy as np
@@ -1012,24 +1013,66 @@ def get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, c
         cur_df = cur_df.merge(c_df, on=doc_id_col, how="left")
     return cur_df
 
+# Template slice function for string (categorical) columns
+def _slice_fn_cat(x, group_name):
+    return x == group_name
+
+# Template slice function for numeric columns
+def _slice_fn_num(x, left, right):
+    return (x > left) and (x <= right)
+
+# Convert manual slice bounds to bins
+def slice_bounds_to_bins(slice_bounds):
+    bins = []
+    for i in range(len(slice_bounds) - 1):
+        bins.append(pd.Interval(left=slice_bounds[i], right=slice_bounds[i+1]))
+    return bins
+
+# Automatically create slice groupings based on slice column
+# - slice_col: str (column name with which to slice data)
+# - max_slice_bins: int (Optional: for numeric columns, the maximum number of bins to create)
+# - slice_bounds: list (Optional: for numeric columns, manual bin boundaries to use)
+def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
+    # Determine type to create groupings
+    if is_numeric_dtype(df[slice_col]):
+        # Numeric column: Create bins
+        if slice_bounds is not None:
+            # Use provided bin boundaries
+            bins = slice_bounds_to_bins(slice_bounds)
+        else:
+            # Automatically create bins using percentiles
+            bin_assn = pd.qcut(df[slice_col], q=max_slice_bins, duplicates="drop", labels=None)
+            bins = sorted(bin_assn.unique(), key=lambda x: x.left, reverse=False)
+        groupings = {
+            f"Bin: ({bin.left}, {bin.right}]": {"x": slice_col, "fn": _slice_fn_num, "args": [bin.left, bin.right]} for bin in bins
+        }
+    elif is_string_dtype(df[slice_col]):
+        # String column: Create groupings based on unique values
+        groupings = {
+            group_name: {"x": slice_col, "fn": _slice_fn_cat, "args": [group_name]} for group_name in df[slice_col].unique()
+        }
+    else:
+        raise ValueError(f"Slice column type not supported: {df[slice_col].dtype}. Please convert this column to ")
+        groupings = {}
+    return groupings
+
 # Helper function for `visualize()` to generate the underlying dataframes
 # Parameters:
 # - threshold: float (minimum score of positive class)
-def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, custom_groups, show_highlights, norm_by, debug=False, threshold=None, outlier_threshold=0.75):
+def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, slice_col, max_slice_bins, slice_bounds, show_highlights, norm_by, debug=False, threshold=None, outlier_threshold=0.75):
     # TODO: codebook info
 
     # Handle groupings
     # Add the "All" grouping by default
     groupings = {
-        "All": {"x": None, "fn": None},
+        "All": {"x": None, "fn": None, "args": None},
     }
-    if len(custom_groups) > 0:
+    if slice_col is not None:
         # Add custom groupings
+        custom_groups = get_groupings(df, slice_col, max_slice_bins, slice_bounds)
         groupings.update(custom_groups)
-        for group_name, group_info in custom_groups.items():
-            grouping_col = group_info["x"]
-            if grouping_col not in cols_to_show:
-                cols_to_show.append(grouping_col)
+        if slice_col not in cols_to_show:
+            cols_to_show.append(slice_col)
 
     # Fetch the results table
     df = get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, cols_to_show)
@@ -1061,10 +1104,11 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     for group_name, group_filtering in groupings.items():
         filter_x = group_filtering["x"]
         filter_func = group_filtering["fn"]
+        filter_args = group_filtering["args"]
         if filter_func is None:
             group_matches = [True] * len(df)
         else:
-            group_matches = [filter_func(x) for x in df[filter_x].tolist()]
+            group_matches = [filter_func(x, *filter_args) for x in df[filter_x].tolist()]
         cur_df = df[group_matches]
         group_cts[group_name] = len(cur_df)
 
@@ -1224,12 +1268,14 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 #
 # Parameters:
 # - cols_to_show: list of strings (column names to show in visualization)
-# - custom_groups: dict (group_name -> group information)
+# - slice_col: string (column name to slice by)
+# - max_slice_bins: int (maximum number of slices to show)
+# - slice_bounds: list of numbers (manual boundaries for slices)
 # - show_highlights: boolean (whether to show highlights)
 # - norm_by: string (column name to normalize by; either "group" or "concept")
 # - debug: boolean (whether to print debug statements)
-def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], custom_groups={}, show_highlights=False, norm_by="concept", debug=False):
-    matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(in_df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, custom_groups=custom_groups, show_highlights=show_highlights, norm_by=norm_by, debug=debug)
+def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], slice_col=None, max_slice_bins=None, slice_bounds=None, show_highlights=False, norm_by="concept", debug=False):
+    matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(in_df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, slice_col=slice_col, max_slice_bins=max_slice_bins, slice_bounds=slice_bounds,show_highlights=show_highlights, norm_by=norm_by, debug=debug)
 
     data = matrix_df.to_json(orient='records')
     data_items = item_df.to_json(orient='records')
