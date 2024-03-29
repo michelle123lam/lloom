@@ -22,7 +22,7 @@ if _DEV:
   CSS_select = ""
 else:
   # from `npm run build`
-  # Path to static from lloom_ai/src/lloom_ai (the python package)
+  # Path to static from text_lloom/src/text_lloom (the python package)
   bundled_assets_dir = pathlib.Path(__file__).parent / "static"
   ESM = (bundled_assets_dir / "index.js").read_text()
   CSS = (bundled_assets_dir / "index.css").read_text()

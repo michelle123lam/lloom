@@ -13,7 +13,7 @@ export default defineConfig({
 		},
 	},
 	build: {
-        outDir: "lloom_ai/src/lloom_ai/static",
+        outDir: "text_lloom/src/text_lloom/static",
         emptyOutDir: false,
         lib: {
             entry: {

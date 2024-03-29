@@ -34,7 +34,8 @@ export default defineConfig({
           text: 'LLooM Overview',
           items: [
             { text: 'What is LLooM?', link: '/about/' },
-            { text: 'Get Started', link: '/about/get-started' }
+            { text: 'Get Started', link: '/about/get-started' },
+            { text: 'Using the LLooM Workbench', link: '/about/vis-guide' },
           ]
         }
       ],
