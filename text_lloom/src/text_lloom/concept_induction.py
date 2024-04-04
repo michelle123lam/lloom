@@ -1042,9 +1042,19 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
         else:
             # Automatically create bins using percentiles
             bin_assn = pd.qcut(df[slice_col], q=max_slice_bins, duplicates="drop", labels=None)
-            bins = sorted(bin_assn.unique(), key=lambda x: x.left, reverse=False)
+            bins = sorted(bin_assn.unique(), key=lambda x: x.left if (isinstance(x, pd.Interval)) else 0, reverse=False)
+        def get_bin_name(bin):
+            if isinstance(bin, pd.Interval):
+                return f"Bin: ({bin.left}, {bin.right}]"
+            return f"Bin: {bin}"
+        def get_bin_fn(bin):
+            if isinstance(bin, pd.Interval):
+                return {"x": slice_col, "fn": _slice_fn_num, "args": [bin.left, bin.right]}
+            elif pd.isna(bin):
+                return {"x": slice_col, "fn": lambda x: pd.isna(x), "args": []}
+            return {"x": slice_col, "fn": _slice_fn_cat, "args": [bin]}
         groupings = {
-            f"Bin: ({bin.left}, {bin.right}]": {"x": slice_col, "fn": _slice_fn_num, "args": [bin.left, bin.right]} for bin in bins
+            get_bin_name(bin): get_bin_fn(bin) for bin in bins
         }
     elif is_string_dtype(df[slice_col]):
         # String column: Create groupings based on unique values
@@ -1052,7 +1062,7 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
             group_name: {"x": slice_col, "fn": _slice_fn_cat, "args": [group_name]} for group_name in df[slice_col].unique()
         }
     else:
-        raise ValueError(f"Slice column type not supported: {df[slice_col].dtype}. Please convert this column to ")
+        raise ValueError(f"Slice column type not supported: {df[slice_col].dtype}. Please convert this column to numeric or string type.")
         groupings = {}
     return groupings
 
@@ -1178,7 +1188,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         # Metadata
         cluster_avg_overall_score = NAN_SCORE  # TEMPLATE SCORE for datasets without scores
         item_metadata[group_name] = {
-            "Slice size": f"{len(cur_df)} examples",
+            "Slice size": f"{len(cur_df)} documents",
         }
 
         # Matrix df
@@ -1237,7 +1247,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         res = {
             "Criteria": f"<br>{c.prompt}",
             "Summary": f"<br>{c.summary}",
-            "Matches": f"{concept_cts[c.name]} examples",
+            "Concept matches": f"{concept_cts[c.name]} documents",
             "Representative examples": f"{format_bullets(ex, add_quotes=True)}"
         }
         return res
@@ -1245,7 +1255,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     concept_metadata = {c.name: get_concept_metadata(c) for c in concepts.values()}
     concept_metadata["Outlier"] = {
         "Criteria": OUTLIER_CRITERIA,
-        "Concept matches": f"{concept_cts['Outlier']} examples",
+        "Concept matches": f"{concept_cts['Outlier']} documents",
     }
     metadata_dict = {
         "items": item_metadata,

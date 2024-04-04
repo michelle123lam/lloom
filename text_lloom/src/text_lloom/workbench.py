@@ -39,12 +39,6 @@ class lloom:
         self.use_base_api = True
         self.debug = debug  # Whether to run in debug mode
 
-        if save_path is None:
-            # Automatically set using timestamp
-            t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
-            save_path = f"./exports/{t}"
-        self.save_path = save_path
-
         # Input data
         self.doc_id_col = id_col
         self.doc_col = text_col
@@ -89,13 +83,14 @@ class lloom:
         
         return df
 
-    def save(self):
+    def save(self, folder, file_name=None):
         # Saves current session to file
         select_widget = self.select_widget
         self.select_widget = None  # Remove widget before saving (can't be pickled)
 
-        t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
-        cur_path = f"{self.save_path}__{t}.pkl"
+        if file_name is None:
+            file_name = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
+        cur_path = f"{folder}/{file_name}.pkl"
         with open(cur_path, "wb") as f:
             pickle.dump(self, f)
         print(f"Saved session to {cur_path}")
