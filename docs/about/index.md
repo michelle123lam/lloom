@@ -82,7 +82,7 @@ Check out the [Examples](/examples/index) page to walk through case studies usin
 ![The full LLooM Process](/media/lloom_process_full.svg)
 
 ## Learn more
-LLooM is a research prototype! You can learn more about the project, the method, and a variety of evaluations in our CHI 2024 publication: [Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM]() by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
+LLooM is a research prototype! You can read much more about the project, the method, and a variety of evaluations in our CHI 2024 publication: [Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM](TODO) by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
 
 ### Team members
 <VPTeamMembers size="medium" :members="members" />
@@ -91,4 +91,4 @@ LLooM is a research prototype! You can learn more about the project, the method,
 Interested in the project or helping with future directions? We'd love to hear from you! Please feel free to contact Michelle at mlam4@cs.stanford.edu.
 
 ### Acknowledgements
-Thank you to the Stanford HCI Group and UW Interactive Data Lab for your feedback on early versions of this work. This work was supported in part by IBM as a founding member of the Stanford Institute for Human-centered Artificial Intelligence (HAI) and by NSF award IIS-1901386. Michelle was supported by a Stanford Interdisciplinary Graduate Fellowship.
+Thank you to the Stanford HCI Group and UW Interactive Data Lab for feedback on early versions of this work. This work was supported in part by IBM as a founding member of the Stanford Institute for Human-centered Artificial Intelligence (HAI) and by NSF award IIS-1901386. Michelle was supported by a Stanford Interdisciplinary Graduate Fellowship.

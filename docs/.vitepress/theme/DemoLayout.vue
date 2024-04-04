@@ -51,7 +51,7 @@ function isActiveDataset(dataset) {
     <div class="full-width demo">
         <!-- Jumbotron -->
         <div class="jumbotron-wrapper">
-            <h2><b>Example Text Documents</b></h2>
+            <h2><b>Example Inputs</b></h2>
             <div class="jumbotron-gradient"></div>
             <div class="jumbotron">
                 <div class="marquee marquee--hover-pause">
@@ -72,8 +72,9 @@ function isActiveDataset(dataset) {
         <!-- Results -->
         <div class="result-wrapper">
             <div class="logo-lloom">
+                <h2><b>Example </b></h2>
                 <img src="/media/lloom.svg" alt="LLooM Logo">
-                <h2><b>Example Concepts</b></h2>
+                <h2><b>Outputs</b></h2>
             </div>
             <!-- Seed selection -->
             <div id="seed-button-text">

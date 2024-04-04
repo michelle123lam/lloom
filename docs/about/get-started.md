@@ -1,34 +1,39 @@
 # Get Started
 
-LLooM is currently designed as a Python package for computational notebooks.
+LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM on your dataset. You can also refer to this [starter Colab Notebook](TODO).
 
-## Setup
-### Installation
-Install the LLooM Python package:
+## Installation
+First, install the LLooM Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
 ```
 pip install text_lloom
 ```
 
-### OpenAI setup
-LLooM uses the OpenAI API under the hood to support its core operators. Set your OpenAI API key to use your account.
-```
-openai.api_key = "sk-YOUR-KEY-HERE"
-```
-
 ## LLooM Workbench
+Now, you can use the LLooM package in a computational notebook! Create your notebook (i.e., with [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)) and then follow the steps below.
+
 ### Import package
 First, import the LLooM package:
 ```py
 import text_lloom.workbench as wb
 ```
 
+### OpenAI setup
+LLooM uses the OpenAI API under the hood to support its core operators. You'll first need to locally set the `api_key` variable to use your own account.
+```
+openai.api_key = "sk-YOUR-KEY-HERE"
+```
+
+::: tip
+LLooM provides (1) **cost estimation functions** that automatically run before operations that make calls to the OpenAI API and (2) **cost summary functions** to review tracked usage, but we encourage you to monitor usage on your account as always.
+:::
+
 ### Create a LLooM instance
-Then, after loading your data as a Pandas DataFrame, create a new LLooM instance:
+Then, after loading your data as a Pandas DataFrame, create a new LLooM instance. You will need to specify the name of the column that contains your input text documents (`text_col`). The ID column (`id_col`) is optional.
 ```py
 l = wb.lloom(
     df=df,
-    id_col="your_doc_id_col",
     text_col="your_doc_text_col",
+    id_col="your_doc_id_col",  # Optional
 )
 ```
 
@@ -44,7 +49,10 @@ Review the generated concepts and select concepts to inspect further:
 l.select()
 ```
 
-Then, apply these concepts to the full dataset; this function will score all documents with respect to each concept to indicate the extent to which the document matches the concept inclusion criteria.
+In the output, each box contains the concept name, concept inclusion criteria, and representative example(s).
+![LLooM select() function output](/media/ui/select_output.png)
+
+Then, apply these concepts to the full dataset with `score()`. This function will score all documents with respect to each concept to indicate the extent to which the document matches the concept inclusion criteria.
 ```py
 score_df = await l.score()
 ```
@@ -54,19 +62,24 @@ Now, you can visualize the results in the main LLooM Workbench view. An interact
 ```py
 l.vis()
 ```
+Check out [Using the LLooM Workbench](./vis-guide.md) for a more detailed guide on the visualization components.
+![LLooM vis() function output](/media/ui/vis_output.png)
 
-If you want to additionally slice your data according to a pre-existing metadata column, you can optionally provide a `slice_col`. Numeric or string columns are supported.
+#### Add slices (columns)
+If you want to additionally slice your data according to a pre-existing metadata column in your dataframe, you can optionally provide a `slice_col`. Numeric or string columns are supported.
 ```py
 l.vis(slice_col="n_likes")
 ```
+By default, the concept matrix is normalized by **concept** (`norm_by="concept"`), meaning that the size of the circles in each concept row represents the fraction of examples *in that concept* that fall into each slice column. 
+![LLooM vis() function output with slices](/media/ui/vis_output_slice.png)
 
-By default, the concept matrix is normalized by **concept** (`norm_by="concept"`), meaning that the size of the circles in each concept row represents the fraction of examples *in that concept* that fall into each slice. You can also normalize by **slice** so that the size of circles in each slice column represents the fraction of examples *in that slice* that fall into each column.
+You can also normalize by **slice** so that the size of circles in each slice column represents the fraction of examples *in that slice* that fall into each concept row.
 ```py
 l.vis(slice_col="n_likes", norm_by="slice")
 ```
 
 ### Add manual concepts
-You may also manually add your own custom concepts by providing a name and prompt. This will automatically score the data by that concept. Re-run the `vis()` function to see the new concept results
+You may also manually add your own custom concepts by providing a name and prompt. This will automatically score the data by that concept. Re-run the `vis()` function to see the new concept results.
 ```py
 await l.add(
     name="your new concept name",
@@ -75,9 +88,9 @@ await l.add(
 ```
 
 ### Save or export results
-Save your LLooM instance to a pickle file to reload at a later point:
+You can save your LLooM instance to a pickle file to reload at a later point.
 ```py
-l.save()
+l.save(folder="your/path/here", file_name="your_file_name")
 ```
 
 Export a summary of the results in Pandas Dataframe form. 
@@ -94,7 +107,7 @@ The dataframe will include the following columns:
 - `highlights`: An illustrative sample of n=3 highlighted quotes from documents that matched the concept that were relevant to the concept
 
 ## LLooM Operators
-If you'd like to dive deeper and reconfigure the core operators used within LLooM (like the `Distill`, `Cluster`, and `Synthesize` operators), you can access the base functions from the concept_induction module:
+If you'd like to dive deeper and reconfigure the core operators used within LLooM (like the `Distill`, `Cluster`, and `Synthesize` operators), you can access the base functions from the `concept_induction` module:
 
 ```
 import text_lloom.concept_induction as ci
