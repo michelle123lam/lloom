@@ -82,7 +82,7 @@ Check out the [Examples](/examples/index) page to walk through case studies usin
 ![The full LLooM Process](/media/lloom_process_full.svg)
 
 ## Learn more
-LLooM is a research prototype! You can read much more about the project, the method, and a variety of evaluations in our CHI 2024 publication: [Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM](TODO) by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
+LLooM is a research prototype! You can read much more about the project, the method, and a variety of evaluations in our CHI 2024 publication: [Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM]() by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
 
 ### Team members
 <VPTeamMembers size="medium" :members="members" />

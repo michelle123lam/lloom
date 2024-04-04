@@ -1,6 +1,6 @@
 # Get Started
 
-LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM on your dataset. You can also refer to this [starter Colab Notebook](TODO).
+LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM on your dataset. You can also refer to this [starter Colab Notebook]().
 
 ## Installation
 First, install the LLooM Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
