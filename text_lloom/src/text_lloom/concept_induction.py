@@ -37,7 +37,7 @@ else:
     from .__init__ import MatrixWidget, ConceptSelectWidget
 
 # CONSTANTS ================================
-NAN_SCORE = -0.01  # Numerical score to use in place of NaN values for matrix viz
+NAN_SCORE = 0  # Numerical score to use in place of NaN values for matrix viz
 OUTLIER_CRITERIA = "Did the example not match any of the above concepts?"
 SCORE_DF_OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight"]
 
@@ -1045,8 +1045,8 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
             bins = sorted(bin_assn.unique(), key=lambda x: x.left if (isinstance(x, pd.Interval)) else 0, reverse=False)
         def get_bin_name(bin):
             if isinstance(bin, pd.Interval):
-                return f"Bin: ({bin.left}, {bin.right}]"
-            return f"Bin: {bin}"
+                return f"{slice_col}: ({bin.left}, {bin.right}]"
+            return f"{slice_col}: {bin}"
         def get_bin_fn(bin):
             if isinstance(bin, pd.Interval):
                 return {"x": slice_col, "fn": _slice_fn_num, "args": [bin.left, bin.right]}
@@ -1058,8 +1058,10 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
         }
     elif is_string_dtype(df[slice_col]):
         # String column: Create groupings based on unique values
+        def get_group_name(group_name):
+            return f"{slice_col}: {group_name}"
         groupings = {
-            group_name: {"x": slice_col, "fn": _slice_fn_cat, "args": [group_name]} for group_name in df[slice_col].unique()
+            get_group_name(group_name): {"x": slice_col, "fn": _slice_fn_cat, "args": [group_name]} for group_name in df[slice_col].unique()
         }
     else:
         raise ValueError(f"Slice column type not supported: {df[slice_col].dtype}. Please convert this column to numeric or string type.")
@@ -1069,7 +1071,7 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
 # Helper function for `visualize()` to generate the underlying dataframes
 # Parameters:
 # - threshold: float (minimum score of positive class)
-def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, slice_col, max_slice_bins, slice_bounds, show_highlights, norm_by, debug=False, threshold=None, outlier_threshold=0.75):
+def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, slice_col, max_slice_bins, slice_bounds, show_highlights, norm_by=None, debug=False, threshold=None, outlier_threshold=0.75):
     # TODO: codebook info
 
     # Handle groupings
@@ -1105,9 +1107,10 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     df_bullets = df_bullets.groupby(doc_id_col).agg(lambda x: list(x)).reset_index()
 
     # Rationale df
-    rationale_col = "rationale"
+    rationale_col = "score rationale"
     highlight_col = "highlight"
-    rationale_df = score_df[[doc_id_col, "concept_name", rationale_col, highlight_col]]
+    rationale_df = score_df[[doc_id_col, "concept_name", "rationale", highlight_col]]
+    rationale_df.rename(columns={"rationale": rationale_col}, inplace=True)
     rationale_df[doc_id_col] = rationale_df[doc_id_col].astype(str)
 
     # Prep data for each group
@@ -1138,7 +1141,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         cur_df = cur_df.merge(df_filtered, on=doc_id_col, how="left")
 
         # Match with bullets
-        bullets_col = "bullets"
+        bullets_col = "text bullets"
         df_bullets = get_text_col_and_rename(df_bullets, doc_id_col, new_col_name=bullets_col)
         cur_df = cur_df.merge(df_bullets, on=doc_id_col, how="left")
 
@@ -1228,7 +1231,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     if norm_by == "slice":
         # Normalize by slice
         matrix_df["value"] = [calc_norm_by_slice(row) for _, row in matrix_df.iterrows()]
-    else:
+    elif norm_by == "concept":
         # Normalize by concept
         matrix_df["value"] = [calc_norm_by_concept(row, "value") for _, row in matrix_df.iterrows()]
     
@@ -1284,7 +1287,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 # - show_highlights: boolean (whether to show highlights)
 # - norm_by: string (column name to normalize by; either "slice" or "concept")
 # - debug: boolean (whether to print debug statements)
-def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], slice_col=None, max_slice_bins=None, slice_bounds=None, show_highlights=False, norm_by="concept", debug=False):
+def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], slice_col=None, max_slice_bins=None, slice_bounds=None, show_highlights=False, norm_by=None, debug=False):
     matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(in_df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, slice_col=slice_col, max_slice_bins=max_slice_bins, slice_bounds=slice_bounds,show_highlights=show_highlights, norm_by=norm_by, debug=debug)
 
     data = matrix_df.to_json(orient='records')

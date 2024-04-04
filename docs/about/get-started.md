@@ -19,8 +19,9 @@ import text_lloom.workbench as wb
 
 ### OpenAI setup
 LLooM uses the OpenAI API under the hood to support its core operators. You'll first need to locally set the `api_key` variable to use your own account.
-```
-openai.api_key = "sk-YOUR-KEY-HERE"
+```py
+import os
+os.environ["OPENAI_API_KEY"] = "sk-YOUR-KEY-HERE"
 ```
 
 ::: tip

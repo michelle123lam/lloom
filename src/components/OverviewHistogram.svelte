@@ -7,8 +7,6 @@
     export let data;
     export let div;
 
-    console.log("OverviewHistogram", div);
-
     function processData(data) {
         let processedData = [];
         data = JSON.parse(data);

@@ -118,6 +118,7 @@
 <div>
 {#if numConcepts > 0}
     <h2 class="card-title">CONCEPT OVERVIEW</h2>
+    <p>An overview of concepts in your dataset. <i>Outliers</i> are documents that did not match any of the concepts.</p>
     <div id="histDiv" class="overview-hist" bind:this={histDiv}>
         {#key histDiv}
                 {#if histDiv == undefined}
@@ -129,6 +130,17 @@
     </div>
 
     <h2 class="card-title">CONCEPT MATRIX</h2>
+    <div>
+        <p>A view of concepts (rows) and slices (columns). Click on a concept or slice name to view details. <br>The size of the circles indicates the number of documents in a given concept and slice.</p>
+        <ul>
+            <li><b>Concepts</b> (rows): LLooM-generated concept matches</li>
+            <li><b>Slices</b> (columns): User-specified data groupings</li>
+            <ul>
+                <li>The default <i>All</i> slice includes all documents.</li>
+                <li>Provide your own <code>slice_col</code> for custom slices based on a string or numeric column in your dataset.</li>
+            </ul>
+        </ul>
+    </div>
     <div id="matrixWidget" class="matrix-widget">
         <div id="matrixDiv" class="matrix" bind:this={matrixDiv}>
             {#key matrixDiv}
@@ -180,9 +192,9 @@
     }
 
     :global(.matrix-widget) {
-        display: flex;
+        /* display: flex;
         flex-direction: row;
-        justify-content: space-between;
+        justify-content: space-between; */
     }
 
     :global(.matrix-view) {
@@ -191,18 +203,17 @@
 
     :global(.matrix) {
         float: left;
-        /* max-width: 40%; */
-        overflow-x: scroll;  
+        max-width: 30%;
+        overflow-x: clip;
     }
 
     :global(.tables) {
         float: right;
         padding: 0 20px;
         overflow-x: scroll;
-        max-width: 70%;
+        max-width: 65%;
         border-radius: 10px;
         border: 1px solid #e6e6e6; 
-        /* max-width: 60%; */
     }
     :global(.tables p) {
         font-size: 14px;

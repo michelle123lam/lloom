@@ -2,27 +2,6 @@
 
 The LLooM Workbench visualization consists of several components. Here, we'll walk through in a bit more detail on how to work with this interactive visualization.
 
-## Key terms
-Here we provide a brief reference on terms used throughout the LLooM Workbench.
-
-::: info CONCEPT GENERATION
-- **Concept**: A natural language description of an emergent theme, trend, or pattern in text.
-    - **Criteria**: The explicit inclusion criteria used to determine whether a given document matches a concept.
-    - **Summary**: A summary of the documents that matched the concept.
-    - **Representative examples**: A sample of quotes from input documents that were used to generate the concept.
-- **Seed**: A word or phrase to steer the direction of concept generation. LLooM uses the provided seed term to condition the Distill and Synthesize operators to pay attention to a particular aspect of the data. Ex: "social issues" for a political dataset or "evaluation methods" for an academic papers dataset.
-:::
-
-::: info CONCEPT SCORING
-- **Concept score**: The estimated likelihood that a document matches the given concept, from 0 (lowest likelihood) to 1 (highest likelihood).
-- **Concept matches**: Documents that matched a concept, by default operationalized as those that received the highest concept score of 1.
-:::
-
-::: info VISUALIZATION
-- **Slice**: A user-specified data grouping based on additional columns in the input dataframe. LLooM automatically creates groups for strings (as categorical variables) or numbers (as binned continuous variables).
-- **Outlier**: Any input document that does not match _any_ of the active concepts.
-:::
-
 ## Concept Overview
 The Concept Overview chart is at the top of the LLooM Workbench visualization. This chart is intended to provide a high-level summary of concepts observed in the dataset. The x-axis displays all concepts (including the Outlier set), and the y-axis plots the number of documents that matched the concept. 
 
@@ -35,7 +14,7 @@ The Concept Matrix is below the Concept Overview and comprises the majority of t
 The circles at the intersection of each concept and slice indicate the _number of documents_ in that concept and slice: a larger circle indicates a higher number of docs, and a smaller circle indicates a lower number of docs. 
 
 ### Circle normalization
-Since there are different numbers of documents within each concept and slice, absolute document counts aren't always helpful. We can _normalize_ the circle size either by concept or by slice.
+Since there are different numbers of documents within each concept and slice, absolute document counts aren't always helpful. We can optionally _normalize_ the circle size either by concept or by slice.
 - **`norm_by="concept"`**: (**norm by row**) The size of the circles in each _concept row_ represents the fraction of examples _in that concept_ that fall into each slice column. 
     ::: tip When to use CONCEPT normalization
     * Helpful if we want to see patterns _within_ a concept and _across_ slices. 
@@ -64,8 +43,8 @@ Clicking on a concept row header opens its Concept Detail view. This view contai
 - **Potential concept matches**: This table displays a summary of documents that matched the concept, where each row represents one document. It includes the following columns:
     * `concept score`: The 0-1 score assigned to the document. By default, only documents with a score of 1 will appear as matches here.
     * `text`: The full document text. If the model has identified spans of relevant text for the concept, they will be highlighted in blue.
-    * `bullets`: The results of the Distill step that produces bulleted summaries of the document.
-    * `rationale`: The LLM's rationale for providing the given concept score.
+    * `text bullets`: The results of the Distill step that produces bulleted summaries of the document.
+    * `score rationale`: The LLM's rationale for providing the given concept score.
     * `<slice column>`: The slice column values if `slice_col` was specified.
     ::: tip
     Click on the header for a column in the table to sort by that column.
@@ -79,6 +58,27 @@ Similarly, clicking on a slice column header opens its Slice Detail view. This v
     * `text`: The full document text.
     * `<concept name>`: The score for the concept with the indicated name. There will be a column for each concept.
     * `<slice column>`: The slice column values.
+
+## Key terms
+Here we provide a brief reference on terms used throughout the LLooM Workbench.
+
+::: info CONCEPT GENERATION
+- **Concept**: A natural language description of an emergent theme, trend, or pattern in text.
+    - **Criteria**: The explicit inclusion criteria used to determine whether a given document matches a concept.
+    - **Summary**: A summary of the documents that matched the concept.
+    - **Representative examples**: A sample of quotes from input documents that were used to generate the concept.
+- **Seed**: A word or phrase to steer the direction of concept generation. LLooM uses the provided seed term to condition the Distill and Synthesize operators to pay attention to a particular aspect of the data. Ex: "social issues" for a political dataset or "evaluation methods" for an academic papers dataset.
+:::
+
+::: info CONCEPT SCORING
+- **Concept score**: The estimated likelihood that a document matches the given concept, from 0 (lowest likelihood) to 1 (highest likelihood).
+- **Concept matches**: Documents that matched a concept, by default operationalized as those that received the highest concept score of 1.
+:::
+
+::: info VISUALIZATION
+- **Slice**: A user-specified data grouping based on additional columns in the input dataframe. LLooM automatically creates groups for strings (as categorical variables) or numbers (as binned continuous variables).
+- **Outlier**: Any input document that does not match _any_ of the active concepts.
+:::
 
 
 <style>

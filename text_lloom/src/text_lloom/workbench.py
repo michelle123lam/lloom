@@ -7,6 +7,8 @@ import pandas as pd
 import ipywidgets as widgets
 import random
 from nltk.tokenize import sent_tokenize
+import os
+import openai
 
 
 # Local imports
@@ -62,6 +64,12 @@ class lloom:
             "in_tokens": [],
             "out_tokens": [],
         }
+
+        # Set up API key
+        if "OPENAI_API_KEY" not in os.environ:
+            raise Exception("API key not found. Please set the OPENAI_API_KEY environment variable by running: `os.environ['OPENAI_API_KEY'] = 'your_key'`")
+        else:
+            openai.api_key = os.environ["OPENAI_API_KEY"]
     
     # Preprocesses input dataframe
     def preprocess_df(self, df):
@@ -466,7 +474,7 @@ class lloom:
     # - show_highlights: bool (whether to show text highlights)
     # - norm_by: str (how to normalize scores: "concept" or "slice")
     # - export_df: bool (whether to return a dataframe for export)
-    def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by="concept", export_df=False):
+    def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by=None, export_df=False):
         active_concepts = self.__get_active_concepts()
         score_df = self.get_score_df()
 

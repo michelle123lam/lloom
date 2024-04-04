@@ -17,7 +17,7 @@
     const dispatch = createEventDispatcher();
     let rowLabelWidth = 200;
     let rowLabelHeight = 150;
-    let perSliceWidth = 80;
+    let perSliceWidth = 60;
     let colLabelHeight = 300;
     let perConceptHeight = 60;
     
@@ -584,10 +584,14 @@
                 return max;
             }
 
-            this.columnHeight = max(chartData.columns.map(c => this.trim(c.name) + "M"));
-            this.rowWidth = this.margin.left + max(chartData.rows.map(r => r.name + "MM"), this.font.clone().weight("bold"));
             this.columnHeight = rowLabelHeight;  // Workaround
             this.rowWidth = rowLabelWidth;  // Workaround
+            // if (chartData.columns.length > 0) {
+            //     this.columnHeight = max(chartData.columns.map(c => this.trim(c.name) + "M"));
+            // }
+            // if (chartData.rows.length > 0) {
+            //     this.rowWidth = this.margin.left + max(chartData.rows.map(r => r.name + "MM"), this.font.clone().weight("bold"));
+            // }
         }
 
         _calculateBubbleRadius(chartData, showSlider) {
@@ -801,7 +805,7 @@
                 row: "#caf0f8",
                 above: "#ffd166",
                 below: "#118ab2",
-                label: "black"
+                label: "#3c3c43"
             };
 
             this.matrix = {
@@ -934,7 +938,8 @@
                     //   .attr("transform", "rotate(-45)");
                 }
             );
-
+            
+            const axisColor = "#a7a7a7";
             this.axis = this._renderGroups(
                 this.matrix.og,
                 undefined,
@@ -942,7 +947,7 @@
                 g => {
                     g.append("line")
                         .attr("y1", 0).attr("y2", c.scales.maxY)
-                        .attr("stroke-width", 1).attr("stroke", "#8d99ae");
+                        .attr("stroke-width", 1).attr("stroke", axisColor);
                 }
             );
         }
@@ -1127,7 +1132,10 @@
                             .attr("cy", c.measures.bubbleRadius)
                             .attr("r", 0);
                     })
-                    .on("click", this._handleClick.bind(this));
+                    .on("click", this._handleClick.bind(this))
+                    .on("pointerenter", this._handlePointerEnter.bind(this))
+                    .on("pointermove", this._handlePointerMove.bind(this))
+                    .on("pointerleave", this._handlePointerLeave.bind(this));
 
                 this._bubbles.selectAll("circle")
                     .transition()
@@ -1136,7 +1144,7 @@
                     .attr("r", d => d.value ? c.scales.r(d.value) : 0);
             });
 
-            // this.highlightBubbles(); // TEMP: remove highlighting
+            // this.highlightBubbles(); // Remove highlighting
         }
 
         relocateAnnotation(delay = true) {
@@ -1155,125 +1163,62 @@
 
         _handleClick(e, d) {
             const c = this.chart;
-            // console.log("handleClick", d, this._focused)  // TEMP
-            // if (this._focused !== d) {
-            //     // Clicking on a new bubble
-            //     // Clear previous
-            //     if (this._focused != null) {
-            //         // console.log("removing shadow") // TEMP
-            //         // Remove shadow from previous element
-            //         this._bubbles.filter(b => b == this._focused)
-            //             .call(g => {
-            //                 g.select(".shadow").remove();
-            //                 g.select(".bubble").attr("transform", null);
-            //             });
-                    
-            //         if (this.oncancel) this.oncancel(e, d);
-            //             this.columns.axis.select("line").attr("stroke-width", 1);
-            //             this.columns.text.attr("font-weight", "");
-            //             this._bubbles.filter(b => b === this._focused)
-            //                 .call(g => {
-            //                     g.select(".bubble").attr("transform", "");
-            //                     g.select(".shadow").remove();
-            //                 });
-            //     }
-            //     // this._showAnnotation(e, d);
-
-            //     // Select new bubble
-            //     dispatch("message", {selection_type: "cell", row: ("" + d.row) , col: ("" + d.column)})
-
-            //     // Add shadow to clicked element
-            //     this._bubbles.filter(b => b === d)
-            //     .call(g => {
-            //         // g.select(".bubble").attr("transform", "translate(1,-1.5)");
-            //         g.insert("circle", "circle")
-            //         .attr("class", "shadow")
-            //         .attr("cy", c.measures.bubbleRadius)
-            //         .attr("r", d => d.value ? c.scales.r(d.value) : 0)
-            //         .attr("fill", d => {
-            //             const color = d.value >= c.chartData.level ? this.colors.above : this.colors.below;
-            //             return d3.color(color).darker(1);
-            //         })
-            //     });
-
-            //     this.columns.axis.select("line").attr("stroke-width", col => col.name === d.column ? 2 : 1);
-            //     this.columns.text.attr("font-weight", col => col.name === d.column ? "bold" : "");
-            //     this._focused = d;
-            // }
-            // else {
-            //     // Clicking on the same bubble
-            //     // Clear this bubble
-            //     this._annotation.hide();
-            //     this._focused = null;
-            //     dispatch("message", {selection_type: "cell", row: null , col: null})
-
-            //     // Remove shadow from clicked element
-            //     this._bubbles.filter(b => b === d)
-            //     .call(g => {
-            //         g.select(".bubble").attr("transform", "");
-            //         g.select(".shadow").remove();
-            //     });
-            // }  # Don't respond to click on individual bubble
             if (this.onclick) this.onclick(e, d);
         }
 
         _showAnnotation(e, d) {
-            // const
-            //     c = this.chart,
-            //     a = this._annotation,
-            //     getPosition = (axis, name) => {
-            //         const obj = axis.find(d => d.name === name);
-            //         return obj ? obj.position : 0;
-            //     }
+            const
+                c = this.chart,
+                a = this._annotation,
+                getPosition = (axis, name) => {
+                    const obj = axis.find(d => d.name === name);
+                    return obj ? obj.position : 0;
+                }
 
-            // if (this.showAnnotation) {
-            //     const
-            //         cx = c.scales.x(getPosition(c.chartData.columns, d.column)),
-            //         cy = c.scales.y(getPosition(c.chartData.rows, d.row)),
-            //         r = c.scales.r(d.value),
-            //         color = d.value >= c.chartData.level ? this.colors.above : this.colors.below;
+            if (this.showAnnotation) {
+                const
+                    cx = c.scales.x(getPosition(c.chartData.columns, d.column)),
+                    cy = c.scales.y(getPosition(c.chartData.rows, d.row)),
+                    r = c.scales.r(d.value),
+                    color = d.value >= c.chartData.level ? this.colors.above : this.colors.below;
 
-            //     this._focused = d;
-            //     a.hide();
-            //     a.show(
-            //         null, this._getTooltipContent(d),
-            //         cx + c.measures.bubbleRadius,
-            //         cy + c.measures.bubbleRadius + c.measures.padding / 2,
-            //         r, d3.color(color).darker(1));
-            // }
+                this._focused = d;
+                a.hide();
+                a.show(
+                    null, this._getTooltipContent(d),
+                    cx + c.measures.bubbleRadius,
+                    cy + c.measures.bubbleRadius + c.measures.padding / 2,
+                    r, d3.color(color).darker(1));
+            }
         }
 
         _handlePointerEnter(e, d) {
             const c = this.chart;
-            // // console.log("handlePointerEnter", d, this._focused) // TEMP
 
             if (this.onhover) this.onhover(e, d);
                 this.columns.axis.select("line").attr("stroke-width", col => col.name === d.column ? 2 : 1);
-                this.columns.text.attr("font-weight", col => col.name === d.column ? "bold" : "");
+                // this.columns.text.attr("font-weight", col => col.name === d.column ? "bold" : "");
 
-            // if (this._focused == null) {
-            //     // If nothing is selected, filter on hover-enter
-            //     // if (this.showTooltip) this._tooltip.show(e, this._getTooltipContent(d));
-            //     if (this.onhover) this.onhover(e, d);
-            //     this.columns.axis.select("line").attr("stroke-width", col => col.name === d.column ? 2 : 1);
-            //     this.columns.text.attr("font-weight", col => col.name === d.column ? "bold" : "");
-                
-            //     dispatch("message", {selection_type: "cell", row: ("" + d.row) , col: ("" + d.column)})
+            if (this._focused == null) {
+                // If nothing is selected, filter on hover-enter
+                if (this.showTooltip) this._tooltip.show(e, this._getTooltipContent(d));
+                if (this.onhover) this.onhover(e, d);
+                // dispatch("message", {selection_type: "cell", row: ("" + d.row) , col: ("" + d.column)})
 
-            //     // Add shadow
-            //     this._bubbles.filter(b => b === d)
-            //     .call(g => {
-            //         // g.select(".bubble").attr("transform", "translate(1,-1.5)");
-            //         g.insert("circle", "circle")
-            //         .attr("class", "shadow")
-            //         .attr("cy", c.measures.bubbleRadius)
-            //         .attr("r", d => d.value ? c.scales.r(d.value) : 0)
-            //         .attr("fill", d => {
-            //             const color = d.value >= c.chartData.level ? this.colors.above : this.colors.below;
-            //             return d3.color(color).darker(1);
-            //         })
-            //     });  // TEMP: remove threshold-based circle coloring
-            // }
+                // Add darker bubble
+                this._bubbles.filter(b => b === d)
+                .call(g => {
+                    g.insert("circle", "circle")
+                    .attr("class", "shadow")
+                    .attr("cy", c.measures.bubbleRadius)
+                    .attr("r", d => d.value ? c.scales.r(d.value) : 0)
+                    .attr("fill", d => {
+                        const color = d.value >= c.chartData.level ? this.colors.above : this.colors.below;
+                        return d3.color(color).darker(1);
+                    })
+                    .attr("opacity", 0.5);
+                });
+            }
         }
 
         _handlePointerMove(e) {
@@ -1281,21 +1226,18 @@
         }
 
         _handlePointerLeave(e, d) {
-            // if (this.showTooltip) this._tooltip.hide();
-            // // console.log("handlePointerLeave", d, this._focused) // TEMP
+            if (this.showTooltip) this._tooltip.hide();
             if (this._focused == null) {
-                // // If nothing is selected, remove on hover-leave
-                // // If something is selected, ignore
                 // dispatch("message", {selection_type: "cell", row: null , col: null})
 
                 if (this.oncancel) this.oncancel(e, d);
                     this.columns.axis.select("line").attr("stroke-width", 1);
-                    this.columns.text.attr("font-weight", "");
-                    // this._bubbles.filter(b => b === d)
-                    //     .call(g => {
-                    //         g.select(".bubble").attr("transform", "");
-                    //         g.select(".shadow").remove();
-                    //     });
+                    // this.columns.text.attr("font-weight", "");
+                    this._bubbles.filter(b => b === d)
+                        .call(g => {
+                            g.select(".bubble").attr("transform", "");
+                            g.select(".shadow").remove();
+                        });
             }
             
         }
@@ -1359,13 +1301,13 @@
             }
         }
 
-        _getTooltipContent(d) {  // TODO(msl): add full text in detail section
+        _getTooltipContent(d) { 
             const names = this.chart.fieldNames;
             return [
-                `${names.row}: ${d.row}`,
-                `${names.column}: ${d.column}`,
-                `${names.value}: ${this._formatValue(d.value, false)}`,
-                `${names.detail}: ${d.detail.slice(0, 50)}...`
+                // `Concept: ${d.row}`,
+                // `Slice: ${d.column}`,
+                // `Matches: ${this._formatValue(d.value, false)}`,
+                `${this._formatValue(d.value, false)}`,
             ];
         }
 
@@ -1391,12 +1333,20 @@
                 .call(draw)
                 .on("click", this._rowClick.bind(this))
                 .on("pointerenter", (e, d) => {
-                    this._bubbleRects.attr("opacity", row => row.name === d.name ? 0.8 : 0.5);
-                    this._labelRects.attr("opacity", row => row.name === d.name ? 0.8 : 0.5);
+                    // this._bubbleRects.attr("opacity", row => row.name === d.name ? 0.8 : 0.5);
+                    // this._labelRects.attr("opacity", row => row.name === d.name ? 0.8 : 0.5);
+                    this._bubbleRects.attr("fill", row => row.name === d.name ? d3.color(this.colors.row).darker(0.3) : this.colors.row);
+                    this._labelRects.attr("fill", row => row.name === d.name ? d3.color(this.colors.row).darker(0.3) : this.colors.row); 
+                    // this._bubbleRects.attr("stroke-width", row => row.name === d.name ? 2 : 0);
+                    // this._labelRects.attr("stroke-width", row => row.name === d.name ? 2 : 0);
                 })
                 .on("pointerleave", (e, d) => {
-                    this._bubbleRects.attr("opacity", 0.5);
-                    this._labelRects.attr("opacity", 0.5);
+                    // this._bubbleRects.attr("opacity", 0.5);
+                    // this._labelRects.attr("opacity", 0.5);
+                    // this._bubbleRects.attr("stroke-width", 0);
+                    // this._labelRects.attr("stroke-width", 0);
+                    this._bubbleRects.attr("fill", this.colors.row);
+                    this._labelRects.attr("fill", this.colors.row);
                 });
         }
 
@@ -1404,6 +1354,8 @@
             if (this._rowFocused !== d) {
                 this._bubbleRects.attr("stroke-width", row => row.name === d.name ? 2 : 0);
                 this._labelRects.attr("stroke-width", row => row.name === d.name ? 2 : 0);
+                this._bubbleRects.attr("fill", row => row.name === d.name ? d3.color(this.colors.row).darker(0.3) : this.colors.row);
+                this._labelRects.attr("fill", row => row.name === d.name ? d3.color(this.colors.row).darker(0.3) : this.colors.row); 
                 this._rowFocused = d;
                 dispatch("message", {selection_type: "row", row: ("" + d.name), col: null, sortOrder: d.order})
                 if (this.columns._focused != null) {
@@ -1414,6 +1366,8 @@
             } else {
                 this._bubbleRects.attr("stroke-width", 0);
                 this._labelRects.attr("stroke-width", 0);
+                this._bubbleRects.attr("fill", this.colors.row);
+                this._labelRects.attr("fill", this.colors.row);
                 this._rowFocused = null;
                 dispatch("message", {selection_type: "row", row: null, col: null, sortOrder: d.order})
             }
