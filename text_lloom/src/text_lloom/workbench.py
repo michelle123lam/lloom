@@ -403,6 +403,7 @@ class lloom:
             batch_size=batch_size,
             get_highlights=get_highlights,
             sess=self,
+            threshold=1.0,
         )
 
         return score_df
@@ -422,13 +423,13 @@ class lloom:
         score_df = score_df.rename(columns={"doc_id": self.doc_id_col})
         return score_df
 
-    def __get_concept_highlights(self, c, threshold=0.75, highlight_col="highlight", lim=3):
+    def __get_concept_highlights(self, c, threshold=1.0, highlight_col="highlight", lim=3):
         if c.name == "Outlier":
             return []
         if c.id not in self.results:
             return []
         score_df = self.results[c.id].copy()
-        score_df = score_df[score_df["score"] > threshold]
+        score_df = score_df[score_df["score"] >= threshold]
         highlights = score_df[highlight_col].tolist()
         # shuffle highlights
         random.shuffle(highlights)
@@ -447,10 +448,10 @@ class lloom:
         ex = df[df[self.doc_id_col].isin(ex_ids)][self.doc_col].tolist()
         return ex
 
-    def __get_df_for_export(self, item_df, threshold=0.75, include_outliers=False):
+    def __get_df_for_export(self, item_df, threshold=1.0, include_outliers=False):
         # Prepares a dataframe meant for exporting the current session results
         # Includes concept, criteria, summary, representative examples, prevalence, and highlights
-        matched = item_df[(item_df.concept_score_orig > threshold)]
+        matched = item_df[(item_df.concept_score_orig >= threshold)]
         if not include_outliers:
             matched = matched[item_df.concept != "Outlier"]
 
@@ -474,7 +475,7 @@ class lloom:
     # - show_highlights: bool (whether to show text highlights)
     # - norm_by: str (how to normalize scores: "concept" or "slice")
     # - export_df: bool (whether to return a dataframe for export)
-    def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by=None, export_df=False):
+    def vis(self, cols_to_show=[], slice_col=None, max_slice_bins=5, slice_bounds=None, show_highlights=True, norm_by=None, export_df=False, include_outliers=False):
         active_concepts = self.__get_active_concepts()
         score_df = self.get_score_df()
 
@@ -495,18 +496,18 @@ class lloom:
             norm_by=norm_by,
         )
         if export_df:
-            return self.__get_df_for_export(item_df)
+            return self.__get_df_for_export(item_df, include_outliers=include_outliers)
         
         return widget
 
-    def export_df(self):
-        return self.vis(export_df=True)
+    def export_df(self, include_outliers=False):
+        return self.vis(export_df=True, include_outliers=include_outliers)
     
-    def export_json(self, threshold=0.75):
+    def export_json(self, threshold=1.0):
         def format_dict(c):
             c["criteria"] = c["prompt"]
             cur_score_df = self.results[c["id"]]
-            matched = cur_score_df[cur_score_df.score > threshold]
+            matched = cur_score_df[cur_score_df.score >= threshold]
             c["n"] = len(matched)
             # Remove unused columns
             del c["prompt"]

@@ -636,7 +636,7 @@ def get_empty_score_df(in_df, concept, concept_id, text_col, doc_id_col):
     return out_df[SCORE_DF_OUT_COLS]
 
 # Performs scoring for one concept
-async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, model_name, batch_size, get_highlights, sess):
+async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, model_name, batch_size, get_highlights, sess, threshold):
     # TODO: add support for only a sample of examples
     # TODO: set consistent concept IDs for reference
 
@@ -680,7 +680,7 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
         sess.results[concept_id] = score_df
     
         # Generate summary
-        cur_summary = await summarize_concept(score_df, concept_id, model_name, sess=sess)
+        cur_summary = await summarize_concept(score_df, concept_id, model_name, sess=sess, threshold=threshold)
     return score_df
 
 # Performs scoring for all concepts
@@ -688,7 +688,7 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
 #   --> text could be original, filtered (quotes), and/or summarized (bullets)
 # Parameters: threshold
 # Output: score_df (columns: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight)
-async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gpt-3.5-turbo", batch_size=5, get_highlights=False, sess=None):
+async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gpt-3.5-turbo", batch_size=5, get_highlights=False, sess=None, threshold=1.0):
     # Scoring operates on "text" column for each concept
     start = time.time()
 
@@ -697,7 +697,7 @@ async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gp
     text_df = filter_empty_rows(text_df, text_col)
 
     text_df[doc_id_col] = text_df[doc_id_col].astype(str)
-    tasks = [score_helper(concept, concept_i, concept_id, text_df, text_col, doc_id_col, model_name, batch_size, get_highlights, sess=sess) for concept_i, (concept_id, concept) in enumerate(concepts.items())]
+    tasks = [score_helper(concept, concept_i, concept_id, text_df, text_col, doc_id_col, model_name, batch_size, get_highlights, sess=sess, threshold=threshold) for concept_i, (concept_id, concept) in enumerate(concepts.items())]
     score_dfs = await tqdm_asyncio.gather(*tasks, file=sys.stdout)
 
     # Combine score_dfs
@@ -746,7 +746,7 @@ def refine(score_df, concepts, threshold=1, generic_threshold=0.75, rare_thresho
     
     return concepts
 
-async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-preview", sess=None, threshold=0.75, summary_length="15-20 word", score_col="score", highlight_col="highlight"):
+async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-preview", sess=None, threshold=1.0, summary_length="15-20 word", score_col="score", highlight_col="highlight"):
     # Summarizes behavior in each concept
     df = score_df.copy()
     df = df[df[score_col] >= threshold]
@@ -783,7 +783,7 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
     return None
 
 # Returns ids of not-covered documents
-def get_not_covered(score_df, doc_id_col, threshold=0.75, debug=False):
+def get_not_covered(score_df, doc_id_col, threshold=1.0, debug=False):
     # Convert to thresholded scores; sum scores across concepts for each doc
     df = score_df.copy()
     df["score"] = df["score"].apply(lambda x: 1 if x >= threshold else 0)
@@ -799,7 +799,7 @@ def get_not_covered(score_df, doc_id_col, threshold=0.75, debug=False):
     return doc_ids
 
 # Returns ids of covered-by-generic documents
-def get_covered_by_generic(score_df, doc_id_col, threshold=0.75, generic_threshold=0.5, debug=False):
+def get_covered_by_generic(score_df, doc_id_col, threshold=1.0, generic_threshold=0.5, debug=False):
     # Determines generic concepts
     df = score_df.copy()
     df["score"] = df["score"].apply(lambda x: 1 if x >= threshold else 0)
@@ -1088,7 +1088,7 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
 # Helper function for `visualize()` to generate the underlying dataframes
 # Parameters:
 # - threshold: float (minimum score of positive class)
-def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, slice_col, max_slice_bins, slice_bounds, show_highlights, norm_by=None, debug=False, threshold=None, outlier_threshold=0.75):
+def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show, slice_col, max_slice_bins, slice_bounds, show_highlights, norm_by=None, debug=False, threshold=None, outlier_threshold=1.0):
     # TODO: codebook info
 
     # Handle groupings
@@ -1215,7 +1215,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
         for concept in concept_names:
             cur_scores = [clean_score(x, threshold) for x in cur_df[concept].tolist()]
             if len(cur_scores) > 0:
-                matches = [x for x in cur_scores if x > outlier_threshold]
+                matches = [x for x in cur_scores if x >= outlier_threshold]
                 n_matches = len(matches)
             else:
                 n_matches = 0
