@@ -285,7 +285,7 @@
                     return new Cell(key, col.name, c ? +c[names.value] : null, c[names.detail]);
                 });
                 const row = new Row(key, i, cells);
-                row.markBounds();
+                // row.markBounds();
                 return row;
             });
 

@@ -16,6 +16,7 @@ import textwrap
 from itertools import chain
 import pickle
 import ipywidgets as widgets
+import re
 
 # Clustering
 from bertopic import BERTopic
@@ -962,8 +963,24 @@ def format_bullets(orig, add_quotes=False):
         lines = [f"<li>{line}</li>" for line in orig]
     return "<ul>" + "".join(lines) + "</ul>"
 
+def remove_emojis(string):
+    emoji_pattern = re.compile(
+        "["
+        u"\U0001F600-\U0001F64F" # emoticons
+        u"\U0001F300-\U0001F5FF" # symbols & pictographs
+        u"\U0001F680-\U0001F6FF" # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF" # flags (iOS)
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        "]+", 
+        flags=re.UNICODE
+    )
+    
+    return emoji_pattern.sub(r'', string)
+
 # Adds color-background styling for highlight columns to match score value
 def format_highlight(orig: str, quotes, x: float):
+        orig = remove_emojis(orig)
         color_str = f"rgba(130, 193, 251, {x*0.5})"
         start_tag = f"<span style='background-color: {color_str}'>"
         end_tag = "</span>"
