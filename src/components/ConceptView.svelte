@@ -11,6 +11,7 @@
     export let filterItems;
     export let selectedTitle;
     export let selectedMetadata;
+    export let sliceCol;
 
     let rows = [];
     let columns = [];
@@ -74,7 +75,7 @@
                     {/each}
                 </div>
                 <div class="overview-card-right">
-                    <ConceptSummaryChart rows={rowsMatch} {filterItems} />
+                    <ConceptSummaryChart rows={rowsMatch} {filterItems} {sliceCol} />
                 </div>
             </div>
         {/if}

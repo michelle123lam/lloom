@@ -88,12 +88,20 @@ await l.add(
 )
 ```
 
-### Save or export results
+### Save LLooM instance
 You can save your LLooM instance to a pickle file to reload at a later point.
 ```py
 l.save(folder="your/path/here", file_name="your_file_name")
 ```
 
+You can then reload the LLooM instance by opening the pickle file:
+```py
+import pickle
+with open(f"your/path/here/your_file_name.pkl", "rb") as f:
+    l = pickle.load(f)
+```
+
+### Export results
 Export a summary of the results in Pandas Dataframe form. 
 ```py
 export_df = l.export_df()

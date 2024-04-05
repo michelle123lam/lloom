@@ -12,6 +12,8 @@
     export let div;  // div containing the matrix
     export let numConcepts;  // total number of concepts (for dynamic sizing)
     export let numSlices; // total number of slices (for dynamic sizing)
+    export let sliceCol; // name of the slice column
+    export let normBy; // normalization type
 
     let chart;
     const dispatch = createEventDispatcher();
@@ -918,6 +920,10 @@
                 .attr("height", c.measures.columnHeight + bufferHeight)
                 .append("g");
             
+            // Slice column label
+            g.append("text").text(sliceCol).attr("y", 10).attr("x", 10).attr("font-weight",  "bold").attr("font-size", 12);
+
+            // Column headers
             this.labels = this._renderGroups(
                 g,
                 `translate(0,${c.measures.columnHeight})`,
@@ -1303,12 +1309,21 @@
 
         _getTooltipContent(d) { 
             const names = this.chart.fieldNames;
-            return [
+            // return [
                 // `Concept: ${d.row}`,
                 // `Slice: ${d.column}`,
                 // `Matches: ${this._formatValue(d.value, false)}`,
-                `${this._formatValue(d.value, false)}`,
-            ];
+            // ];
+            if (normBy === "") {
+                let valFormat = (d.value)
+                return [`${valFormat} docs`,]
+            } else if (normBy === "concept") {
+                let valFormat = d3.format(".1%")(d.value);
+                return [`${valFormat} of concept`,]
+            }  else if (normBy === "slice") {
+                let valFormat = d3.format(".1%")(d.value);
+                return [`${valFormat} of slice`,]
+            }
         }
 
         _calcTooltipPosition(c, box) {

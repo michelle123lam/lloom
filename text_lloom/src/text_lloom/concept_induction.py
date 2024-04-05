@@ -1045,8 +1045,8 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
             bins = sorted(bin_assn.unique(), key=lambda x: x.left if (isinstance(x, pd.Interval)) else 0, reverse=False)
         def get_bin_name(bin):
             if isinstance(bin, pd.Interval):
-                return f"{slice_col}: ({bin.left}, {bin.right}]"
-            return f"{slice_col}: {bin}"
+                return f"({bin.left}, {bin.right}]"
+            return f"{bin}"
         def get_bin_fn(bin):
             if isinstance(bin, pd.Interval):
                 return {"x": slice_col, "fn": _slice_fn_num, "args": [bin.left, bin.right]}
@@ -1059,7 +1059,7 @@ def get_groupings(df, slice_col, max_slice_bins, slice_bounds):
     elif is_string_dtype(df[slice_col]):
         # String column: Create groupings based on unique values
         def get_group_name(group_name):
-            return f"{slice_col}: {group_name}"
+            return f"{group_name}"
         groupings = {
             get_group_name(group_name): {"x": slice_col, "fn": _slice_fn_cat, "args": [group_name]} for group_name in df[slice_col].unique()
         }
@@ -1294,11 +1294,17 @@ def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_b
     data_items = item_df.to_json(orient='records')
     data_items_wide = item_df_wide.to_json(orient='records')
     md = json.dumps(metadata_dict)
+    if slice_col is None:
+        slice_col = ""
+    if norm_by is None:
+        norm_by = ""
     w = MatrixWidget(
         data=data, 
         data_items=data_items,
         data_items_wide=data_items_wide, 
-        metadata=md
+        metadata=md,
+        slice_col=slice_col,
+        norm_by=norm_by,
     )
     return w, matrix_df, item_df, item_df_wide
 

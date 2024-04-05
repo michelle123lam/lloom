@@ -16,6 +16,8 @@
     let dataItemsWide;
     let metadataOrig;
     let metadata;
+    let sliceCol;
+    let normBy;
     let numConcepts;
     let numSlices;
 
@@ -32,6 +34,8 @@
     dataItemsWide = model.get("data_items_wide");
     metadataOrig = model.get("metadata");
     metadata = JSON.parse(metadataOrig);
+    sliceCol = model.get("slice_col");
+    normBy = model.get("norm_by");
     numConcepts = Object.keys(metadata.concepts).length;
     numSlices = Object.keys(metadata.items).length;
 
@@ -78,7 +82,11 @@
             } else {
                 selectedMatrixElem = "group";
                 filterItems = { id: col };
-                selectedTitle = "Slice: " + col;
+                if (sliceCol.length > 0) {
+                    selectedTitle = "Slice: " + sliceCol + ": " + col;
+                } else {
+                    selectedTitle = "Slice: " + col;
+                }
                 selectedMetadata = metadata.items[col];
 
                 sortBy = "concept_score";
@@ -152,6 +160,8 @@
                         div={matrixDiv}
                         {numConcepts}
                         {numSlices}
+                        {sliceCol}
+                        {normBy}
                         on:message={handleMatrixEvent}
                     />
                     
@@ -166,6 +176,7 @@
                 {filterItems}
                 {selectedTitle}
                 {selectedMetadata}
+                {sliceCol}
             />
         </div>
         {:else if selectedMatrixElem == "group"}

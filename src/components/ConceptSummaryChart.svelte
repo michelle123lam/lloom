@@ -7,6 +7,7 @@
     // Properties
     export let rows = [];
     export let filterItems;
+    export let sliceCol;
     let data;
     let viewVL;
 
@@ -46,7 +47,7 @@
                 // scale: {
                 //     domain: [0, 1]
                 // },
-                title: "Concept Prevalence"
+                title: "Number of documents"
             },
 			x: { 
                 field: 'id', 
@@ -55,7 +56,7 @@
                     labelLimit: 100,
                     labelAngle: -45
                 },
-                title: "Group",
+                title: sliceCol,
                 sort: null,
             },
             tooltip: {

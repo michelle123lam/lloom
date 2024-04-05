@@ -47,7 +47,7 @@
                 // scale: {
                 //     domain: [0, 1]
                 // },
-                title: "Concept Prevalence"
+                title: "Number of documents"
             },
 			y: { 
                 field: 'concept', 

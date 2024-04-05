@@ -43,6 +43,8 @@ class MatrixWidget(anywidget.AnyWidget):
     data_items = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data_items` property
     data_items_wide = traitlets.Unicode().tag(sync=True)  # syncs the widget's `data_items_wide` property
     metadata = traitlets.Unicode().tag(sync=True)  # syncs the widget's `metadata` property
+    slice_col = traitlets.Unicode().tag(sync=True)  # syncs the widget's `slice_col` property
+    norm_by = traitlets.Unicode().tag(sync=True)  # syncs the widget's `norm_by` property
   
 """
 CONCEPT SELECT WIDGET
