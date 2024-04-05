@@ -22,6 +22,7 @@
     let ignore_cols = ["concept_score_orig"];
     let sortBy = "concept score";
     let sortOrder = -1;
+    let domain = [];
 
     onMount(() => {
         renderTable(data);
@@ -56,6 +57,9 @@
 
             // rowsMatch = rows.filter(row => (row["concept_score_orig"] == 1.0));
             // rowsNonMatch = rows.filter(row => (row["concept_score_orig"] == 0.0));
+
+            let fullDomain = rows.map(d => d["id"]);
+            domain = [...new Set(fullDomain)];
         }
     }
 </script>
@@ -75,7 +79,7 @@
                     {/each}
                 </div>
                 <div class="overview-card-right">
-                    <ConceptSummaryChart rows={rowsMatch} {filterItems} {sliceCol} />
+                    <ConceptSummaryChart rows={rowsMatch} {filterItems} {sliceCol} {domain} />
                 </div>
             </div>
         {/if}
@@ -144,13 +148,13 @@
 
     :global(.overview-card-left) {
         float: left;
-        width: 60%;
+        width: 60%; 
         height: 100%; 
     }
 
     :global(.overview-card-right) {
         float: right;
-        width: 30%; 
+        width: 40%; 
         height: 100%;
     }
 

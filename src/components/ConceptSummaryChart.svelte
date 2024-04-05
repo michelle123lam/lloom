@@ -1,15 +1,15 @@
 <script>
     // Component to render chart (viewing data by clusters) in notebook
     // Imports
-    import { onMount } from "svelte";
-    import { Vega, VegaLite } from 'svelte-vega';
+    import * as Plot from "@observablehq/plot";
 
     // Properties
     export let rows = [];
     export let filterItems;
     export let sliceCol;
-    let data;
-    let viewVL;
+    export let domain;
+
+    let container;
 
     function onChange(rows, filterItems) {
         let filteredRows = rows.filter((row) => {
@@ -22,60 +22,51 @@
             return keep;
         });
         rows = filteredRows;
-        data = {
-            rows: rows
+        makePlot(rows);
+    }
+
+    function makePlot(data) {
+        if (data.length > 0) {
+            let curPlot = Plot.plot({
+                x: {domain: domain},
+                marks: [
+                    Plot.gridY(),
+                    Plot.barY(
+                        data, 
+                        Plot.groupX(
+                            {y: 'count'},
+                            {
+                                x: 'id', 
+                                fill: '#c1e0fd', 
+                                tip: true, 
+                            },
+                        ),
+                    ),
+                    Plot.axisX({
+                        label: sliceCol,
+                        lineWidth: 8,
+                        tickRotate: -45,
+                        textAnchor: "end",
+                    }),
+                    Plot.axisY({
+                        label: "Number of documents",
+                    })
+                ],
+                marginBottom: 100,
+                width: 300,
+                height: 200,
+            });
+
+            // Replace the div with the plot
+            container.replaceChildren(curPlot);
         }
     }
 
-    onChange(rows, filterItems);
-
-    let specVL = {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-		description: 'A simple bar chart with embedded data.',
-		data: {
-			name: 'rows'
-		},
-		mark: {type: 'bar'},
-        title: "Concept Prevalence",
-        width: 200, 
-        height: 150, 
-		encoding: {
-			y: { 
-                field: 'concept_score_orig', 
-                type: 'quantitative' , 
-                aggregate: "sum",
-                // scale: {
-                //     domain: [0, 1]
-                // },
-                title: "Number of documents"
-            },
-			x: { 
-                field: 'id', 
-                type: 'ordinal',
-                axis: {
-                    labelLimit: 100,
-                    labelAngle: -45
-                },
-                title: sliceCol,
-                sort: null,
-            },
-            tooltip: {
-                field: 'concept_score_orig',
-                type: 'quantitative',
-                aggregate: 'sum',
-                // format: '.2f',
-            }
-		}
-	};
-
-    // $: viewVL ? console.log('Vega-Lite view: ', viewVL.data('rows')) : '';
     $: onChange(rows, filterItems);
     
 </script>
 
-<div class="chart">
-    <VegaLite {data} spec={specVL} options={{actions: false}} bind:view={viewVL} />
-</div>
+<div bind:this={container}/>
 
 <style>
 </style>

@@ -30,12 +30,14 @@
                 <div class="concept-detail">
                     <div class="left">
                         <input type="checkbox" id={c_id} name={c.name} bind:checked={c.active} on:change={() => handleCheck({c_id})}>
-                        <label for={c_id}><b>{i + 1}: {c.name}</b></label>
+                        <label for={c_id} class="concept-name"><b>{i + 1}: {c.name}</b></label>
                     </div>
                     <div class="mid">
+                        <p><b>Inclusion Criteria</b></p>
                         <p>{c.prompt}</p>
                     </div>
                     <div class="right">
+                        <b>Representative Examples</b>
                         {#if c.examples}
                             <ul>
                                 {#each c.examples as example}
@@ -90,8 +92,8 @@
         padding: 0px;
         margin: 0px;
     }
-    .examples {
-        font-size: 10px;
+    .concept-name {
+        font-size: 16px;
     }
     .concept-detail p, ul {
         padding: 0px 10px;

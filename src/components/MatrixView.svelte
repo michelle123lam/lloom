@@ -139,7 +139,7 @@
 
     <h2 class="card-title">CONCEPT MATRIX</h2>
     <div>
-        <p>A view of concepts (rows) and slices (columns). Click on a concept or slice name to view details. <br>The size of the circles indicates the number of documents in a given concept and slice.</p>
+        <p>A view of <b>concepts</b> (rows) and <b>slices</b> (columns). <b>Click on a concept or slice name</b> to view details. <br>The <b>size</b> of the circles indicates the <b>number of documents</b> in a given concept and slice.</p>
         <ul>
             <li><b>Concepts</b> (rows): LLooM-generated concept matches</li>
             <li><b>Slices</b> (columns): User-specified data groupings</li>

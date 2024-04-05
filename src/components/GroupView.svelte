@@ -19,6 +19,7 @@
     let columns = [];
     let rowsLong = [];
     let remount = true;
+    let domain = [];
 
     onMount(() => {
         renderTable(data, dataLong);
@@ -45,6 +46,9 @@
             remount = false;
             setTimeout(() => (remount = true), 0);
             el.appendChild(div);
+            
+            let fullDomain = rowsLong.map(d => d["concept"]);
+            domain = [...new Set(fullDomain)];
         }
     }
 </script>
@@ -58,10 +62,14 @@
         {#if selectedMetadata}
             <h3 class="card-title">SLICE DETAILS</h3>
             <div class="overview-card"> 
-                {#each Object.entries(selectedMetadata) as [key, value]}
-                    <p><b>{key}</b>: {value}</p>
-                {/each}
-                <GroupSummaryChart rows={rowsLong} {filterItems} />
+                <div class="overview-card-left-40">
+                    {#each Object.entries(selectedMetadata) as [key, value]}
+                        <p><b>{key}</b>: {value}</p>
+                    {/each}
+                </div>
+                <div class="overview-card-right-60">
+                    <GroupSummaryChart rows={rowsLong} {filterItems} {domain} />
+                </div>
             </div>
         {/if}
 
@@ -82,4 +90,14 @@
 </div>
 
 <style>
+    .overview-card-left-40 {
+        float: left !important;
+        width: 40%;
+        height: 100%;
+    }
+    .overview-card-right-60 { 
+        float: right !important;
+        width: 60%;
+        height: 100%;
+    }
 </style>

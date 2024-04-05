@@ -1,14 +1,14 @@
 <script>
     // Component to render chart (viewing data by concepts) in notebook
     // Imports
-    import { onMount } from "svelte";
-    import { Vega, VegaLite } from 'svelte-vega';
+    import * as Plot from "@observablehq/plot";
 
     // Properties
     export let rows = [];
     export let filterItems;
-    let data;
-    let viewVL;
+    export let domain;
+
+    let container;
 
     function onChange(rows, filterItems) {
         let filteredRows = rows.filter((row) => {
@@ -24,61 +24,55 @@
             return keep;
         });
         rows = filteredRows;
-        data = {
-            rows: rows
-        }
+        makePlot(rows);
     }
 
-    onChange(rows, filterItems);
-
-    let specVL = {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-		description: 'A simple bar chart with embedded data.',
-		data: {
-			name: 'rows'
-		},
-		mark: {type: 'bar'},
-        width: 150,
-		encoding: {
-			x: { 
-                field: 'concept_score_orig', 
-                type: 'quantitative' , 
-                aggregate: "sum",
-                // scale: {
-                //     domain: [0, 1]
-                // },
-                title: "Number of documents"
-            },
-			y: { 
-                field: 'concept', 
-                type: 'nominal',
-                axis: {
-                    labelLimit: 100
+    function makePlot(data) {
+        if (data.length > 0) {
+            let curPlot = Plot.plot({
+                y: {domain: domain},
+                color: {
+                    field: "concept",
+                    type: "categorical",
+                    scheme: "pastel2"
                 },
-                sort: null,
-                title: "Concept"
-            },
-            color: {
-                field: 'concept',
-                legend: null
-            },
-            tooltip:  {
-                field: 'concept_score_orig',
-                type: 'quantitative',
-                aggregate: 'sum',
-                // format: '.2f',
-            }
-		}
-	};
+                marks: [
+                    Plot.gridX(),
+                    Plot.barX(
+                        data, 
+                        Plot.groupY(
+                            {x: 'count'},
+                            {
+                                y: 'concept', 
+                                // fill: '#c1e0fd', 
+                                fill: "concept",
+                                tip: true, 
+                            },
+                        ),
+                    ),
+                    Plot.axisY({
+                        label: "Concept",
+                        lineWidth: 12,
+                    }),
+                    Plot.axisX({
+                        label: "Number of documents",
+                    })
+                ],
+                marginLeft: 150,
+                width: 400,
+                height: 250,
+            });
 
-    // $: viewVL ? console.log('Vega-Lite view: ', viewVL.data('rows')) : '';
+            // Replace the div with the plot
+            container.replaceChildren(curPlot);
+        }
+    }
+    
     $: onChange(rows, filterItems);
     
 </script>
 
-<div class="chart">
-    <VegaLite {data} spec={specVL} options={{actions: false}} bind:view={viewVL} />
-</div>
+<div bind:this={container}/>
 
 <style>
 </style>
