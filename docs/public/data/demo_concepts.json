@@ -1,31 +1,5 @@
 {
     "Political social media": {
-        "no seed": [
-            {
-                "name": "Environmental Concerns",
-                "summary": "Addressing environmental concerns through legislation, conservation efforts, sustainable infrastructure, and reducing reliance on adversarial nations for critical resources.",
-                "criteria": "Is the text related to environmental issues or climate change?",
-                "n": 7
-            },
-            {
-                "name": "Economic Issues",
-                "summary": "Various viewpoints on economic issues: budget balancing, energy costs, job creation, tax fairness, inflation, debt ceiling, supply chains, and healthcare affordability.",
-                "criteria": "Does the example discuss economic concerns, such as inflation or job growth?",
-                "n": 36
-            },
-            {
-                "name": "National Security",
-                "summary": "National security is a top priority, with a focus on border protection, classified documents, defense, and accountability.",
-                "criteria": "Is national security or defense a primary focus of the text?",
-                "n": 18
-            },
-            {
-                "name": "Party Politics",
-                "summary": "Democrats highlight efforts to reduce federal deficit and empower Medicare. Republicans emphasize opposition to new taxes and support for energy independence.",
-                "criteria": "Does this text highlight actions or positions specific to a political party?",
-                "n": 73
-            }
-        ],
         "social distrust": [
             {
                 "name": "Government Critique",
@@ -71,35 +45,35 @@
                 "summary": "Emphasizes the importance of political accountability through legislative actions, investigations, and calls for transparency and justice.",
                 "n": 17
             }
+        ],
+        "no seed": [
+            {
+                "name": "Environmental Concerns",
+                "summary": "Addressing environmental concerns through legislation, conservation efforts, sustainable infrastructure, and reducing reliance on adversarial nations for critical resources.",
+                "criteria": "Is the text related to environmental issues or climate change?",
+                "n": 7
+            },
+            {
+                "name": "Economic Issues",
+                "summary": "Various viewpoints on economic issues: budget balancing, energy costs, job creation, tax fairness, inflation, debt ceiling, supply chains, and healthcare affordability.",
+                "criteria": "Does the example discuss economic concerns, such as inflation or job growth?",
+                "n": 36
+            },
+            {
+                "name": "National Security",
+                "summary": "National security is a top priority, with a focus on border protection, classified documents, defense, and accountability.",
+                "criteria": "Is national security or defense a primary focus of the text?",
+                "n": 18
+            },
+            {
+                "name": "Party Politics",
+                "summary": "Democrats highlight efforts to reduce federal deficit and empower Medicare. Republicans emphasize opposition to new taxes and support for energy independence.",
+                "criteria": "Does this text highlight actions or positions specific to a political party?",
+                "n": 73
+            }
         ]
     },
     "Content Moderation": {
-        "no seed": [
-            {
-                "name": "Gender Norms Critique",
-                "summary": "Critique of gender norms includes disparaging women's intelligence, men's unnecessary opinions, stereotypes of liberated women, and challenges to feminism.",
-                "criteria": "Does this text challenge traditional gender roles or stereotypes?",
-                "n": 158
-            },
-            {
-                "name": "Empowerment Messages",
-                "summary": "Empowerment messages advocate for women's rights, challenge gender stereotypes, and promote equality in society.",
-                "criteria": "Is the text conveying a message of empowerment or encouragement?",
-                "n": 51
-            },
-            {
-                "name": "Workplace Gender Issues",
-                "summary": "Various perspectives on workplace gender issues include discrimination, stereotypes, feminism criticism, and gender roles.",
-                "criteria": "Does this text address gender-related issues in the workplace?",
-                "n": 119
-            },
-            {
-                "name": "Misogyny and Disrespect",
-                "summary": "Women are seen as inferior, feminists are criticized, and misogyny is prevalent in society.",
-                "criteria": "Does this text exhibit or address misogyny or disrespect towards women?",
-                "n": 126
-            }
-        ],
         "metaphorical language": [
             {
                 "name": "Emotional Metaphors",
@@ -151,35 +125,35 @@
                 "summary": "Women are portrayed as fragile, untrustworthy, burdensome, and inferior in various contexts and discussions.",
                 "n": 39
             }
+        ],
+        "no seed": [
+            {
+                "name": "Gender Norms Critique",
+                "summary": "Critique of gender norms includes disparaging women's intelligence, men's unnecessary opinions, stereotypes of liberated women, and challenges to feminism.",
+                "criteria": "Does this text challenge traditional gender roles or stereotypes?",
+                "n": 158
+            },
+            {
+                "name": "Empowerment Messages",
+                "summary": "Empowerment messages advocate for women's rights, challenge gender stereotypes, and promote equality in society.",
+                "criteria": "Is the text conveying a message of empowerment or encouragement?",
+                "n": 51
+            },
+            {
+                "name": "Workplace Gender Issues",
+                "summary": "Various perspectives on workplace gender issues include discrimination, stereotypes, feminism criticism, and gender roles.",
+                "criteria": "Does this text address gender-related issues in the workplace?",
+                "n": 119
+            },
+            {
+                "name": "Misogyny and Disrespect",
+                "summary": "Women are seen as inferior, feminists are criticized, and misogyny is prevalent in society.",
+                "criteria": "Does this text exhibit or address misogyny or disrespect towards women?",
+                "n": 126
+            }
         ]
     },
     "AI Broader Impact Statements": {
-        "no seed": [
-            {
-                "name": "Robustness & Security",
-                "summary": "Our work focuses on enhancing robustness and security in machine learning models to prevent misuse and exploitation, improve reliability, and ensure privacy.",
-                "criteria": "Does this text discuss enhancing the robustness or security of machine learning models?",
-                "n": 38
-            },
-            {
-                "name": "Energy & Efficiency",
-                "summary": "Our work focuses on developing efficient algorithms to reduce energy costs in machine learning applications and improve resource utilization.",
-                "criteria": "Is the focus of this text on improving energy efficiency or computational efficiency in machine learning?",
-                "n": 13
-            },
-            {
-                "name": "Ethical Considerations",
-                "summary": "Ethical considerations are crucial in the development and deployment of machine learning technologies to balance benefits and risks.",
-                "criteria": "Does this text address ethical considerations, societal impacts, or fairness in machine learning?",
-                "n": 80
-            },
-            {
-                "name": "Data Privacy",
-                "summary": "Data privacy is crucial in machine learning to prevent attacks, misuse, bias propagation, and ethical concerns, requiring transparency and safeguards.",
-                "criteria": "Is data privacy or secure data handling a primary concern of the text?",
-                "n": 23
-            }
-        ],
         "harms and negative outcomes": [
             {
                 "name": "Bias and Fairness",
@@ -231,35 +205,35 @@
                 "criteria": "Is enhancing energy efficiency through algorithmic or model adjustments mentioned in this example?",
                 "n": 11
             }
+        ],
+        "no seed": [
+            {
+                "name": "Robustness & Security",
+                "summary": "Our work focuses on enhancing robustness and security in machine learning models to prevent misuse and exploitation, improve reliability, and ensure privacy.",
+                "criteria": "Does this text discuss enhancing the robustness or security of machine learning models?",
+                "n": 38
+            },
+            {
+                "name": "Energy & Efficiency",
+                "summary": "Our work focuses on developing efficient algorithms to reduce energy costs in machine learning applications and improve resource utilization.",
+                "criteria": "Is the focus of this text on improving energy efficiency or computational efficiency in machine learning?",
+                "n": 13
+            },
+            {
+                "name": "Ethical Considerations",
+                "summary": "Ethical considerations are crucial in the development and deployment of machine learning technologies to balance benefits and risks.",
+                "criteria": "Does this text address ethical considerations, societal impacts, or fairness in machine learning?",
+                "n": 80
+            },
+            {
+                "name": "Data Privacy",
+                "summary": "Data privacy is crucial in machine learning to prevent attacks, misuse, bias propagation, and ethical concerns, requiring transparency and safeguards.",
+                "criteria": "Is data privacy or secure data handling a primary concern of the text?",
+                "n": 23
+            }
         ]
     },
     "Academic Paper Abstracts": {
-        "no seed": [
-            {
-                "name": "Interactive Technologies",
-                "summary": "Interactive Technologies encompass a wide range of innovative systems and tools for user interfaces, including interactive gestures, virtual reality, tactile feedback, and collaborative interfaces.",
-                "criteria": "Does this text describe an interactive technology or system?",
-                "n": 195
-            },
-            {
-                "name": "Sensory Feedback",
-                "summary": "Exploring various sensory feedback systems, such as gaze-enhanced scrolling, tactile feedback, and haptic cues, to enhance user interactions.",
-                "criteria": "Does this text discuss a technology that provides sensory or haptic feedback?",
-                "n": 47
-            },
-            {
-                "name": "Virtual and Augmented Reality",
-                "summary": "Exploring innovative techniques for haptic feedback, gesture-based sketching, shape-changing interfaces, and immersive interaction in virtual and augmented reality.",
-                "criteria": "Is this text about virtual reality (VR) or augmented reality (AR) technologies?",
-                "n": 29
-            },
-            {
-                "name": "Gesture and Voice Control",
-                "summary": "Exploring innovative systems integrating gesture and voice control for diverse applications and user interactions.",
-                "criteria": "Does this example involve gesture or voice control interfaces?",
-                "n": 32
-            }
-        ],
         "artificial intelligence": [
             {
                 "name": "Gesture & Touch Interaction",
@@ -310,6 +284,32 @@
                 "criteria": "Does this text discuss evaluating an algorithm's performance or effectiveness?",
                 "summary": "Evaluation methods such as controlled experiments and user studies are crucial for assessing algorithm performance and user interaction.",
                 "n": 15
+            }
+        ],
+        "no seed": [
+            {
+                "name": "Interactive Technologies",
+                "summary": "Interactive Technologies encompass a wide range of innovative systems and tools for user interfaces, including interactive gestures, virtual reality, tactile feedback, and collaborative interfaces.",
+                "criteria": "Does this text describe an interactive technology or system?",
+                "n": 195
+            },
+            {
+                "name": "Sensory Feedback",
+                "summary": "Exploring various sensory feedback systems, such as gaze-enhanced scrolling, tactile feedback, and haptic cues, to enhance user interactions.",
+                "criteria": "Does this text discuss a technology that provides sensory or haptic feedback?",
+                "n": 47
+            },
+            {
+                "name": "Virtual and Augmented Reality",
+                "summary": "Exploring innovative techniques for haptic feedback, gesture-based sketching, shape-changing interfaces, and immersive interaction in virtual and augmented reality.",
+                "criteria": "Is this text about virtual reality (VR) or augmented reality (AR) technologies?",
+                "n": 29
+            },
+            {
+                "name": "Gesture and Voice Control",
+                "summary": "Exploring innovative systems integrating gesture and voice control for diverse applications and user interactions.",
+                "criteria": "Does this example involve gesture or voice control interfaces?",
+                "n": 32
             }
         ]
     }

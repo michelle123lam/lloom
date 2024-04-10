@@ -42,7 +42,7 @@ const members = [
   {
     avatar: '/lloom/media/team/bernstein.jpeg',
     name: 'Michael S. Bernstein',
-    title: 'Assoc Professor, Stanford',
+    title: 'Associate Professor, Stanford',
     links: [
       { icon: web_icon, link: 'https://hci.stanford.edu/msb/' },
       { icon: 'twitter', link: 'https://twitter.com/msbernst' },
@@ -65,7 +65,7 @@ The LLooM Python package consists of two components:
 - **`LLooM Operators`**—a lower-level API for the operators that underlie the LLooM algorithm.
 :::
 
-Check out the [Get Started](./get-started) page to try out LLooM.
+Check out the [Get Started](./get-started) page to try out the LLooM Workbench.
 
 ## What can I do with LLooM?
 

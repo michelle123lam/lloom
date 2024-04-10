@@ -1,6 +1,6 @@
 # Get Started
 
-LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM on your dataset. You can also refer to this [starter Colab Notebook]().
+LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. You can also refer to this [starter Colab Notebook]().
 
 ## Installation
 First, install the LLooM Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
@@ -8,7 +8,7 @@ First, install the LLooM Python package, available on PyPI as [`text_lloom`](htt
 pip install text_lloom
 ```
 
-## LLooM Workbench
+## Setup
 Now, you can use the LLooM package in a computational notebook! Create your notebook (i.e., with [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)) and then follow the steps below.
 
 ### Import package
@@ -38,13 +38,14 @@ l = wb.lloom(
 )
 ```
 
-### Run concept generation
+## Concept generation
 Next, you can go ahead and start the concept induction process by generating concepts. You can omit the `seed` parameter if you do not want to use a seed.
 ```py
 await l.gen(seed="your_optional seed_term")
 ```
 
-### Review and score concepts
+## Concept scoring
+### Review concepts
 Review the generated concepts and select concepts to inspect further:
 ```py
 l.select()
@@ -53,12 +54,13 @@ l.select()
 In the output, each box contains the concept name, concept inclusion criteria, and representative example(s).
 ![LLooM select() function output](/media/ui/select_output.png)
 
+### Score concepts
 Then, apply these concepts to the full dataset with `score()`. This function will score all documents with respect to each concept to indicate the extent to which the document matches the concept inclusion criteria.
 ```py
 score_df = await l.score()
 ```
 
-### Visualize concepts
+## Visualization
 Now, you can visualize the results in the main LLooM Workbench view. An interactive widget will appear when you run this function:
 ```py
 l.vis()
@@ -66,28 +68,35 @@ l.vis()
 Check out [Using the LLooM Workbench](./vis-guide.md) for a more detailed guide on the visualization components.
 ![LLooM vis() function output](/media/ui/vis_output.png)
 
-#### Add slices (columns)
+### Add slices (columns)
 If you want to additionally slice your data according to a pre-existing metadata column in your dataframe, you can optionally provide a `slice_col`. Numeric or string columns are supported.
 ```py
 l.vis(slice_col="n_likes")
 ```
-By default, the concept matrix is normalized by **concept** (`norm_by="concept"`), meaning that the size of the circles in each concept row represents the fraction of examples *in that concept* that fall into each slice column. 
-![LLooM vis() function output with slices](/media/ui/vis_output_slice.png)
+
+### Normalize counts
+By default, the concept matrix shows the raw document counts. You can normalize by **concept**, meaning that the size of the circles in each concept row represents the fraction of examples *in that concept* that fall into each slice column. 
+```py
+l.vis(slice_col="n_likes", norm_by="concept")
+```
 
 You can also normalize by **slice** so that the size of circles in each slice column represents the fraction of examples *in that slice* that fall into each concept row.
 ```py
 l.vis(slice_col="n_likes", norm_by="slice")
 ```
+![LLooM vis() function output with slices](/media/ui/vis_output_slice.png)
 
-### Add manual concepts
-You may also manually add your own custom concepts by providing a name and prompt. This will automatically score the data by that concept. Re-run the `vis()` function to see the new concept results.
+## Manual concepts
+You may also manually add your own **custom concepts** by providing a name and prompt. This will automatically score the data by that concept.
 ```py
 await l.add(
     name="your new concept name",
     prompt="your new concept prompt",
 )
 ```
+Then, re-run the `vis()` function to see the new concept results.
 
+## Saving and exporting
 ### Save LLooM instance
 You can save your LLooM instance to a pickle file to reload at a later point.
 ```py
@@ -114,6 +123,46 @@ The dataframe will include the following columns:
 - `prevalence`: The proportion of documents in the dataset that matched this concept
 - `n_matches`: The number of documents in the dataset that matched this concept
 - `highlights`: An illustrative sample of n=3 highlighted quotes from documents that matched the concept that were relevant to the concept
+
+## Cost tracking
+LLooM provides cost estimation functions as well as cost summary functions to review usage.
+
+### estimate_gen_cost
+`l.estimate_gen_cost(params=None, verbose=False)`
+
+Estimates the cost of running `gen()` with the given parameters. If no parameters are provided, the function uses auto-suggested parameters. The function is automatically run within calls to `gen()` for the user to review before proceeding with concept generation.
+
+### estimate_score_cost
+`l.estimate_score_cost(n_concepts=None, verbose=False)`
+
+Estimates the cost of running `score()` on the provided number of concepts. If `n_concepts` is not specified, the function uses the current number of active (selected) concepts. The function is automatically run within calls to `score()` for the user to review before proceeding with concept scoring.
+
+### summary
+`l.summary(verbose=True)`
+
+Displays a **cumulative** summary of the (1) Total time, (2) Total cost, and (3) Tokens for the entire LLooM instance. 
+- Total time: Displays the total time required for each operator. Each tuple contains the operator name and the timestamp at which the operation completed. 
+- Total cost: Displays the calculated cost incurred by each operator.
+- Tokens: Displays the overall number of tokens used (total, in, and out)
+
+Sample output:
+```
+Total time: 25.31 sec (0.42 min)
+	('distill_filter', '2024-03-08-02-45-20'): 3.13 sec
+	('distill_summarize', '2024-03-08-02-45-21'): 1.80 sec
+	('cluster', '2024-03-08-02-45-25'): 4.00 sec
+	('synthesize', '2024-03-08-02-45-42'): 16.38 sec
+
+
+Total cost: 0.14
+	('distill_filter', '2024-03-08-02-45-20'): 0.02
+	('distill_summarize', '2024-03-08-02-45-21'): 0.02
+	('synthesize', '2024-03-08-02-45-42'): 0.10
+
+
+Tokens: total=67045, in=55565, out=11480
+```
+
 
 ## LLooM Operators
 If you'd like to dive deeper and reconfigure the core operators used within LLooM (like the `Distill`, `Cluster`, and `Synthesize` operators), you can access the base functions from the `concept_induction` module:

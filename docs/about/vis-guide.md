@@ -43,7 +43,7 @@ Clicking on a concept row header opens its Concept Detail view. This view contai
 - **Potential concept matches**: This table displays a summary of documents that matched the concept, where each row represents one document. It includes the following columns:
     * `concept score`: The 0-1 score assigned to the document. By default, only documents with a score of 1 will appear as matches here.
     * `text`: The full document text. If the model has identified spans of relevant text for the concept, they will be highlighted in blue.
-    * `text bullets`: The results of the Distill step that produces bulleted summaries of the document.
+    * `text bullets`: Bulleted summaries of the document text.
     * `score rationale`: The LLM's rationale for providing the given concept score.
     * `<slice column>`: The slice column values if `slice_col` was specified.
     ::: tip
