@@ -71,20 +71,23 @@ function isActiveDataset(dataset) {
         </div>
         <!-- Results -->
         <div class="result-wrapper">
-            <div class="logo-lloom">
-                <h2><b>Example </b></h2>
-                <img src="/media/lloom.svg" alt="LLooM Logo">
-                <h2><b>Outputs</b></h2>
-            </div>
-            <!-- Seed selection -->
-            <div id="seed-button-text">
-                <p>Select seed</p>
-            </div>
-            <div class="seed-buttons">
-                <button v-for="seedOpt in curSeedOptions.data" @click="updateSeed(seedOpt)" class="seed-button btn"
-                    :class="{ active: isActiveSeed(seedOpt) }">
-                    <span class="code">{{ seedOpt }}</span>
-                </button>
+            <div class="result-header">
+                <div class="logo-lloom">
+                    <h2><b>Example </b></h2>
+                    <img src="/media/lloom.svg" alt="LLooM Logo">
+                    <h2><b>Outputs</b></h2>
+                </div>
+                <!-- Seed selection -->
+                <div class="seed-button-text">
+                    <p><span style="font-weight: bold; text-transform: uppercase;">Select seed</span>.
+                    The seed term can steer concept induction towards more specific areas of interest. Try out one of the options below:</p>
+                </div>
+                <div class="seed-buttons">
+                    <button v-for="seedOpt in curSeedOptions.data" @click="updateSeed(seedOpt)" class="seed-button btn"
+                        :class="{ active: isActiveSeed(seedOpt) }">
+                        <span class="code">{{ seedOpt }}</span>
+                    </button>
+                </div>
             </div>
             <!-- Concepts -->
             <DemoConcepts :curConcepts="curConcepts" />
@@ -134,8 +137,20 @@ function isActiveDataset(dataset) {
 
 /* Result styles */
 .result-wrapper {
-    width: 65%;
+    width: 70%;
+    height: 100%;
     float: right;
+    overflow-y: scroll;
+    overflow-x: clip;
+    padding: 0 10px;
+}
+
+.result-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: white;
+    padding-bottom: 5px;
 }
 
 .logo-lloom img {
@@ -152,10 +167,9 @@ function isActiveDataset(dataset) {
     justify-content: center;
 }
 
-#seed-button-text {
-    font-weight: bold;
+.seed-button-text {
+    margin: 0 10px;
     font-size: 12px;
-    text-transform: uppercase;
     line-height: normal;
     text-align: center;
 }
@@ -164,9 +178,8 @@ function isActiveDataset(dataset) {
     margin: 5px 0;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
-    gap: 10px;
 }
 
 .seed-button {
@@ -224,17 +237,18 @@ button.active {
 .jumbotron-gradient {
     background: linear-gradient(white 2%, transparent 5%, transparent 95%, white 98%);
     z-index: 10;
-    height: 95%;
+    height: 100%;
     width: 100%;
     position: absolute;
 }
 
 .jumbotron {
-    height: 95%;
+    height: 100%;
     border-radius: 5px;
     padding: 10px 0;
     opacity: 0.7;
     position: absolute;
+    width: 100%;
 }
 
 .doc {

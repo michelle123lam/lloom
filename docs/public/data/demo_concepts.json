@@ -5,25 +5,29 @@
                 "name": "Government Critique",
                 "criteria": "Does this text criticize government actions or policies?",
                 "summary": "Critique of government actions, policies, and officials, advocating for accountability, transparency, and reform.",
-                "n": 49
+                "n": 49, 
+                "fill": "#afd8ff"
             },
             {
                 "name": "Trust in Institutions",
                 "criteria": "Does this text address trust or distrust in social or governmental institutions?",
                 "summary": "Emphasizing trust in institutions through healthcare access, equality, disaster preparedness, combat readiness, and justice initiatives.",
-                "n": 34
+                "n": 34,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Social and Economic Inequality",
                 "criteria": "Does this text discuss social or economic disparities?",
                 "summary": "Advocating for social justice, economic equality, healthcare access, and accountability in government and society.",
-                "n": 32
+                "n": 32,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Policy and Healthcare Concerns",
                 "criteria": "Does this text express concerns about healthcare policies or costs?",
                 "summary": "Advocating for healthcare access, protecting abortion rights, lowering drug prices, and investigating federal agency corruption.",
-                "n": 6
+                "n": 6,
+                "fill": "#a3e0e6"
             }
         ],
         "political candidates": [
@@ -31,45 +35,52 @@
                 "name": "Election and Advocacy",
                 "criteria": "Does this text relate to elections, leadership, or political advocacy by candidates or officials?",
                 "summary": "Various political figures advocate for healthcare, infrastructure, abortion rights, and energy security, emphasizing bipartisanship and honoring Dr. Martin Luther King Jr.",
-                "n": 113
+                "n": 113,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Legislative and Social Actions",
                 "criteria": "Is this text about legislative actions, social justice, or environmental concerns by government officials?",
                 "summary": "Advocating for legislative actions such as healthcare plans, infrastructure funding, and social justice initiatives to improve communities and protect rights.",
-                "n": 83
+                "n": 83,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Political Accountability",
                 "criteria": "Does this text call for accountability or mention an investigation related to government officials?",
                 "summary": "Emphasizes the importance of political accountability through legislative actions, investigations, and calls for transparency and justice.",
-                "n": 17
+                "n": 17,
+                "fill": "#ccbfed"
             }
         ],
         "no seed": [
             {
-                "name": "Environmental Concerns",
-                "summary": "Addressing environmental concerns through legislation, conservation efforts, sustainable infrastructure, and reducing reliance on adversarial nations for critical resources.",
-                "criteria": "Is the text related to environmental issues or climate change?",
-                "n": 7
+                "name": "Party Politics",
+                "summary": "Democrats highlight efforts to reduce federal deficit and empower Medicare. Republicans emphasize opposition to new taxes and support for energy independence.",
+                "criteria": "Does this text highlight actions or positions specific to a political party?",
+                "n": 73,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Economic Issues",
                 "summary": "Various viewpoints on economic issues: budget balancing, energy costs, job creation, tax fairness, inflation, debt ceiling, supply chains, and healthcare affordability.",
                 "criteria": "Does the example discuss economic concerns, such as inflation or job growth?",
-                "n": 36
+                "n": 36,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "National Security",
                 "summary": "National security is a top priority, with a focus on border protection, classified documents, defense, and accountability.",
                 "criteria": "Is national security or defense a primary focus of the text?",
-                "n": 18
+                "n": 18,
+                "fill": "#ccbfed"
             },
             {
-                "name": "Party Politics",
-                "summary": "Democrats highlight efforts to reduce federal deficit and empower Medicare. Republicans emphasize opposition to new taxes and support for energy independence.",
-                "criteria": "Does this text highlight actions or positions specific to a political party?",
-                "n": 73
+                "name": "Environmental Concerns",
+                "summary": "Addressing environmental concerns through legislation, conservation efforts, sustainable infrastructure, and reducing reliance on adversarial nations for critical resources.",
+                "criteria": "Is the text related to environmental issues or climate change?",
+                "n": 7,
+                "fill": "#a3e0e6"
             }
         ]
     },
@@ -79,25 +90,29 @@
                 "name": "Emotional Metaphors",
                 "criteria": "Does this text express emotions using metaphorical language?",
                 "summary": "Women are objectified, lack control, and are seen as tribal and revenge-minded. Feminism is criticized as promoting hostility and entitlement.",
-                "n": 127
+                "n": 127,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Gender Stereotype Metaphors",
                 "criteria": "Identify if metaphorical language reinforces gender stereotypes.",
                 "summary": "Gender stereotype metaphors perpetuate harmful beliefs about women's appearance, behavior, and worth, reinforcing societal biases and inequalities.",
-                "n": 124
+                "n": 124,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Patriarchy Metaphor",
                 "criteria": "Is metaphorical language used to discuss patriarchy?",
                 "summary": "The examples highlight the negative impact of patriarchy, objectification of women, gender discrimination, and societal expectations on women.",
-                "n": 81
+                "n": 81,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Metaphorical Personification",
                 "criteria": "Does this text use personification as a form of metaphorical language?",
                 "summary": "Using metaphorical personification, we depict women as tribal, men as evil, and society as oppressive.",
-                "n": 39
+                "n": 39,
+                "fill": "#a3e0e6"
             }
         ],
         "specific instances of metaphors": [
@@ -105,25 +120,29 @@
                 "name": "Dehumanization Metaphors",
                 "criteria": "Evaluate if the text uses metaphors that dehumanize or objectify individuals based on gender.",
                 "summary": "Dehumanization metaphors are used to criticize women's behavior, appearance, and actions, portraying them as inferior, manipulative, and untrustworthy.",
-                "n": 133
+                "n": 133,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Patriarchy Critique",
                 "criteria": "Is patriarchy criticized through metaphorical language in this text?",
                 "summary": "Critique of patriarchy includes objectification, control, lack of rights, oppression, discrimination, and gender stereotypes.",
-                "n": 74
+                "n": 74,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Emotional Expression",
                 "criteria": "Does this text use metaphors to express complex emotions?",
                 "summary": "Women are portrayed negatively, seen as emotional, manipulative, and inferior by the authors.",
-                "n": 53
+                "n": 53,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Fragility Metaphors",
                 "criteria": "Does this text use metaphors that compare feminists to being weak or fragile?",
                 "summary": "Women are portrayed as fragile, untrustworthy, burdensome, and inferior in various contexts and discussions.",
-                "n": 39
+                "n": 39,
+                "fill": "#a3e0e6"
             }
         ],
         "no seed": [
@@ -131,25 +150,29 @@
                 "name": "Gender Norms Critique",
                 "summary": "Critique of gender norms includes disparaging women's intelligence, men's unnecessary opinions, stereotypes of liberated women, and challenges to feminism.",
                 "criteria": "Does this text challenge traditional gender roles or stereotypes?",
-                "n": 158
-            },
-            {
-                "name": "Empowerment Messages",
-                "summary": "Empowerment messages advocate for women's rights, challenge gender stereotypes, and promote equality in society.",
-                "criteria": "Is the text conveying a message of empowerment or encouragement?",
-                "n": 51
-            },
-            {
-                "name": "Workplace Gender Issues",
-                "summary": "Various perspectives on workplace gender issues include discrimination, stereotypes, feminism criticism, and gender roles.",
-                "criteria": "Does this text address gender-related issues in the workplace?",
-                "n": 119
+                "n": 158,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Misogyny and Disrespect",
                 "summary": "Women are seen as inferior, feminists are criticized, and misogyny is prevalent in society.",
                 "criteria": "Does this text exhibit or address misogyny or disrespect towards women?",
-                "n": 126
+                "n": 126,
+                "fill": "#b3e2cd"
+            },
+            {
+                "name": "Workplace Gender Issues",
+                "summary": "Various perspectives on workplace gender issues include discrimination, stereotypes, feminism criticism, and gender roles.",
+                "criteria": "Does this text address gender-related issues in the workplace?",
+                "n": 119,
+                "fill": "#ccbfed"
+            },
+            {
+                "name": "Empowerment Messages",
+                "summary": "Empowerment messages advocate for women's rights, challenge gender stereotypes, and promote equality in society.",
+                "criteria": "Is the text conveying a message of empowerment or encouragement?",
+                "n": 51,
+                "fill": "#a3e0e6"
             }
         ]
     },
@@ -159,77 +182,89 @@
                 "name": "Bias and Fairness",
                 "summary": "Addressing biases in machine learning models is crucial to prevent perpetuating social biases, discrimination, and unfairness in decision-making processes.",
                 "criteria": "Is bias or fairness in machine learning models or data a focus of this text example?",
-                "n": 46
-            },
-            {
-                "name": "Environmental Impact",
-                "summary": "Addressing environmental impact in AI research is crucial due to high energy consumption and carbon footprint of training large models.",
-                "criteria": "Does this text example highlight concerns about the environmental impact of technology?",
-                "n": 10
+                "n": 46,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Security and Attacks",
                 "summary": "Addressing security concerns in machine learning is crucial for ensuring system safety and reliability against potential attacks.",
                 "criteria": "Does the text example address security vulnerabilities or adversarial attacks against systems?",
-                "n": 40
+                "n": 40,
+                "fill": "#b3e2cd"
+            },
+            {
+                "name": "Environmental Impact",
+                "summary": "Addressing environmental impact in AI research is crucial due to high energy consumption and carbon footprint of training large models.",
+                "criteria": "Does this text example highlight concerns about the environmental impact of technology?",
+                "n": 10,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Job Displacement",
                 "summary": "Advancements in technology, particularly artificial intelligence and automation, pose a threat to various job sectors, potentially leading to widespread unemployment.",
                 "criteria": "Does this text example discuss the risk of job displacement due to automation or AI?",
-                "n": 8
+                "n": 8,
+                "fill": "#a3e0e6"
             }
         ],
         "mitigation strategies": [
             {
-                "name": "Privacy Preservation",
-                "summary": "Addressing privacy preservation concerns in machine learning models, including risks of bias, misuse, and potential breaches of confidentiality.",
-                "criteria": "Does this example discuss strategies for preserving privacy in machine learning?",
-                "n": 15
+                "name": "Robustness Improvement",
+                "summary": "We aim to enhance the robustness of machine learning models against various threats and biases for improved reliability and effectiveness.",
+                "criteria": "Does this example detail methods to improve the robustness of machine learning systems?",
+                "n": 31,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Bias Mitigation",
                 "summary": "We aim to mitigate biases in data and algorithms through careful validation, ethical considerations, and diverse training samples.",
                 "criteria": "Is bias mitigation in AI models the focus of this example?",
-                "n": 28
+                "n": 28,
+                "fill": "#b3e2cd"
             },
             {
-                "name": "Robustness Improvement",
-                "summary": "We aim to enhance the robustness of machine learning models against various threats and biases for improved reliability and effectiveness.",
-                "criteria": "Does this example detail methods to improve the robustness of machine learning systems?",
-                "n": 31
+                "name": "Privacy Preservation",
+                "summary": "Addressing privacy preservation concerns in machine learning models, including risks of bias, misuse, and potential breaches of confidentiality.",
+                "criteria": "Does this example discuss strategies for preserving privacy in machine learning?",
+                "n": 15,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Energy Efficiency",
                 "summary": "Efficiency improvements in algorithms and models reduce energy consumption, costs, and environmental impact in machine learning and AI research.",
                 "criteria": "Is enhancing energy efficiency through algorithmic or model adjustments mentioned in this example?",
-                "n": 11
+                "n": 11,
+                "fill": "#a3e0e6"
             }
         ],
         "no seed": [
             {
-                "name": "Robustness & Security",
-                "summary": "Our work focuses on enhancing robustness and security in machine learning models to prevent misuse and exploitation, improve reliability, and ensure privacy.",
-                "criteria": "Does this text discuss enhancing the robustness or security of machine learning models?",
-                "n": 38
-            },
-            {
-                "name": "Energy & Efficiency",
-                "summary": "Our work focuses on developing efficient algorithms to reduce energy costs in machine learning applications and improve resource utilization.",
-                "criteria": "Is the focus of this text on improving energy efficiency or computational efficiency in machine learning?",
-                "n": 13
-            },
-            {
                 "name": "Ethical Considerations",
                 "summary": "Ethical considerations are crucial in the development and deployment of machine learning technologies to balance benefits and risks.",
                 "criteria": "Does this text address ethical considerations, societal impacts, or fairness in machine learning?",
-                "n": 80
+                "n": 80,
+                "fill": "#afd8ff"
+            },
+            {
+                "name": "Robustness & Security",
+                "summary": "Our work focuses on enhancing robustness and security in machine learning models to prevent misuse and exploitation, improve reliability, and ensure privacy.",
+                "criteria": "Does this text discuss enhancing the robustness or security of machine learning models?",
+                "n": 38,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Data Privacy",
                 "summary": "Data privacy is crucial in machine learning to prevent attacks, misuse, bias propagation, and ethical concerns, requiring transparency and safeguards.",
                 "criteria": "Is data privacy or secure data handling a primary concern of the text?",
-                "n": 23
+                "n": 23,
+                "fill": "#ccbfed"
+            },
+            {
+                "name": "Energy & Efficiency",
+                "summary": "Our work focuses on developing efficient algorithms to reduce energy costs in machine learning applications and improve resource utilization.",
+                "criteria": "Is the focus of this text on improving energy efficiency or computational efficiency in machine learning?",
+                "n": 13,
+                "fill": "#a3e0e6"
             }
         ]
     },
@@ -239,25 +274,29 @@
                 "name": "Gesture & Touch Interaction",
                 "criteria": "Is the example related to enhancing user experience through gesture or touch-based interactions?",
                 "summary": "We explore innovative methods for gesture and touch interaction, enabling diverse applications from direct pointing to virtual structure building.",
-                "n": 20
+                "n": 20,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Speech & Audio Processing",
                 "criteria": "Does this text involve speech recognition or audio processing enhancements through AI?",
                 "summary": "We explore various innovative methods in speech and audio processing, including automated capture, user modeling, gesture tracking, multimodal integration, and interactive systems.",
-                "n": 7
+                "n": 7,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "AI in Design",
                 "criteria": "Is the example focused on using artificial intelligence for design or layout purposes?",
                 "summary": "Exploring AI applications in design, from intelligent keyboards to automated layout systems and novel interfaces for user interaction.",
-                "n": 7
+                "n": 7,
+                "fill": "#ccbfed"
             },
             {
                 "name": "AI for Content Creation",
                 "criteria": "Does the text discuss AI applications in content creation, such as drawing, music, or video?",
                 "summary": "We explore AI applications for enhancing content creation through interactive interfaces, gesture recognition, and automated data processing.",
-                "n": 4
+                "n": 4,
+                "fill": "#a3e0e6"
             }
         ],
         "evaluation methods": [
@@ -265,25 +304,29 @@
                 "name": "Experimental Validation",
                 "criteria": "Does the example involve experimental validation to measure system performance or accuracy?",
                 "summary": "Our experiments and user studies validate the effectiveness and feasibility of various interactive technologies and systems.",
-                "n": 30
+                "n": 30,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Informal Feedback",
                 "criteria": "Is informal feedback or evaluation from users or researchers mentioned?",
                 "summary": "Informal feedback from users and researchers positively influences the development and evaluation of various interactive systems.",
-                "n": 29
+                "n": 29,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Performance Metrics",
                 "criteria": "Does the text example detail specific performance metrics or outcomes from an evaluation?",
                 "summary": "We demonstrate various performance metrics improvements in VR, animation creation, data visualization, user interaction, software development, and motion recognition.",
-                "n": 16
+                "n": 16,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Algorithm Evaluation",
                 "criteria": "Does this text discuss evaluating an algorithm's performance or effectiveness?",
                 "summary": "Evaluation methods such as controlled experiments and user studies are crucial for assessing algorithm performance and user interaction.",
-                "n": 15
+                "n": 15,
+                "fill": "#a3e0e6"
             }
         ],
         "no seed": [
@@ -291,25 +334,29 @@
                 "name": "Interactive Technologies",
                 "summary": "Interactive Technologies encompass a wide range of innovative systems and tools for user interfaces, including interactive gestures, virtual reality, tactile feedback, and collaborative interfaces.",
                 "criteria": "Does this text describe an interactive technology or system?",
-                "n": 195
+                "n": 195,
+                "fill": "#afd8ff"
             },
             {
                 "name": "Sensory Feedback",
                 "summary": "Exploring various sensory feedback systems, such as gaze-enhanced scrolling, tactile feedback, and haptic cues, to enhance user interactions.",
                 "criteria": "Does this text discuss a technology that provides sensory or haptic feedback?",
-                "n": 47
+                "n": 47,
+                "fill": "#b3e2cd"
             },
             {
                 "name": "Virtual and Augmented Reality",
                 "summary": "Exploring innovative techniques for haptic feedback, gesture-based sketching, shape-changing interfaces, and immersive interaction in virtual and augmented reality.",
                 "criteria": "Is this text about virtual reality (VR) or augmented reality (AR) technologies?",
-                "n": 29
+                "n": 29,
+                "fill": "#ccbfed"
             },
             {
                 "name": "Gesture and Voice Control",
                 "summary": "Exploring innovative systems integrating gesture and voice control for diverse applications and user interactions.",
                 "criteria": "Does this example involve gesture or voice control interfaces?",
-                "n": 32
+                "n": 32,
+                "fill": "#a3e0e6"
             }
         ]
     }

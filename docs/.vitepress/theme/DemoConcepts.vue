@@ -24,7 +24,7 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
             <ConceptHist :curConcepts="curConcepts" :key="componentKey" />
         </div>
         <div class="concepts">
-            <div v-for="c in curConcepts.data" class="concept">
+            <div v-for="c in curConcepts.data" class="concept" :style="{backgroundColor: c.fill + '50'}">
                 <h3>{{ c.name }}</h3>
                 <p><strong>Criteria:</strong> {{ c.criteria }}</p>
                 <p><strong>Summary:</strong> {{ c.summary }}</p>
@@ -35,8 +35,8 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
 
 <style>
 .concepts-wrapper {
+    position: relative;
     width: 100%;
-    height: 90%;
     float: right;
     display: flex;
     flex-direction: column;
@@ -45,22 +45,15 @@ watch(() => props.curConcepts.data, async(newVal, oldVal) => {
 
 .concepts {
     padding: 0 10px;
-    /* display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start; */
     margin: 5px auto;
 }
 
 .concepts-hist {
-    max-height: 45%;
-    overflow: scroll;
     margin: 10px auto;
 }
 
 .concept {
     margin: 5px auto;
-    background-color: #c1e0fd;
     border: 1px solid #dedede;
     border-radius: 5px;
     font-size: 11px;

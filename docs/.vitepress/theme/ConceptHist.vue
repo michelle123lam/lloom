@@ -15,13 +15,13 @@ export default {
                 Plot.barY(data, {
                     x: 'name', 
                     y: 'n', 
-                    fill: '#A1D1FC', 
-                    tip: true, 
+                    fill: 'fill', 
+                    tip: { format: { fill: null }}, 
                     sort: { x: "y", reverse: true, limit: 20 }
                 }),
                 Plot.axisX({
                     label: "",
-                    lineWidth: 4,
+                    lineWidth: 5,
                 }),
                 Plot.axisY({
                     label: "Number of documents",
@@ -31,6 +31,7 @@ export default {
             marginBottom: 50,
             width: 400,
             height: 135,
+            style: { fontSize: 11}
         });
         this.$refs.view.replaceChildren(plot);
     }
