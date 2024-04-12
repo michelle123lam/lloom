@@ -150,7 +150,7 @@ class lloom:
         est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model_name, synth_in_tokens, synth_out_tokens)
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
-        print(f"Estimated cost: {np.round(total_cost, 2)}")
+        print(f"\n\nEstimated cost: {np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
         if verbose:
@@ -181,7 +181,7 @@ class lloom:
         est_cost = calc_cost_by_tokens(self.score_model_name, score_in_tokens, score_out_tokens)
 
         total_cost = np.sum(est_cost)
-        print(f"Scoring {n_concepts} concepts for {len(self.in_df)} documents")
+        print(f"\n\nScoring {n_concepts} concepts for {len(self.in_df)} documents")
         print(f"Estimated cost: {np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
@@ -241,7 +241,7 @@ class lloom:
 
     def show_selected(self):
         active_concepts = self.__get_active_concepts()
-        print(f"Active concepts (n={len(active_concepts)}):")
+        print(f"\n\nActive concepts (n={len(active_concepts)}):")
         for c_id, c in active_concepts.items():
             print(f"- {c.name}: {c.prompt}")
 
@@ -359,6 +359,20 @@ class lloom:
         w = get_select_widget(concepts_json)
         self.select_widget = w
         return w
+
+    async def select_auto(self, max_concepts):
+        # Select the best concepts up to max_concepts
+        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name)
+
+        # Handle if selection failed
+        if len(selected_concepts) == 0:
+            concept_ids = list(self.concepts.keys())
+            selected_concepts = random.sample(concept_ids, max_concepts)
+
+        # Activate only the selected concepts
+        for c_id in selected_concepts:
+            if c_id in self.concepts:
+                self.concepts[c_id].active = True
 
     def __get_active_concepts(self):
         # Update based on widget
@@ -523,6 +537,24 @@ class lloom:
         concepts_dict = [format_dict(c.to_dict()) for c_id, c in active_concepts.items()]
         concepts_json = json.dumps(concepts_dict)
         return concepts_json
+
+    async def gen_auto(
+        self,
+        max_concepts=8,
+        seed=None, params=None, n_synth=1,
+        debug=True
+    ):
+        # Runs gen(), select(), and score() all at once
+        # Run generation
+        await self.gen(seed=seed, params=params, n_synth=n_synth, auto_review=True, debug=debug)
+
+        # Select the best concepts
+        await self.select_auto(max_concepts=max_concepts)
+        self.show_selected()
+
+        # Run scoring
+        score_df = await self.score()
+        return score_df
 
     async def add(self, name, prompt, ex_ids=[], get_highlights=True):
         # Add concept

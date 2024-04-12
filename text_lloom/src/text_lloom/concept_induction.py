@@ -547,6 +547,35 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
     save_progress(sess, concept_df_out, step_name="review_merge", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_merge
 
+# Model selects the best concepts up to `max_concepts`
+# Input: concepts (concept_id -> Concept)
+# Parameters: max_concepts, model_name
+# Output: selected_concepts: dict (concept_id -> Concept)
+async def review_select(concepts, max_concepts, model_name):
+    concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
+    concepts_list_str = "\n".join(concepts_list)
+    arg_dicts = [{
+        "themes": concepts_list_str,
+        "max_concepts": max_concepts,
+    }]
+
+    # Run prompts
+    prompt_template = review_select_prompt
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+
+    # Process results
+    res = res_text[0]
+    selected_concept_names = json_load(res, top_level_key="selected")
+
+    selected_concepts = []
+    for c_id, c in concepts.items():
+        if c.name in selected_concept_names:
+            selected_concepts.append(c_id)
+
+    if len(selected_concepts) > max_concepts:
+        selected_concepts = selected_concepts[:max_concepts]
+    return selected_concepts
+
 
 def get_ex_batch_args(df, text_col, doc_id_col, concept_name, concept_prompt):
     ex = get_examples_dict(df, text_col, doc_id_col)

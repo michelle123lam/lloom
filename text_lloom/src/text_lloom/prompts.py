@@ -77,6 +77,21 @@ Please respond ONLY with a valid JSON in the following format with the original 
 }}
 """
 
+review_select_prompt = """
+I have this set of themes generated from text examples:
+{themes}
+
+Please select AT MOST {max_concepts} themes to include in the final set of themes. These themes should be the highest quality themes in the set: (1) NOT too generic or vague (should not describe most examples), (2) NOT too specific (should not only describe a small set of examples), and (3) NOT overlapping with other selected themes (they should capture a range of different patterns).
+Please respond ONLY with a valid JSON in the following format:
+
+{{
+    "selected": [ 
+        "<THEME_NAME_1>",
+        "<THEME_NAME_2>",
+    ]
+}}
+"""
+
 # Score ========================
 score_no_highlight_prompt = """
 CONTEXT: 
