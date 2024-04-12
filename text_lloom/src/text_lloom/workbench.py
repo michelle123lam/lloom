@@ -218,18 +218,18 @@ class lloom:
         }
         return params
     
-    def summary(self, show_detail=True):
+    def summary(self, verbose=True):
         # Time
         total_time = np.sum(list(self.time.values()))
         print(f"Total time: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
-        if show_detail:
+        if verbose:
             for step_name, time in self.time.items():
                 print(f"\t{step_name}: {time:0.2f} sec")
 
         # Cost
         total_cost = np.sum(list(self.cost.values()))
         print(f"\n\nTotal cost: {total_cost:0.2f}")
-        if show_detail:
+        if verbose:
             for step_name, cost in self.cost.items():
                 print(f"\t{step_name}: {cost:0.2f}")
 
@@ -246,7 +246,7 @@ class lloom:
             print(f"- {c.name}: {c.prompt}")
 
     # HELPER FUNCTIONS ================================
-    async def gen(self, seed=None, params=None, n_synth=1, debug=True):
+    async def gen(self, seed=None, params=None, n_synth=1, auto_review=True, debug=True):
         if params is None:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
@@ -325,6 +325,10 @@ class lloom:
                 seed=seed,
                 sess=self,
             )
+
+            # Review current concepts (remove low-quality, merge similar)
+            if auto_review:
+                _, df_concepts = await review(concepts=self.concepts, concept_df=df_concepts, concept_col_prefix=concept_col_prefix, model_name=self.synth_model_name, sess=self)
 
             self.concept_history[i] = self.concepts
             if debug:

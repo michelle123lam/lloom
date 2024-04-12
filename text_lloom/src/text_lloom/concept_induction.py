@@ -407,12 +407,12 @@ def pretty_print_merge_results(merged):
 # Input: concept_df (columns: doc_id, text, concept_id, concept_name, concept_prompt)
 # Parameters: n_concepts
 # Output: 
-# - concepts: dict (concept_id -> concept dict)
+# - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review(concepts, concept_df, concept_col, concept_col_prefix, model_name, debug=True, sess=None):
+async def review(concepts, concept_df, concept_col_prefix, model_name, debug=True, sess=None):
     # Model is asked to review the provided set of concepts
-    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col, concept_col_prefix, model_name=model_name, sess=sess)
-    concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col, concept_col_prefix, model_name=model_name, sess=sess)
+    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, sess=sess)
+    concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col_prefix, model_name=model_name, sess=sess)
 
     if debug:
         print(f"Removed ({len(removed)}):\n{removed}")
@@ -420,6 +420,8 @@ async def review(concepts, concept_df, concept_col, concept_col_prefix, model_na
         pretty_print_merge_results(merged)
 
     # TODO: ask model to filter to the "best" N concepts
+    if sess is not None:
+        sess.concepts = concepts_out
     return concepts_out, concept_df_out
 
 
@@ -427,15 +429,14 @@ async def review(concepts, concept_df, concept_col, concept_col_prefix, model_na
 # Input: concept_df (columns: doc_id, text, concept_id, concept_name, concept_prompt)
 # Parameters: n_concepts
 # Output: 
-# - concepts: dict (concept_id -> concept dict)
+# - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review_remove(concepts, concept_df, concept_col, concept_col_prefix, model_name, sess):
+async def review_remove(concepts, concept_df, concept_col_prefix, model_name, sess):
     concepts = concepts.copy()  # Make a copy of the concepts dict to avoid modifying the original
     start = time.time()
     concept_name_col = f"{concept_col_prefix}_name"
 
-    concepts_list = concept_df[concept_col].tolist()
-    concepts_list = [f"- {c}" for c in concepts_list]
+    concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
         "themes": concepts_list_str,
@@ -449,21 +450,24 @@ async def review_remove(concepts, concept_df, concept_col, concept_col_prefix, m
     res = res_text[0]
     concepts_to_remove = json_load(res, top_level_key="remove")
 
-    concept_df_out = concept_df.copy()
-    concept_df_out = concept_df_out[~concept_df_out[concept_name_col].isin(concepts_to_remove)]
+    if concept_df is not None:
+        concept_df_out = concept_df.copy()
+        concept_df_out = concept_df_out[~concept_df_out[concept_name_col].isin(concepts_to_remove)]  # Remove from concept_df
+    else:
+        concept_df_out = None
     c_ids_to_remove = []
     for c_id, c in concepts.items():
-        if c['name'] in concepts_to_remove:
+        if c.name in concepts_to_remove:
             c_ids_to_remove.append(c_id)
     for c_id in c_ids_to_remove:
-        concepts.pop(c_id, None)
+        concepts.pop(c_id, None)  # Remove from concepts dict
 
     save_progress(sess, concept_df_out, step_name="review_remove", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_remove
 
 def get_concept_by_name(concepts, concept_name):
     for c_id, c in concepts.items():
-        if c['name'] == concept_name:
+        if c.name == concept_name:
             return c_id, c
     return None, None
 
@@ -471,16 +475,16 @@ def get_concept_by_name(concepts, concept_name):
 # Input: concept_df (columns: doc_id, text, concept_id, concept_name, concept_prompt)
 # Parameters: n_concepts
 # Output: 
-# - concepts: dict (concept_id -> concept dict)
+# - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review_merge(concepts, concept_df, concept_col, concept_col_prefix, model_name, sess):
+async def review_merge(concepts, concept_df, concept_col_prefix, model_name, sess):
     concepts = concepts.copy()  # Make a copy of the concepts dict to avoid modifying the original
     start = time.time()
+    concept_col = concept_col_prefix
     concept_name_col = f"{concept_col_prefix}_name"
     concept_prompt_col = f"{concept_col_prefix}_prompt"
 
-    concepts_list = concept_df[concept_col].tolist()
-    concepts_list = [f"- {c}" for c in concepts_list]
+    concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
         "themes": concepts_list_str,
@@ -494,7 +498,10 @@ async def review_merge(concepts, concept_df, concept_col, concept_col_prefix, mo
     res = res_text[0]
     concepts_to_merge = json_load(res, top_level_key="merge")
 
-    concept_df_out = concept_df.copy()
+    if concept_df is not None:
+        concept_df_out = concept_df.copy()
+    else:
+        concept_df_out = None
 
     # Remove all original concepts
     # Add new merged concepts
@@ -519,26 +526,23 @@ async def review_merge(concepts, concept_df, concept_col, concept_col_prefix, mo
             c_id, c = get_concept_by_name(concepts, orig_concept)
             if c is not None:
                 c_ids_to_remove.append(c_id)
-                merged_example_ids.extend(c["example_ids"])
+                merged_example_ids.extend(c.example_ids)
         
         # Create new merged concept in dict
         new_concept_name = merge_result["merged_theme_name"]
         new_concept_prompt = merge_result["merged_theme_prompt"]
         new_concept_id = str(uuid.uuid4())
-        concepts[new_concept_id] = {
-            "name": new_concept_name,
-            "prompt": new_concept_prompt,
-            "example_ids": merged_example_ids,
-        }
+        concepts[new_concept_id] = Concept(name=new_concept_name, prompt=new_concept_prompt, example_ids=merged_example_ids, active=False)
 
         # Replace prior df row with new merged concept
-        for orig_concept in orig_concepts:
-            concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_name_col] = new_concept_name
-            concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_prompt_col] = new_concept_prompt
-            concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_col] = f"{new_concept_name}: {new_concept_prompt}"
+        if concept_df is not None:
+            for orig_concept in orig_concepts:  # Merge in concept_df
+                concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_name_col] = new_concept_name
+                concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_prompt_col] = new_concept_prompt
+                concept_df_out.loc[concept_df_out[concept_name_col]==orig_concept, concept_col] = f"{new_concept_name}: {new_concept_prompt}"
         
     for c_id in c_ids_to_remove:
-        concepts.pop(c_id, None)
+        concepts.pop(c_id, None) # Remove from concepts dict
 
     save_progress(sess, concept_df_out, step_name="review_merge", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_merge
