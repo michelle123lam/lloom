@@ -148,6 +148,11 @@ class lloom:
         synth_in_tokens = np.sum([(synth_prompt_tokens + (est_bullet_tokens * n_bullets_per_cluster)) for _ in range(est_n_clusters)])
         synth_out_tokens = params["synth_n_concepts"] * est_n_clusters * est_concept_tokens
         est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model_name, synth_in_tokens, synth_out_tokens)
+
+        # Review: pass all names and prompts
+        rev_in_tokens = synth_out_tokens * 2  # For both review_remove and review_merge
+        rev_out_tokens = rev_in_tokens * 0.5  # Conservatively assume half size
+        est_cost["review"] = calc_cost_by_tokens(self.synth_model_name, rev_in_tokens, rev_out_tokens)
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
         print(f"\n\nEstimated cost: {np.round(total_cost, 2)}")
@@ -231,7 +236,7 @@ class lloom:
         print(f"\n\nTotal cost: {total_cost:0.2f}")
         if verbose:
             for step_name, cost in self.cost.items():
-                print(f"\t{step_name}: {cost:0.2f}")
+                print(f"\t{step_name}: {cost:0.3f}")
 
         # Tokens
         in_tokens = np.sum(self.tokens["in_tokens"])
