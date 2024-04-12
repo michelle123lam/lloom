@@ -1,12 +1,12 @@
-# AI Broader Impact Statements
+# 4: AI Broader Impact Statements
 
 <DemoLayout curDataset="AI Broader Impact Statements" curScrollSpeed="400s"/>
 
-## tl;dr
-TODO
+## Task: Investigate anticipated consequences of AI research
+Advances in AI are driven by research labs, so to avoid future harms, today's researchers must be equipped to grapple with **AI ethics**, including the ability to anticipate risks and mitigate potentially harmful downstream impacts of their work. **How do AI researchers assess the consequences of their work**? LLooM can help us to understand how AI researchers discuss downstream outcomes, ethical issues, and potential mitigations. Such an analysis could help us to uncover gaps in understanding that could be addressed with guidelines and AI ethics curricula.
 
-## Dataset
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam ultrices ut risus et lacinia. Phasellus gravida elit tortor, nec scelerisque sapien ullamcorper a. Maecenas commodo tincidunt pulvinar. Nullam vehicula lorem eget pretium gravida. Fusce eget dictum lacus, id commodo libero. Phasellus tincidunt eu augue vel malesuada. Donec a dui ut felis rutrum commodo. Cras lacinia placerat rhoncus. In orci augue, rutrum nec euismod nec, rutrum vitae felis. Donec volutpat odio id auctor condimentum. Quisque ut laoreet libero. Etiam suscipit turpis eget dolor consectetur posuere.
+## Dataset: NeurIPS Broader Impact Statements, 2020
+In 2020, NeurIPS, a premier machine learning research conference, required authors to include a broader impact statement in their submission in an effort to encourage researchers to consider negative consequences of their work. These statements provide a window into the ethical thought processes of a broad swath of AI researchers, and [prior work](https://doi.org/10.1145/3461702.3462608) from Nanayakkara et al. has performed a qualitative thematic analysis on a sample of 300 statements. 
 
-## Sample analysis
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam ultrices ut risus et lacinia. Phasellus gravida elit tortor, nec scelerisque sapien ullamcorper a. Maecenas commodo tincidunt pulvinar. Nullam vehicula lorem eget pretium gravida. Fusce eget dictum lacus, id commodo libero. Phasellus tincidunt eu augue vel malesuada. Donec a dui ut felis rutrum commodo. Cras lacinia placerat rhoncus. In orci augue, rutrum nec euismod nec, rutrum vitae felis. Donec volutpat odio id auctor condimentum. Quisque ut laoreet libero. Etiam suscipit turpis eget dolor consectetur posuere.
+## Analysis
+:arrow_right: Try out analyzing this data with LLooM on this [Colab notebook]().

@@ -269,36 +269,6 @@
         ]
     },
     "Academic Paper Abstracts": {
-        "artificial intelligence": [
-            {
-                "name": "Gesture & Touch Interaction",
-                "criteria": "Is the example related to enhancing user experience through gesture or touch-based interactions?",
-                "summary": "We explore innovative methods for gesture and touch interaction, enabling diverse applications from direct pointing to virtual structure building.",
-                "n": 20,
-                "fill": "#afd8ff"
-            },
-            {
-                "name": "Speech & Audio Processing",
-                "criteria": "Does this text involve speech recognition or audio processing enhancements through AI?",
-                "summary": "We explore various innovative methods in speech and audio processing, including automated capture, user modeling, gesture tracking, multimodal integration, and interactive systems.",
-                "n": 7,
-                "fill": "#b3e2cd"
-            },
-            {
-                "name": "AI in Design",
-                "criteria": "Is the example focused on using artificial intelligence for design or layout purposes?",
-                "summary": "Exploring AI applications in design, from intelligent keyboards to automated layout systems and novel interfaces for user interaction.",
-                "n": 7,
-                "fill": "#ccbfed"
-            },
-            {
-                "name": "AI for Content Creation",
-                "criteria": "Does the text discuss AI applications in content creation, such as drawing, music, or video?",
-                "summary": "We explore AI applications for enhancing content creation through interactive interfaces, gesture recognition, and automated data processing.",
-                "n": 4,
-                "fill": "#a3e0e6"
-            }
-        ],
         "evaluation methods": [
             {
                 "name": "Experimental Validation",
@@ -326,6 +296,36 @@
                 "criteria": "Does this text discuss evaluating an algorithm's performance or effectiveness?",
                 "summary": "Evaluation methods such as controlled experiments and user studies are crucial for assessing algorithm performance and user interaction.",
                 "n": 15,
+                "fill": "#a3e0e6"
+            }
+        ],
+        "artificial intelligence": [
+            {
+                "name": "Gesture & Touch Interaction",
+                "criteria": "Is the example related to enhancing user experience through gesture or touch-based interactions?",
+                "summary": "We explore innovative methods for gesture and touch interaction, enabling diverse applications from direct pointing to virtual structure building.",
+                "n": 20,
+                "fill": "#afd8ff"
+            },
+            {
+                "name": "Speech & Audio Processing",
+                "criteria": "Does this text involve speech recognition or audio processing enhancements through AI?",
+                "summary": "We explore various innovative methods in speech and audio processing, including automated capture, user modeling, gesture tracking, multimodal integration, and interactive systems.",
+                "n": 7,
+                "fill": "#b3e2cd"
+            },
+            {
+                "name": "AI in Design",
+                "criteria": "Is the example focused on using artificial intelligence for design or layout purposes?",
+                "summary": "Exploring AI applications in design, from intelligent keyboards to automated layout systems and novel interfaces for user interaction.",
+                "n": 7,
+                "fill": "#ccbfed"
+            },
+            {
+                "name": "AI for Content Creation",
+                "criteria": "Does the text discuss AI applications in content creation, such as drawing, music, or video?",
+                "summary": "We explore AI applications for enhancing content creation through interactive interfaces, gesture recognition, and automated data processing.",
+                "n": 4,
                 "fill": "#a3e0e6"
             }
         ],

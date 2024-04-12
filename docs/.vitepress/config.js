@@ -24,7 +24,7 @@ export default defineConfig({
 
     nav: [
       { text: 'About', link: '/about/' },
-      { text: 'Examples', link: '/examples/' },
+      { text: 'Examples', link: '/examples/pol-soc-media' },
       { text: 'API Reference', link: '/api/' }
     ],
 
@@ -43,11 +43,10 @@ export default defineConfig({
         {
           text: 'Examples',
           items: [
-            { text: 'Overview', link: '/examples/' },
-            { text: 'Political Social Media', link: '/examples/pol-soc-media' },
-            { text: 'Content Moderation', link: '/examples/content-mod' },
-            { text: 'Academic Paper Abstracts', link: '/examples/paper-abstracts' },
-            { text: 'AI Broader Impact Statements', link: '/examples/ai-impact-statements' }
+            { text: '1: Political Social Media', link: '/examples/pol-soc-media' },
+            { text: '2: Content Moderation', link: '/examples/content-mod' },
+            { text: '3: Academic Paper Abstracts', link: '/examples/paper-abstracts' },
+            { text: '4: AI Broader Impact Statements', link: '/examples/ai-impact-statements' }
           ]
         }
       ],
