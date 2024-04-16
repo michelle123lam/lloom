@@ -220,22 +220,3 @@ Please respond with a list of each concept and either the item it matches or NON
     ]
 }}
 """
-
-# Match Concept ========================
-match_concept_prompt = """
-I have this dict of CONCEPTS (keys) and their corresponding inclusion criteria (values), as follows:
-{concepts}
-
-I have the following theme:
-{seed}
-
-Please identify any CONCEPTS that do not match the THEME. If there no such concepts, please leave the list empty.
-Please respond ONLY with a valid JSON in the following format:
-
-{{
-    "remove": [ 
-        "<CONCEPT_NAME_5>",
-        "<CONCEPT_NAME_6>",
-    ]
-}}
-"""
