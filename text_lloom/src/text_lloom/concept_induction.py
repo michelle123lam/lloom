@@ -40,7 +40,7 @@ else:
 # CONSTANTS ================================
 NAN_SCORE = 0  # Numerical score to use in place of NaN values for matrix viz
 OUTLIER_CRITERIA = "Did the example not match any of the above concepts?"
-SCORE_DF_OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight"]
+SCORE_DF_OUT_COLS = ["doc_id", "text", "concept_id", "concept_name", "concept_prompt", "score", "rationale", "highlight", "concept_seed"]
 
 
 # HELPER functions ================================
@@ -315,6 +315,8 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
         seed_phrase = f"If possible, please make the patterns RELATED TO {seed.upper()}."
     else:
         seed_phrase = ""
+
+    seed_label = seed
     arg_dicts = []
     cluster_ids = cluster_df[cluster_id_col].unique()
     cluster_dfs = {}  # Store each cluster's dataframe by cluster_id
@@ -368,6 +370,7 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                     prompt=concept_dict["prompt"],
                     example_ids=ex_ids,
                     active=False,
+                    seed=seed_label
                 )
                 concepts[concept.id] = concept
                 
@@ -375,14 +378,14 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                     # doc_id, text, concept_id, concept_name, concept_prompt
                     cur_key = (ex_id, cur_cluster_id)
                     if cur_key in ex_id_to_ex:
-                        row = [ex_id, ex_id_to_ex[cur_key], concept.id, concept.name, concept.prompt]
+                        row = [ex_id, ex_id_to_ex[cur_key], concept.id, concept.name, concept.prompt, concept.seed]
                         rows.append(row)
             if verbose:
                 examples = cluster_dfs[cur_cluster_id][doc_col].tolist()
                 concepts_formatted = pretty_print_dict_list(cur_concepts)
                 print(f"\n\nInput examples: {examples}\nOutput concepts: {concepts_formatted}")
     # doc_id, text, concept_id, concept_name, concept_prompt
-    concept_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, concept_col_prefix, f"{concept_col_prefix}_name", f"{concept_col_prefix}_prompt"])
+    concept_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, concept_col_prefix, f"{concept_col_prefix}_name", f"{concept_col_prefix}_prompt", "seed"])
 
     concept_df[f"{concept_col_prefix}_namePrompt"] = concept_df[f"{concept_col_prefix}_name"] + ": " + concept_df[f"{concept_col_prefix}_prompt"]
     if dedupe:
@@ -621,6 +624,7 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
     res_dict = json_load(res, top_level_key="pattern_results")
     concept_name = concept.name
     concept_prompt = concept.prompt
+    concept_seed = concept.seed
     if res_dict is not None:
         rows = []
         for ex in res_dict:
@@ -642,9 +646,9 @@ def get_score_df(res, in_df, concept, concept_id, text_col, doc_id_col, get_high
                         rationale = ""   # Set rationale to empty string
 
                     if get_highlights and ("quote" in ex):
-                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ex["quote"]]
+                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ex["quote"], concept_seed]
                     else:
-                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, ""]  # Set quote to empty string
+                        row = [doc_id, text, concept_id, concept_name, concept_prompt, ans, rationale, "", concept_seed]  # Set quote to empty string
                     rows.append(row)
         
         out_df = pd.DataFrame(rows, columns=SCORE_DF_OUT_COLS)
@@ -657,6 +661,7 @@ def get_empty_score_df(in_df, concept, concept_id, text_col, doc_id_col):
     # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
     concept_name = concept.name
     concept_prompt = concept.prompt
+    concept_seed = concept.seed
     out_df = in_df.copy()
     out_df["doc_id"] = out_df[doc_id_col]
     out_df["text"] = out_df[text_col]
@@ -666,6 +671,7 @@ def get_empty_score_df(in_df, concept, concept_id, text_col, doc_id_col):
     out_df["score"] = NAN_SCORE
     out_df["rationale"] = ""
     out_df["highlight"] = ""
+    out_df["concept_seed"] = concept.seed
     return out_df[SCORE_DF_OUT_COLS]
 
 # Performs scoring for one concept
@@ -836,7 +842,7 @@ def get_covered_by_generic(score_df, doc_id_col, threshold=1.0, generic_threshol
     # Determines generic concepts
     df = score_df.copy()
     df["score"] = df["score"].apply(lambda x: 1 if x >= threshold else 0)
-    df_generic = df.groupby("concept_id").mean().reset_index()
+    df_generic = df.groupby("concept_id")['score'].mean().reset_index()
     df_generic.rename(columns={"score": "pos_frac"}, inplace=True)
     df_generic = df_generic[df_generic["pos_frac"] >= generic_threshold]
     generic_concepts = df_generic["concept_id"].unique().tolist()
@@ -865,10 +871,10 @@ def loop(score_df, doc_col, doc_id_col, debug=False):
     # TODO: Allow users to decide on custom filtering conditions
     # TODO: Save generic concepts to session (to avoid later)
     n_initial = len(score_df[doc_id_col].unique())
-
     underrep_ids = get_not_covered(score_df, doc_id_col)
     generic_ids = get_covered_by_generic(score_df, doc_id_col)
     ids_to_include = underrep_ids + generic_ids
+    
     ids_to_include = set(ids_to_include)
     if debug:
         print(f"ids_to_include ({len(ids_to_include)}): {ids_to_include}")
@@ -881,7 +887,6 @@ def loop(score_df, doc_col, doc_id_col, debug=False):
     if (n_final == n_initial) or (len(text_df) == 0):
         return None
     return text_df
-
 
 def trace():
     # Input: concept_df (columns: doc_id, text, concept_id, ...), text_dfs (columns: doc_id, text)
@@ -1388,3 +1393,20 @@ def edit_concept(concepts, concept_id, new_name=None, new_prompt=None, new_ex_id
 
     # TODO: handle concept_df
     return concepts
+
+async def check_concept_seed(concepts, seed, model_name="gpt-3.5-turbo"):
+    concepts_prompts_str = str(concepts)
+    seed_str = str(seed)
+    arg_dicts = [
+        {
+            "concepts": concepts_prompts_str,
+            "seed": seed_str,
+        }
+    ]
+
+    # Run prompts
+    prompt_template = match_concept_prompt
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    res = res_text[0]
+    concepts_to_remove = json_load(res, top_level_key="remove")
+    return concepts_to_remove
