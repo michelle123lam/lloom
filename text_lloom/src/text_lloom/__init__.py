@@ -5,10 +5,10 @@ import anywidget
 import traitlets
 
 import nltk
-nltk.download('punkt')
+nltk.download('punkt', quiet=True)
 
 try:
-    __version__ = importlib.metadata.version("lloom")
+    __version__ = importlib.metadata.version("text_lloom")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
