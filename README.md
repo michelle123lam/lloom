@@ -7,7 +7,7 @@
 **Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM**. *Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, Michael S. Bernstein*. Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems (CHI '24).
 
 ## Get started
-Follow the [**Get Started**](https://michelle123lam.github.io/lloom/about/get-started) instructions on our documentation for a walkthrough of the main LLooM functions.
+Follow the [**Get Started**](https://stanfordhci.github.io/lloom/about/get-started) instructions on our documentation for a walkthrough of the main LLooM functions.
 
 This will involve downloading our Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
 ```sh
