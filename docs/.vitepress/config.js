@@ -5,6 +5,20 @@ export default defineConfig({
   title: "LLooM",
   description: "Concept Induction: Analyzing Unstructured Text with High-Level Concepts",
   base: "/lloom/",
+  head: [
+    [
+      'script',
+      { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-YYD21V2BQE' }
+    ],
+    [
+      'script',
+      {},
+      `window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YYD21V2BQE');`
+    ]
+  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: {
@@ -15,7 +29,7 @@ export default defineConfig({
     siteTitle: false,
 
     footer: {
-      message: "LLooM was produced by the <a href='https://hci.stanford.edu/'>Stanford Human-Computer Interaction Group</a> in collaboration with the <a href='https://idl.cs.washington.edu/'>UW Interactive Data Lab</a>."
+      message: "LLooM is a research prototype produced by the <a href='https://hci.stanford.edu/'>Stanford Human-Computer Interaction Group</a> in collaboration with the <a href='https://idl.cs.washington.edu/'>UW Interactive Data Lab</a>."
     },
 
     search: {
@@ -60,8 +74,8 @@ export default defineConfig({
           ]
         }
       ]
-  },
-
+    },
+    
     socialLinks: [
       { icon: 'github', link: 'https://github.com/michelle123lam/lloom' }
     ]
