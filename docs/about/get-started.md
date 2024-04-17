@@ -1,6 +1,6 @@
 # Get Started
 
-LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. We suggest starting this [**template Colab Notebook**](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb).
+LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. We suggest starting with this [**template Colab Notebook**](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb).
 
 <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
@@ -43,9 +43,19 @@ l = wb.lloom(
 ```
 
 ## Concept generation
-Next, you can go ahead and start the concept induction process by generating concepts. You can omit the `seed` parameter if you do not want to use a seed.
+Next, you can go ahead and start the concept induction process by generating concepts. The **seed term** can steer concept induction towards more specific areas of interest (e.g., social issues" for political discussion or "evaluation methods" for academic papers). You can omit the `seed` parameter if you do not want to use a seed.
 ```py
-await l.gen(seed="your_optional seed_term")
+await l.gen(
+    seed="your_optional_seed_term",  # Optional
+)
+```
+
+We also provide a one-function **"auto" mode** that grants less control over the process, but simplifies the concept generation and scoring process into a single function. If you use the `gen_auto` function, you do not need to run concept scoring, but can directly proceed to visualize the results.
+```py
+score_df = await l.gen_auto(
+    max_concepts=5,
+    seed="your_optional_seed_term",  # Optional
+)
 ```
 
 ## Concept scoring
@@ -73,10 +83,13 @@ Check out [Using the LLooM Workbench](./vis-guide.md) for a more detailed guide 
 ![LLooM vis() function output](/media/ui/vis_output.png)
 
 ### Add slices (columns)
-If you want to additionally slice your data according to a pre-existing metadata column in your dataframe, you can optionally provide a `slice_col`. Numeric or string columns are supported.
+If you want to additionally slice your data according to a pre-existing metadata column in your dataframe, you can optionally provide a `slice_col`. Numeric or string columns are supported. Currently, numeric columns are automatically binned into quantiles, and string columns are treated as categorical variables.
 ```py
 l.vis(slice_col="n_likes")
 ```
+Optional parameters for slices:
+- `max_slice_bins`: For numeric columns, the maximum number of bins to create (default=5)
+- `slice_bounds`: For numeric columns, the manual bin boundaries to use (ex: [0, 10, 50, 100])
 
 ### Normalize counts
 By default, the concept matrix shows the raw document counts. You can normalize by **concept**, meaning that the size of the circles in each concept row represents the fraction of examples *in that concept* that fall into each slice column. 
@@ -110,7 +123,7 @@ l.save(folder="your/path/here", file_name="your_file_name")
 You can then reload the LLooM instance by opening the pickle file:
 ```py
 import pickle
-with open(f"your/path/here/your_file_name.pkl", "rb") as f:
+with open("your/path/here/your_file_name.pkl", "rb") as f:
     l = pickle.load(f)
 ```
 

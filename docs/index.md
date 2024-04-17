@@ -6,7 +6,7 @@ hero:
   text: From unstructured text to interpretable concepts
   tagline: LLooM automatically surfaces high-level concepts to analyze unstructured text
   image:
-    src: /media/lloom_process.svg
+    src: /media/lloom_home.svg
     alt: Summary of the LLooM Concept Induction process from Data to Concepts to an interactive LLooM Workbench visualization
   actions:
     - theme: brand
@@ -22,13 +22,13 @@ hero:
 
 features:
   - icon: 🔍
+    title: Generate interpretable concepts
+    details: LLooM concepts are defined by natural language descriptions and explicit inclusion criteria.
+  - icon: 📊
     title: Visualize data by concepts
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+    details: Use the LLooM Workbench in computational notebooks for dataset overviews, concept details, and doc-level scores and highlights.
   - icon: 🗣️
     title: Steer the analysis direction
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - icon: 🔁
-    title: TODO additional features
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+    details: Provide a seed term to orient concept induction around your interests, like "social issues" for political discussion or "evaluation methods" for academic papers.
 ---
 

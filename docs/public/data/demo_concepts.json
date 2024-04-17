@@ -46,11 +46,18 @@
                 "fill": "#b3e2cd"
             },
             {
+                "name": "Social Justice",
+                "criteria": "Does this text discuss social justice or reform efforts?",
+                "summary": "Advocating for social justice through policies on healthcare, education, equality, and economic fairness.",
+                "n": 29,
+                "fill": "#ccbfed"
+            },
+            {
                 "name": "Political Accountability",
                 "criteria": "Does this text call for accountability or mention an investigation related to government officials?",
                 "summary": "Emphasizes the importance of political accountability through legislative actions, investigations, and calls for transparency and justice.",
                 "n": 17,
-                "fill": "#ccbfed"
+                "fill": "#a3e0e6"
             }
         ],
         "no seed": [
