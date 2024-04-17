@@ -159,7 +159,7 @@ Estimates the cost of running `score()` on the provided number of concepts. If `
 
 Displays a **cumulative** summary of the (1) Total time, (2) Total cost, and (3) Tokens for the entire LLooM instance. 
 - Total time: Displays the total time required for each operator. Each tuple contains the operator name and the timestamp at which the operation completed. 
-- Total cost: Displays the calculated cost incurred by each operator.
+- Total cost: Displays the calculated cost incurred by each operator (in US Dollars).
 - Tokens: Displays the overall number of tokens used (total, in, and out)
 
 Sample output:
@@ -171,10 +171,10 @@ Total time: 25.31 sec (0.42 min)
 	('synthesize', '2024-03-08-02-45-42'): 16.38 sec
 
 
-Total cost: 0.14
-	('distill_filter', '2024-03-08-02-45-20'): 0.02
-	('distill_summarize', '2024-03-08-02-45-21'): 0.02
-	('synthesize', '2024-03-08-02-45-42'): 0.10
+Total cost: $0.14
+	('distill_filter', '2024-03-08-02-45-20'): $0.02
+	('distill_summarize', '2024-03-08-02-45-21'): $0.02
+	('synthesize', '2024-03-08-02-45-42'): $0.10
 
 
 Tokens: total=67045, in=55565, out=11480

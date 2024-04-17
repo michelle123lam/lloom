@@ -9,6 +9,7 @@ import random
 from nltk.tokenize import sent_tokenize
 import os
 import openai
+from yaspin import yaspin
 
 
 # Local imports
@@ -110,6 +111,32 @@ class lloom:
         k = (step_name, t)  # Key of step name and current time
         return k
 
+    # Printed text formatting
+    def bold_txt(self, s):
+        return f"\033[1m{s}\033[0m"
+
+    def highlight_txt(self, s, color="yellow"):
+        if color == "yellow":
+            return f"\x1b[48;5;228m{s}\x1b[m"
+        elif color == "blue":
+            return f"\x1b[48;5;117m{s}\x1b[m"
+
+    def bold_highlight_txt(self, s):
+        return self.bold_txt(self.highlight_txt(s))
+    
+    def spinner_wrapper(self, step_name):
+        format_step_name = f"{self.highlight_txt(step_name, color='blue')}"
+        return yaspin(text=format_step_name, color="yellow")
+
+    def print_timing(self, step_name):
+        # Print elapsed time for the provided step
+        key_matches = [k for k in self.time.keys() if k[0] == step_name]
+        if len(key_matches) == 0:
+            return  # No matches
+        step_key = key_matches[:-1] # Get the last key
+        elapsed = self.time[step_key]
+        print(f"Total time: {elapsed:0.2f} sec")
+
     # Estimate cost of generation for the given params
     def estimate_gen_cost(self, params=None, verbose=False):
         if params is None:
@@ -155,7 +182,7 @@ class lloom:
         est_cost["review"] = calc_cost_by_tokens(self.synth_model_name, rev_in_tokens, rev_out_tokens)
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
-        print(f"\n\nEstimated cost: {np.round(total_cost, 2)}")
+        print(f"\n\n{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
         if verbose:
@@ -187,7 +214,7 @@ class lloom:
 
         total_cost = np.sum(est_cost)
         print(f"\n\nScoring {n_concepts} concepts for {len(self.in_df)} documents")
-        print(f"Estimated cost: {np.round(total_cost, 2)}")
+        print(f"{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
         if verbose:
@@ -226,42 +253,43 @@ class lloom:
     def summary(self, verbose=True):
         # Time
         total_time = np.sum(list(self.time.values()))
-        print(f"Total time: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
+        print(f"{self.bold_txt('Total time')}: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
         if verbose:
             for step_name, time in self.time.items():
                 print(f"\t{step_name}: {time:0.2f} sec")
 
         # Cost
         total_cost = np.sum(list(self.cost.values()))
-        print(f"\n\nTotal cost: {total_cost:0.2f}")
+        print(f"\n\n{self.bold_txt('Total cost')}: ${total_cost:0.2f}")
         if verbose:
             for step_name, cost in self.cost.items():
-                print(f"\t{step_name}: {cost:0.3f}")
+                print(f"\t{step_name}: ${cost:0.3f}")
 
         # Tokens
         in_tokens = np.sum(self.tokens["in_tokens"])
         out_tokens = np.sum(self.tokens["out_tokens"])
         total_tokens =  in_tokens + out_tokens
-        print(f"\n\nTokens: total={total_tokens}, in={in_tokens}, out={out_tokens}")
+        print(f"\n\n{self.bold_txt('Tokens')}: total={total_tokens}, in={in_tokens}, out={out_tokens}")
 
     def show_selected(self):
         active_concepts = self.__get_active_concepts()
-        print(f"\n\nActive concepts (n={len(active_concepts)}):")
+        print(f"\n\n{self.bold_txt('Active concepts')} (n={len(active_concepts)}):")
         for c_id, c in active_concepts.items():
-            print(f"- {c.name}: {c.prompt}")
+            print(f"- {self.bold_txt(c.name)}: {c.prompt}")
 
     # HELPER FUNCTIONS ================================
     async def gen(self, seed=None, params=None, n_synth=1, auto_review=True, debug=True):
         if params is None:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
-                print(f"Auto-suggested parameters: {params}")
+                print(f"{self.bold_txt('Auto-suggested parameters')}: {params}")
         
         # Run cost estimation
         self.estimate_gen_cost(params)
         
         # Confirm to proceed
-        user_input = input("\nProceed with generation? (y/n): ")
+        print(f"\n\n{self.bold_highlight_txt('Action required')}")
+        user_input = input("Proceed with generation? (y/n): ")
         if user_input.lower() != "y":
             print("Cancelled generation")
             return
@@ -269,37 +297,43 @@ class lloom:
         # Run concept generation
         filter_n_quotes = params["filter_n_quotes"]
         if filter_n_quotes > 1:
-            df_filtered = await distill_filter(
-                text_df=self.in_df, 
-                doc_col=self.doc_col,
-                doc_id_col=self.doc_id_col,
-                model_name=self.model_name,
-                n_quotes=params["filter_n_quotes"],
-                seed=seed,
-                sess=self,
-            )
-            self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
-            self.df_filtered = df_filtered
-            if debug:
-                print("df_filtered")
-                display(df_filtered)
+            step_name = "Distill-filter"
+            with self.spinner_wrapper(step_name) as spinner:
+                df_filtered = await distill_filter(
+                    text_df=self.in_df, 
+                    doc_col=self.doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.model_name,
+                    n_quotes=params["filter_n_quotes"],
+                    seed=seed,
+                    sess=self,
+                )
+                self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
+                self.df_filtered = df_filtered
+                spinner.ok("✅")
+                if debug:
+                    self.print_timing(step_name)
+                    display(df_filtered)
         else:
             # Just use original df to generate bullets
             self.df_filtered = self.in_df
         
-        df_bullets = await distill_summarize(
-            text_df=self.df_filtered, 
-            doc_col=self.doc_col,
-            doc_id_col=self.doc_id_col,
-            model_name=self.model_name,
-            n_bullets=params["summ_n_bullets"],
-            seed=seed,
-            sess=self,
-        )
-        self.df_bullets = df_bullets
-        if debug:
-            print("df_bullets")
-            display(df_bullets)
+        step_name = "Distill-summarize"
+        with self.spinner_wrapper(step_name) as spinner:
+            df_bullets = await distill_summarize(
+                text_df=self.df_filtered, 
+                doc_col=self.doc_col,
+                doc_id_col=self.doc_id_col,
+                model_name=self.model_name,
+                n_bullets=params["summ_n_bullets"],
+                seed=seed,
+                sess=self,
+            )
+            self.df_bullets = df_bullets
+            spinner.ok("✅")
+            if debug:
+                self.print_timing(step_name)
+                display(df_bullets)
         
         df_cluster_in = df_bullets
         synth_doc_col = self.doc_col
@@ -308,45 +342,58 @@ class lloom:
         # Perform synthesize step n_synth times
         for i in range(n_synth):
             self.concepts = {}
-            df_cluster = await cluster(
-                text_df=df_cluster_in, 
-                doc_col=synth_doc_col,
-                doc_id_col=self.doc_id_col,
-                embed_model_name=self.embed_model_name,
-                sess=self,
-            )
-            if debug:
-                print("df_cluster")
-                display(df_cluster)
+
+            step_name = "Cluster"
+            with self.spinner_wrapper(step_name) as spinner:
+                df_cluster = await cluster(
+                    text_df=df_cluster_in, 
+                    doc_col=synth_doc_col,
+                    doc_id_col=self.doc_id_col,
+                    embed_model_name=self.embed_model_name,
+                    sess=self,
+                )
+                spinner.ok("✅")
+                if debug:
+                    self.print_timing(step_name)
+                    display(df_cluster)
             
-            df_concepts = await synthesize(
-                cluster_df=df_cluster, 
-                doc_col=synth_doc_col,
-                doc_id_col=self.doc_id_col,
-                model_name=self.synth_model_name,
-                concept_col_prefix=concept_col_prefix,
-                n_concepts=synth_n_concepts,
-                pattern_phrase="unique topic",
-                seed=seed,
-                sess=self,
-            )
+            step_name = "Synthesize"
+            with self.spinner_wrapper(step_name) as spinner:
+                df_concepts = await synthesize(
+                    cluster_df=df_cluster, 
+                    doc_col=synth_doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.synth_model_name,
+                    concept_col_prefix=concept_col_prefix,
+                    n_concepts=synth_n_concepts,
+                    pattern_phrase="unique topic",
+                    seed=seed,
+                    sess=self,
+                )
+                spinner.ok("✅")
+                if debug:
+                    self.print_timing(step_name)
 
-            # Review current concepts (remove low-quality, merge similar)
-            if auto_review:
-                _, df_concepts = await review(concepts=self.concepts, concept_df=df_concepts, concept_col_prefix=concept_col_prefix, model_name=self.synth_model_name, sess=self)
+                # Review current concepts (remove low-quality, merge similar)
+                if auto_review:
+                    step_name = "Review"
+                    with self.spinner_wrapper(step_name) as spinner:
+                        _, df_concepts = await review(concepts=self.concepts, concept_df=df_concepts, concept_col_prefix=concept_col_prefix, model_name=self.synth_model_name, sess=self)
+                        spinner.ok("✅")
 
-            self.concept_history[i] = self.concepts
-            if debug:
-                # Print results
-                print(f"synthesize {i + 1}: (n={len(self.concepts)})")
-                for k, c in self.concepts.items():
-                    print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
+                self.concept_history[i] = self.concepts
+                if debug:
+                    # Print results
+                    print(f"\n\n{self.highlight_txt('Synthesize', color='blue')} {i + 1}: (n={len(self.concepts)} concepts)")
+                    for k, c in self.concepts.items():
+                        print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
             
             # Update synthesize params for next iteration
             df_concepts["synth_doc_col"] = df_concepts[f"{concept_col_prefix}_name"] + ": " + df_concepts[f"{concept_col_prefix}_prompt"]
             df_cluster_in = df_concepts
             synth_doc_col = "synth_doc_col"
             synth_n_concepts = math.floor(synth_n_concepts * 0.75)
+        print("✅ Done with concept generation!")
 
     def __concepts_to_json(self):
         concept_dict = {c_id: c.to_dict() for c_id, c in self.concepts.items()}
@@ -411,7 +458,8 @@ class lloom:
         self.estimate_score_cost(n_concepts=len(concepts), batch_size=batch_size, get_highlights=get_highlights)
 
         # Confirm to proceed
-        user_input = input("\nProceed with scoring? (y/n): ")
+        print(f"\n\n{self.bold_highlight_txt('Action required')}")
+        user_input = input("Proceed with scoring? (y/n): ")
         if user_input.lower() != "y":
             print("Cancelled scoring")
             return
@@ -429,6 +477,7 @@ class lloom:
             threshold=1.0,
         )
 
+        print("✅ Done with concept scoring!")
         return score_df
 
     def __get_concept_from_name(self, name):

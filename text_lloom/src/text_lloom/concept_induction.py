@@ -96,7 +96,7 @@ def cluster_helper(in_df, doc_col, doc_id_col, min_cluster_size, cluster_id_col,
     
     return cluster_df
 
-def save_progress(sess, df, step_name, start, res, model_name, debug=True):
+def save_progress(sess, df, step_name, start, res, model_name, debug=False):
     # Save df to session
     if (sess is not None) and (df is not None):
         k = sess.get_save_key(step_name)
@@ -108,7 +108,7 @@ def save_progress(sess, df, step_name, start, res, model_name, debug=True):
     # Gets cost
     calc_cost(res, model_name, step_name, sess, debug=debug)
 
-def get_timing(start, step_name, sess, debug=True):
+def get_timing(start, step_name, sess, debug=False):
     if start is None:
         return
     elapsed = time.time() - start
@@ -119,7 +119,7 @@ def get_timing(start, step_name, sess, debug=True):
         k = sess.get_save_key(step_name)
         sess.time[k] = elapsed
 
-def calc_cost(results, model_name, step_name, sess, debug=True):
+def calc_cost(results, model_name, step_name, sess, debug=False):
     # Calculate cost with API results and model name
     if results is None:
         return
@@ -415,6 +415,7 @@ async def review(concepts, concept_df, concept_col_prefix, model_name, debug=Tru
     concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col_prefix, model_name=model_name, sess=sess)
 
     if debug:
+        print(f"\n\nAuto-review")
         print(f"Removed ({len(removed)}):\n{removed}")
         print(f"Merged ({len(merged)}):")
         pretty_print_merge_results(merged)
