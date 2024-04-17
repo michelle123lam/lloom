@@ -27,7 +27,7 @@ features:
   - icon: 📊
     title: Visualize data by concepts
     details: Use the LLooM Workbench in computational notebooks for dataset overviews, concept details, and doc-level scores and highlights.
-  - icon: 🗣️
+  - icon: 🚗
     title: Steer the analysis direction
     details: Provide a seed term to orient concept induction around your interests, like "social issues" for political discussion or "evaluation methods" for academic papers.
 ---

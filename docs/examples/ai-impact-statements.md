@@ -1,4 +1,4 @@
-# 4: AI Broader Impact Statements
+# AI Broader Impact Statements
 
 <DemoLayout curDataset="AI Broader Impact Statements" curScrollSpeed="400s"/>
 

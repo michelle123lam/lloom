@@ -70,11 +70,15 @@ The LLooM Python package consists of two components:
 → **Check out the [Get Started](./get-started) page to try out the LLooM Workbench!**
 
 ## What can I do with LLooM?
-**Check out the [Examples](/examples/pol-soc-media) section** to walk through case studies using LLooM, including [political social media](/examples/pol-soc-media) 🇺🇸📱, [content moderation](/examples/content-mod) 💬⚖️, [HCI paper abstracts](/examples/paper-abstracts) 📄📈, and [AI ethics statements](/examples/ai-impact-statements) 📝🤖.
+LLooM can assist with a range of data analysis goals—from **preliminary exploratory analysis** to **theory-driven confirmatory analysis**. Analysts can review LLooM concepts to interpret emergent trends in the data, but they can also author concepts to actively seek out certain phenomena in the data. Concepts can be compared with existing metadata or other concepts to perform **statistical analyses**, generate **plots**, or train a **model**.
 
 ![LLooM overview](/media/pull_figure.svg)
 
-LLooM can assist with a range of data analysis goals—from **preliminary exploratory analysis** to **theory-driven confirmatory analysis**. Analysts can review LLooM concepts to interpret emergent trends in the data, but they can also author concepts to actively seek out certain phenomena in the data. Concepts can be compared with existing metadata or other concepts to perform **statistical analyses**, generate **plots**, or train a **model**.
+**Check out the [Examples](/examples/pol-soc-media) section** to walk through case studies using LLooM, including:
+- 🇺🇸📱 [Political social media](/examples/pol-soc-media)
+- 💬⚖️ [Content moderation](/examples/content-mod)
+- 📄📈 [HCI paper abstracts](/examples/paper-abstracts)
+- 📝🤖 [AI ethics statements](/examples/ai-impact-statements)
 
 ### Workbench features
 The LLooM Workbench is an interactive text analysis tool for computational notebooks like Jupyter and Colab. After running concept induction, the Workbench can display an interactive visualization like the one below.

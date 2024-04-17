@@ -107,8 +107,10 @@ l.vis(slice_col="n_likes", norm_by="slice")
 You may also manually add your own **custom concepts** by providing a name and prompt. This will automatically score the data by that concept.
 ```py
 await l.add(
-    name="your new concept name",
-    prompt="your new concept prompt",
+    # Your new concept name
+    name="Government Critique",
+    # Your new concept prompt
+    prompt="Does this text criticize government actions or policies?", 
 )
 ```
 Then, re-run the `vis()` function to see the new concept results.

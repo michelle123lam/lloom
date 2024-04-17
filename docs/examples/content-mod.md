@@ -1,4 +1,4 @@
-# 2: Content Moderation
+# Content Moderation
 
 <DemoLayout curDataset="Content Moderation" />
 

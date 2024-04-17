@@ -38,12 +38,11 @@ export default defineConfig({
 
     nav: [
       { text: 'About', link: '/about/' },
-      { text: 'Examples', link: '/examples/pol-soc-media' },
       { text: 'API Reference', link: '/api/' }
     ],
 
     sidebar: {
-      '/about/': [
+      '/': [
         {
           text: 'LLooM Overview',
           items: [
@@ -51,16 +50,14 @@ export default defineConfig({
             { text: 'Get Started', link: '/about/get-started' },
             { text: 'Using the LLooM Workbench', link: '/about/vis-guide' },
           ]
-        }
-      ],
-      '/examples/': [
+        },
         {
           text: 'Examples',
           items: [
-            { text: '1: Political Social Media', link: '/examples/pol-soc-media' },
-            { text: '2: Content Moderation', link: '/examples/content-mod' },
-            { text: '3: Academic Paper Abstracts', link: '/examples/paper-abstracts' },
-            { text: '4: AI Broader Impact Statements', link: '/examples/ai-impact-statements' }
+            { text: 'Political Social Media', link: '/examples/pol-soc-media' },
+            { text: 'Content Moderation', link: '/examples/content-mod' },
+            { text: 'Academic Paper Abstracts', link: '/examples/paper-abstracts' },
+            { text: 'AI Broader Impact Statements', link: '/examples/ai-impact-statements' }
           ]
         }
       ],

@@ -4,7 +4,7 @@ LLooM can assist with a range of data analysis goals—from preliminary explorat
 
 Check out the examples in this section to see what LLooM can do, or visit the [What is LLooM?](/about/index.html) page to learn more about the motivations and methods behind LLooM.
 
-# 1: Political Social Media
+# Political Social Media
 
 <DemoLayout curDataset="Political social media" />
 
