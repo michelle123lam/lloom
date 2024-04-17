@@ -22,7 +22,7 @@ import text_lloom.workbench as wb
 ```
 
 ### OpenAI setup
-LLooM uses the OpenAI API under the hood to support its core operators. You'll first need to locally set the `api_key` variable to use your own account.
+LLooM uses the OpenAI API under the hood to support its core operators (using GPT-3.5 and GPT-4). You'll first need to locally set the `OPENAI_API_KEY` variable to use your own account.
 ```py
 import os
 os.environ["OPENAI_API_KEY"] = "sk-YOUR-KEY-HERE"
