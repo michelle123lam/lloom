@@ -10,6 +10,8 @@ from nltk.tokenize import sent_tokenize
 import os
 import openai
 from yaspin import yaspin
+import base64
+import requests
 
 
 # Local imports
@@ -105,6 +107,15 @@ class lloom:
         print(f"Saved session to {cur_path}")
 
         self.select_widget = select_widget  # Restore widget after saving
+    
+    def get_pkl_str(self):
+        # Saves current session to pickle string
+        select_widget = self.select_widget
+        self.select_widget = None  # Remove widget before saving (can't be pickled)
+
+        pkl_str = pickle.dumps(self)
+        self.select_widget = select_widget  # Restore widget after saving
+        return pkl_str
 
     def get_save_key(self, step_name):
         t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
@@ -607,6 +618,41 @@ class lloom:
         concepts_dict = [format_dict(c.to_dict()) for c_id, c in active_concepts.items()]
         concepts_json = json.dumps(concepts_dict)
         return concepts_json
+
+    def submit(self):
+        # Submit the current session results to the database
+        # Prepare pickled lloom instance
+        l_pkl = self.get_pkl_str()
+        l_pkl_str = base64.b64encode(l_pkl).decode('ascii')
+
+        # Gather user inputs
+        print("Thank you for using LLooM and submitting your work! We would love to hear more about your analysis.")
+        print("\nPlease provide a contact email address. This will allow us to follow up to better meet your needs and/or feature your work on our site!")
+        email = input("Email address: ")
+
+        print("\nBriefly summarize the goal of your analysis: What data were you using? What questions were you trying to answer?")
+        goal = input("Goal: ")
+
+        with self.spinner_wrapper() as spinner:
+            cur_data = {
+                "email": email,
+                "goal": goal,
+                "lloom_pkl": l_pkl_str,
+            }
+            hdr = {"Content-Type": "application/json"}
+            cur_url = "https://lloom-log-server.vercel.app"
+
+            try:
+                r = requests.post(f"{cur_url}/save", json=cur_data, headers=hdr)
+
+                # Parse result
+                r_json = json.loads(r.text)
+                status = r_json["message"]
+                spinner.text = f"Submission status: {status}"
+                spinner.ok("✅")
+            except Exception as e:
+                spinner.fail("❌")
+                print(f"Error: {e}")
 
     async def gen_auto(
         self,

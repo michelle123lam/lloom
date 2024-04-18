@@ -116,6 +116,19 @@ await l.add(
 Then, re-run the `vis()` function to see the new concept results.
 
 ## Saving and exporting
+
+### Submit your results
+::: tip 🖼️ ✨ Submit your work for a chance to be featured!
+If you'd like to share what you've done with LLooM or would like your work featured in a gallery of results, please submit your LLooM instance with the `submit()` function! If your submission is selected, we'll reach out to you to follow up and hear more about your work with LLooM.
+:::
+To submit your results, you just need to run the following function:
+```py
+l.submit()
+```
+You will be prompted to provide a few more details: 
+- **Email address**: Please provide an email address so that we can contact you if your work is selected.
+- **Analysis goal**: Share as much detail as you'd like about your analysis: What data were you using? What questions were you trying to answer? What did you find?
+
 ### Save LLooM instance
 You can save your LLooM instance to a pickle file to reload at a later point.
 ```py
