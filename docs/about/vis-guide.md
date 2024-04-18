@@ -2,7 +2,7 @@
 
 The LLooM Workbench visualization consists of several components. Here, we'll walk through in a bit more detail on how to work with this interactive visualization.
 
-![LLooM Workbench UI](/media/lloom_workbench_ui.svg)
+![LLooM Workbench UI](/media/lloom_workbench_ui.png)
 
 ## A: Concept Overview
 The Concept Overview chart is at the top of the LLooM Workbench visualization. This chart is intended to provide a high-level summary of concepts observed in the dataset. The x-axis displays all concepts (including the Outlier set), and the y-axis plots the number of documents that matched the concept. 

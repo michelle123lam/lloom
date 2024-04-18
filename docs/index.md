@@ -3,6 +3,7 @@
 layout: home
 
 hero:
+  name: LLooM
   text: From unstructured text to interpretable concepts
   tagline: LLooM automatically surfaces high-level concepts to analyze unstructured text
   image:

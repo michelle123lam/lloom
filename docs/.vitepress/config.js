@@ -6,6 +6,7 @@ export default defineConfig({
   description: "Concept Induction: Analyzing Unstructured Text with High-Level Concepts",
   base: "/lloom/",
   head: [
+    ['link', { rel: 'icon', href: '/lloom/media/favicon.png' }],
     [
       'script',
       { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-YYD21V2BQE' }

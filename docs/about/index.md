@@ -82,7 +82,7 @@ LLooM can assist with a range of data analysis goals—from **preliminary explor
 
 ### Workbench features
 The LLooM Workbench is an interactive text analysis tool for computational notebooks like Jupyter and Colab. After running concept induction, the Workbench can display an interactive visualization like the one below.
-![LLooM Workbench UI](/media/lloom_workbench_ui.svg)
+![LLooM Workbench UI](/media/lloom_workbench_ui.png)
 
 ::: info LLooM Workbench features include:
 - **A: Concept Overview**: Displays an **overview** of the dataset in terms of concepts and their prevalence.
