@@ -1,24 +1,25 @@
 # LLooM
 
+<p align="">
+    <h3>
+        <a href="https://stanfordhci.github.io/lloom/" target="_blank"><b>PROJECT PAGE</b></a> | 
+        <a href="https://hci.stanford.edu/publications/2024/Lam_LLooM_CHI24.pdf" target="_blank">Paper</a> | 
+        <a href="https://stanfordhci.github.io/lloom/examples/pol-soc-media.html" target="_blank">Demo Examples</a>
+    </h3>
+</p>
+<p align="">
+    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
+        <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+    </a> &nbsp
+    <a href="https://badge.fury.io/py/text_lloom"><img src="https://badge.fury.io/py/text_lloom.svg" alt="PyPI text_lloom" height="20"></a>
+</p>
+
 **LLooM** is an interactive text analysis tool introduced as part of an ACM CHI 2024 paper:
 
 **Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM**. *Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, Michael S. Bernstein*. Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems (CHI '24).
 
 <p align="center">
-    <a href="https://stanfordhci.github.io/lloom/" target="_blank"><b>PROJECT PAGE</b></a> | 
-    <a href="https://hci.stanford.edu/publications/2024/Lam_LLooM_CHI24.pdf" target="_blank">Paper</a> | 
-    <a href="https://stanfordhci.github.io/lloom/examples/pol-soc-media.html" target="_blank">Demo Examples</a>
-
-</p>
-<p align="center">
-    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-    </a>  
-    <a href="https://badge.fury.io/py/text_lloom"><img src="https://badge.fury.io/py/text_lloom.svg" alt="PyPI text_lloom" height="20"></a>
-</p>
-
-<p align="center">
-<img src="./docs/public/media/lloom_home_wide.svg" alt="LLooM splash figure" width="80%">
+<img src="./docs/public/media/lloom_home_wide.svg" alt="LLooM splash figure" width="90%">
 </p>
 
 ## What is LLooM?
