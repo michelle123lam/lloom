@@ -184,7 +184,7 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
             rows.append([ex_id, cur_filtered])
     quote_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col])
     
-    save_progress(sess, quote_df, step_name="distill_filter", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, quote_df, step_name="Distill-filter", start=start, res=res_full, model_name=model_name)
     return quote_df
 
 
@@ -237,7 +237,7 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
                 rows.append([ex_id, bullet])
     bullet_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col])
 
-    save_progress(sess, bullet_df, step_name="distill_summarize", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, bullet_df, step_name="Distill-summarize", start=start, res=res_full, model_name=model_name)
     return bullet_df
 
 
@@ -273,7 +273,7 @@ async def cluster(text_df, doc_col, doc_id_col, cluster_id_col="cluster_id", min
         # Cluster and group by clusters
         cluster_df = cluster_helper(text_df, doc_col, doc_id_col, min_cluster_size=min_cluster_size, cluster_id_col=cluster_id_col, embed_model_name=embed_model_name)
 
-    save_progress(sess, cluster_df, step_name="cluster", start=start, res=None, model_name=None)
+    save_progress(sess, cluster_df, step_name="Cluster", start=start, res=None, model_name=None)
     return cluster_df
 
 
@@ -290,7 +290,7 @@ def dict_to_json(examples):
 # Output: 
 # - concepts: dict (concept_id -> concept dict)
 # - concept_df: DataFrame (columns: doc_id, doc, concept_id, concept_name, concept_prompt)
-async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=True, pattern_phrase="unifying pattern", dedupe=True, seed=None, sess=None):
+async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=False, pattern_phrase="unifying pattern", dedupe=True, seed=None, sess=None, return_logs=False):
     # Synthesis operates on "doc" column for each cluster_id
     # Concept object is created for each concept
     start = time.time()
@@ -354,12 +354,10 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     # Process results
     concepts = {}
     rows = []
+    logs = ""
     for cur_cluster_id, res in zip(cluster_ids, res_text):
         cur_concepts = json_load(res, top_level_key="patterns")
         if cur_concepts is not None:
-            # concepts.extend(cur_concepts)
-            # cur_examples_dict = {ex_to_id[cur_ex]: cur_ex for cur_ex in cur_examples}
-            
             for concept_dict in cur_concepts:
                 ex_ids = concept_dict["example_ids"]
                 ex_ids = set(ex_ids) # remove duplicates
@@ -377,10 +375,13 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                     if cur_key in ex_id_to_ex:
                         row = [ex_id, ex_id_to_ex[cur_key], concept.id, concept.name, concept.prompt]
                         rows.append(row)
+            # Print intermediate results
+            examples = cluster_dfs[cur_cluster_id][doc_col].tolist()
+            concepts_formatted = pretty_print_dict_list(cur_concepts)
+            cur_log = f"\n\nInput examples: {examples}\nOutput concepts: {concepts_formatted}"
+            logs += cur_log
             if verbose:
-                examples = cluster_dfs[cur_cluster_id][doc_col].tolist()
-                concepts_formatted = pretty_print_dict_list(cur_concepts)
-                print(f"\n\nInput examples: {examples}\nOutput concepts: {concepts_formatted}")
+                print(cur_log)
     # doc_id, text, concept_id, concept_name, concept_prompt
     concept_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, concept_col_prefix, f"{concept_col_prefix}_name", f"{concept_col_prefix}_prompt"])
 
@@ -388,41 +389,58 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     if dedupe:
         concept_df = dedupe_concepts(concept_df, concept_col=f"{concept_col_prefix}_namePrompt")
 
-    save_progress(sess, concept_df, step_name="synthesize", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df, step_name="Synthesize", start=start, res=res_full, model_name=model_name)
     # Save to session if provided
     if sess is not None:
         for c_id, c in concepts.items():
             sess.concepts[c_id] = c
+    
+    if return_logs:
+        return concept_df, logs
     return concept_df
 
 def dedupe_concepts(df, concept_col):
     # Remove duplicate concept rows
     return df.drop_duplicates(subset=[concept_col])
 
-def pretty_print_merge_results(merged):
+def get_merge_results(merged):
+    out = ""
     for m in merged:
         orig_concepts = m["original_themes"]
-        print(f"[{orig_concepts}] --> {m['merged_theme_name']}: {m['merged_theme_prompt']}")
+        cur_out = f"\t{orig_concepts} --> {m['merged_theme_name']}: {m['merged_theme_prompt']}"
+        out += cur_out + "\n"
+    return out
 
 # Input: concept_df (columns: doc_id, text, concept_id, concept_name, concept_prompt)
 # Parameters: n_concepts
 # Output: 
 # - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review(concepts, concept_df, concept_col_prefix, model_name, debug=True, sess=None):
+async def review(concepts, concept_df, concept_col_prefix, model_name, debug=False, sess=None, return_logs=False):
     # Model is asked to review the provided set of concepts
     concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, sess=sess)
     concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col_prefix, model_name=model_name, sess=sess)
 
+    merge_results = get_merge_results(merged)
+    logs = f"""
+    Auto-review:
+    Removed ({len(removed)}):
+        {removed}
+    Merged ({len(merged)}): 
+    {merge_results}
+    """
     if debug:
         print(f"\n\nAuto-review")
-        print(f"Removed ({len(removed)}):\n{removed}")
-        print(f"Merged ({len(merged)}):")
-        pretty_print_merge_results(merged)
+        print(f"")
+        print(f"")
+        
 
     # TODO: ask model to filter to the "best" N concepts
     if sess is not None:
         sess.concepts = concepts_out
+    
+    if return_logs:
+        return concepts_out, concept_df_out, logs
     return concepts_out, concept_df_out
 
 
@@ -463,7 +481,7 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
     for c_id in c_ids_to_remove:
         concepts.pop(c_id, None)  # Remove from concepts dict
 
-    save_progress(sess, concept_df_out, step_name="review_remove", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df_out, step_name="Review-remove", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_remove
 
 def get_concept_by_name(concepts, concept_name):
@@ -545,7 +563,7 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
     for c_id in c_ids_to_remove:
         concepts.pop(c_id, None) # Remove from concepts dict
 
-    save_progress(sess, concept_df_out, step_name="review_merge", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df_out, step_name="Review-merge", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_merge
 
 # Model selects the best concepts up to `max_concepts`
@@ -708,7 +726,7 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
         missing_rows = get_empty_score_df(missing_rows, concept, concept_id, text_col, doc_id_col)
         score_df = pd.concat([score_df, missing_rows])
 
-    save_progress(sess, score_df, step_name="score_helper", start=None, res=res_full, model_name=model_name)
+    save_progress(sess, score_df, step_name="Score-helper", start=None, res=res_full, model_name=model_name)
     if sess is not None:
         # Save to session if provided
         sess.results[concept_id] = score_df
@@ -737,7 +755,7 @@ async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gp
     # Combine score_dfs
     score_df = pd.concat(score_dfs)
 
-    save_progress(sess, score_df, step_name="score", start=start, res=None, model_name=None)
+    save_progress(sess, score_df, step_name="Score", start=start, res=None, model_name=None)
     return score_df
 
 # Based on concept scoring, refine concepts
@@ -978,7 +996,7 @@ async def auto_eval(items, concepts, model_name="gpt-3.5-turbo", debug=False, se
         else:
             print(f"{c_id}: {c} -- NONE")
 
-    save_progress(sess, df=None, step_name="auto_eval", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, df=None, step_name="Auto-eval", start=start, res=res_full, model_name=model_name)
     return concepts_found, concept_coverage
 
 # Adds color-background styling for score columns to match score value

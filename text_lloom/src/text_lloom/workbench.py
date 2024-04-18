@@ -113,29 +113,28 @@ class lloom:
 
     # Printed text formatting
     def bold_txt(self, s):
+        # Bold text
         return f"\033[1m{s}\033[0m"
 
     def highlight_txt(self, s, color="yellow"):
+        # Highlight text (background color)
         if color == "yellow":
-            return f"\x1b[48;5;228m{s}\x1b[m"
+            return f"\x1b[48;5;228m{s}\x1b[0m"
         elif color == "blue":
-            return f"\x1b[48;5;117m{s}\x1b[m"
+            return f"\x1b[48;5;117m{s}\x1b[0m"
 
     def bold_highlight_txt(self, s):
+        # Both bold and highlight text
         return self.bold_txt(self.highlight_txt(s))
     
-    def spinner_wrapper(self, step_name):
+    def print_step_name(self, step_name):
+        # Print step name (with blue highlighting)
         format_step_name = f"{self.highlight_txt(step_name, color='blue')}"
-        return yaspin(text=format_step_name, color="yellow")
+        print(f"\n\n{format_step_name}")
 
-    def print_timing(self, step_name):
-        # Print elapsed time for the provided step
-        key_matches = [k for k in self.time.keys() if k[0] == step_name]
-        if len(key_matches) == 0:
-            return  # No matches
-        step_key = key_matches[:-1] # Get the last key
-        elapsed = self.time[step_key]
-        print(f"Total time: {elapsed:0.2f} sec")
+    def spinner_wrapper(self):
+        # Wrapper for loading spinner
+        return yaspin(text="Loading", color="yellow")
 
     # Estimate cost of generation for the given params
     def estimate_gen_cost(self, params=None, verbose=False):
@@ -298,7 +297,8 @@ class lloom:
         filter_n_quotes = params["filter_n_quotes"]
         if filter_n_quotes > 1:
             step_name = "Distill-filter"
-            with self.spinner_wrapper(step_name) as spinner:
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
                 df_filtered = await distill_filter(
                     text_df=self.in_df, 
                     doc_col=self.doc_col,
@@ -310,16 +310,17 @@ class lloom:
                 )
                 self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
                 self.df_filtered = df_filtered
+                spinner.text = "Done"
                 spinner.ok("✅")
-                if debug:
-                    self.print_timing(step_name)
-                    display(df_filtered)
+            if debug:
+                display(df_filtered)
         else:
             # Just use original df to generate bullets
             self.df_filtered = self.in_df
         
         step_name = "Distill-summarize"
-        with self.spinner_wrapper(step_name) as spinner:
+        self.print_step_name(step_name)
+        with self.spinner_wrapper() as spinner:
             df_bullets = await distill_summarize(
                 text_df=self.df_filtered, 
                 doc_col=self.doc_col,
@@ -330,10 +331,10 @@ class lloom:
                 sess=self,
             )
             self.df_bullets = df_bullets
+            spinner.text = "Done"
             spinner.ok("✅")
-            if debug:
-                self.print_timing(step_name)
-                display(df_bullets)
+        if debug:
+            display(df_bullets)
         
         df_cluster_in = df_bullets
         synth_doc_col = self.doc_col
@@ -344,7 +345,8 @@ class lloom:
             self.concepts = {}
 
             step_name = "Cluster"
-            with self.spinner_wrapper(step_name) as spinner:
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
                 df_cluster = await cluster(
                     text_df=df_cluster_in, 
                     doc_col=synth_doc_col,
@@ -352,14 +354,15 @@ class lloom:
                     embed_model_name=self.embed_model_name,
                     sess=self,
                 )
+                spinner.text = "Done"
                 spinner.ok("✅")
-                if debug:
-                    self.print_timing(step_name)
-                    display(df_cluster)
+            if debug:
+                display(df_cluster)
             
             step_name = "Synthesize"
-            with self.spinner_wrapper(step_name) as spinner:
-                df_concepts = await synthesize(
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_concepts, synth_logs = await synthesize(
                     cluster_df=df_cluster, 
                     doc_col=synth_doc_col,
                     doc_id_col=self.doc_id_col,
@@ -369,17 +372,30 @@ class lloom:
                     pattern_phrase="unique topic",
                     seed=seed,
                     sess=self,
+                    return_logs=True,
                 )
+                spinner.text = "Done"
                 spinner.ok("✅")
-                if debug:
-                    self.print_timing(step_name)
+            if debug:
+                print(synth_logs)
 
                 # Review current concepts (remove low-quality, merge similar)
                 if auto_review:
                     step_name = "Review"
-                    with self.spinner_wrapper(step_name) as spinner:
-                        _, df_concepts = await review(concepts=self.concepts, concept_df=df_concepts, concept_col_prefix=concept_col_prefix, model_name=self.synth_model_name, sess=self)
+                    self.print_step_name(step_name)
+                    with self.spinner_wrapper() as spinner:
+                        _, df_concepts, review_logs = await review(
+                            concepts=self.concepts, 
+                            concept_df=df_concepts, 
+                            concept_col_prefix=concept_col_prefix, 
+                            model_name=self.synth_model_name, 
+                            sess=self,
+                            return_logs=True,
+                        )
+                        spinner.text = "Done"
                         spinner.ok("✅")
+                    if debug:
+                        print(review_logs)
 
                 self.concept_history[i] = self.concepts
                 if debug:
