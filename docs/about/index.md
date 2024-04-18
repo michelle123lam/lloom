@@ -75,10 +75,10 @@ LLooM can assist with a range of data analysis goals—from **preliminary explor
 ![LLooM overview](/media/pull_figure.svg)
 
 **Check out the [Examples](/examples/pol-soc-media) section** to walk through case studies using LLooM, including:
-- 🇺🇸📱 [Political social media](/examples/pol-soc-media)
-- 💬⚖️ [Content moderation](/examples/content-mod)
-- 📄📈 [HCI paper abstracts](/examples/paper-abstracts)
-- 📝🤖 [AI ethics statements](/examples/ai-impact-statements)
+- 🇺🇸📱 Political social media: [Case Study](/examples/pol-soc-media) | [Colab NB](https://colab.research.google.com/drive/1VRpKTv8TLQdQSb3yPIm7EO_AmeaL5qa2?usp=sharing)
+- 💬⚖️ Content moderation: [Case Study](/examples/content-mod) | [Colab NB](https://colab.research.google.com/drive/1kVgs-rhj83egnCdpEEfYcYJKzCGUGda8?usp=sharing)
+- 📄📈 HCI paper abstracts: [Case Study](/examples/paper-abstracts) | [Colab NB](https://colab.research.google.com/drive/13K7yQML9jjWIofYSQYNWDtnWE9QJRZvE?usp=sharing)
+- 📝🤖 AI ethics statements: [Case Study](/examples/ai-impact-statements) | [Colab NB](https://colab.research.google.com/drive/1CenVNlaTJWBdk3BOeKaL3jX4Y4sK3MrW?usp=sharing)
 
 ### Workbench features
 The LLooM Workbench is an interactive text analysis tool for computational notebooks like Jupyter and Colab. After running concept induction, the Workbench can display an interactive visualization like the one below.

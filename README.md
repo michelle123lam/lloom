@@ -10,7 +10,7 @@
 <p align="">
     <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
         <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-    </a> &nbsp
+    </a>&nbsp
     <a href="https://badge.fury.io/py/text_lloom"><img src="https://badge.fury.io/py/text_lloom.svg" alt="PyPI text_lloom" height="20"></a>
 </p>
 
@@ -38,10 +38,10 @@ LLooM can assist with a range of data analysis goals—from **preliminary explor
 
 ### Example notebooks
 **Check out the [Examples](https://stanfordhci.github.io/lloom/examples/pol-soc-media.html) section** to walk through case studies using LLooM, including:
-- 🇺🇸📱 Political social media: [Page](https://stanfordhci.github.io/lloom/examples/pol-soc-media.html) | [Demo NB](https://colab.research.google.com/drive/1VRpKTv8TLQdQSb3yPIm7EO_AmeaL5qa2?usp=sharing)
-- 💬⚖️ Content moderation: [Page](https://stanfordhci.github.io/lloom/examples/content-mod.html) | [Demo NB](https://colab.research.google.com/drive/1kVgs-rhj83egnCdpEEfYcYJKzCGUGda8?usp=sharing)
-- 📄📈 HCI paper abstracts: [Page](https://stanfordhci.github.io/lloom/examples/paper-abstracts.html) | [Demo NB](https://colab.research.google.com/drive/13K7yQML9jjWIofYSQYNWDtnWE9QJRZvE?usp=sharing)
-- 📝🤖 AI ethics statements: [Page](https://stanfordhci.github.io/lloom/examples/ai-impact-statements.html) | [Demo NB](https://colab.research.google.com/drive/1CenVNlaTJWBdk3BOeKaL3jX4Y4sK3MrW?usp=sharing)
+- 🇺🇸📱 Political social media: [Case Study](https://stanfordhci.github.io/lloom/examples/pol-soc-media.html) | [Colab NB](https://colab.research.google.com/drive/1VRpKTv8TLQdQSb3yPIm7EO_AmeaL5qa2?usp=sharing)
+- 💬⚖️ Content moderation: [Case Study](https://stanfordhci.github.io/lloom/examples/content-mod.html) | [Colab NB](https://colab.research.google.com/drive/1kVgs-rhj83egnCdpEEfYcYJKzCGUGda8?usp=sharing)
+- 📄📈 HCI paper abstracts: [Case Study](https://stanfordhci.github.io/lloom/examples/paper-abstracts.html) | [Colab NB](https://colab.research.google.com/drive/13K7yQML9jjWIofYSQYNWDtnWE9QJRZvE?usp=sharing)
+- 📝🤖 AI ethics statements: [Case Study](https://stanfordhci.github.io/lloom/examples/ai-impact-statements.html) | [Colab NB](https://colab.research.google.com/drive/1CenVNlaTJWBdk3BOeKaL3jX4Y4sK3MrW?usp=sharing)
 
 
 ### Workbench visualization
