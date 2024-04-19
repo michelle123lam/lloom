@@ -60,7 +60,7 @@ By contrast, the LLooM algorithm turns unstructured text into meaningful **high-
 The **LLooM Workbench** is an interactive text analysis tool that visualizes data in terms of the concepts that LLooM surfaces. With the LLooM Workbench, data analysts can inspect the automatically-generated concepts and author their own custom concepts to explore the data.
 
 ::: tip 🚧 LLooM is a research prototype
-LLooM originated from a research project ([more info here](./#about-us)). The system is still under active development. We would appreciate your feedback as we expand beyond our prototype to support a broader range of datasets and analysis goals!
+LLooM originated from a research project ([more info here](./#about-us)). The system is still under active development. We would appreciate your feedback as we expand beyond our prototype to support a broader range of datasets and analysis goals! Check out our [Github repo](https://github.com/michelle123lam/lloom) if you'd like to contribute.
 :::
 
 The LLooM Python package consists of two components:
@@ -115,7 +115,7 @@ What if the analyst wants to **steer LLooM’s attention** toward particular asp
 or “evaluation methods” for an academic papers dataset. The optional `Seed` operator accepts a user-provided seed term to condition the `Distill` or `Synthesize` operators, which can improve the quality and alignment of the output concepts. All of these operators work together to support analysts in performing concept induction and leading theory-driven data analyses.
 
 ## About us
-**LLooM is a research prototype!** You can read much more about the project, the method, and a variety of evaluations in our **CHI 2024** publication: [**Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM**]() by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
+**LLooM is a research prototype!** You can read much more about the project, the method, and a variety of evaluations in our **CHI 2024** publication: [**Concept Induction: Analyzing Unstructured Text with High-Level Concepts Using LLooM**](https://hci.stanford.edu/publications/2024/Lam_LLooM_CHI24.pdf) by Michelle S. Lam, Janice Teoh, James Landay, Jeffrey Heer, and Michael S. Bernstein.
 
 If you find our tool helpful or use it in your work, we'd appreciate you citing our paper!
 ```bibtex

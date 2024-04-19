@@ -19,6 +19,9 @@ hero:
     - theme: alt
       text: Get Started
       link: /about/get-started
+    - theme: alt
+      text: Github
+      link: https://github.com/michelle123lam/lloom
     
 
 features:
