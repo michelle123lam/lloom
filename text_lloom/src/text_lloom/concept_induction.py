@@ -767,17 +767,17 @@ def refine(score_df, concepts, threshold=1, generic_threshold=0.75, rare_thresho
         pos_frac = len(cur_concept_pos) / len(cur_concept_df)
         if pos_frac >= generic_threshold:
             if debug:
-                print(f"Generic: {concepts[c_id]['name']}, {pos_frac} match")
+                print(f"Generic: {concepts[c_id].name}, {pos_frac} match")
             generic.append(c_id)
         elif pos_frac < rare_threshold:
             if debug:
-                print(f"Rare: {concepts[c_id]['name']}, {pos_frac} match")
+                print(f"Rare: {concepts[c_id].name}, {pos_frac} match")
             rare.append(c_id)
 
     # Remove identified concepts
     if debug:
-        print(f"Generic ({len(generic)}): {[concepts[c_id]['name'] for c_id in generic]}")
-        print(f"Rare ({len(rare)}): {[concepts[c_id]['name'] for c_id in rare]}")
+        print(f"Generic ({len(generic)}): {[concepts[c_id].name for c_id in generic]}")
+        print(f"Rare ({len(rare)}): {[concepts[c_id].name for c_id in rare]}")
     for c_id in generic:
         concepts.pop(c_id, None)
     for c_id in rare:
