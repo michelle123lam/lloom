@@ -15,12 +15,6 @@ pip install text_lloom
 ## Setup
 Now, you can use the LLooM package in a computational notebook! Create your notebook (i.e., with [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)) and then follow the steps below.
 
-### Import package
-First, import the LLooM package:
-```py
-import text_lloom.workbench as wb
-```
-
 ### OpenAI setup
 LLooM uses the OpenAI API under the hood to support its core operators (using GPT-3.5 and GPT-4). You'll first need to locally set the `OPENAI_API_KEY` variable to use your own account.
 ```py
@@ -32,8 +26,14 @@ os.environ["OPENAI_API_KEY"] = "sk-YOUR-KEY-HERE"
 LLooM provides (1) **cost estimation functions** that automatically run before operations that make calls to the OpenAI API and (2) **cost summary functions** to review tracked usage, but we encourage you to monitor usage on your account as always.
 :::
 
+### Import package
+Then, import the LLooM package:
+```py
+import text_lloom.workbench as wb
+```
+
 ### Create a LLooM instance
-Then, after loading your data as a Pandas DataFrame, create a new LLooM instance. You will need to specify the name of the column that contains your input text documents (`text_col`). The ID column (`id_col`) is optional.
+After loading your data as a Pandas DataFrame, create a new LLooM instance. You will need to specify the name of the column that contains your input text documents (`text_col`). The ID column (`id_col`) is optional.
 ```py
 l = wb.lloom(
     df=df,

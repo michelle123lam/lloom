@@ -4,11 +4,9 @@
 # Imports
 import time
 import pandas as pd
-import ipywidgets as widgets
 import random
 from nltk.tokenize import sent_tokenize
 import os
-import openai
 from yaspin import yaspin
 import base64
 import requests
@@ -68,11 +66,9 @@ class lloom:
             "out_tokens": [],
         }
 
-        # Set up API key
+        # Check for API key
         if "OPENAI_API_KEY" not in os.environ:
             raise Exception("API key not found. Please set the OPENAI_API_KEY environment variable by running: `os.environ['OPENAI_API_KEY'] = 'your_key'`")
-        else:
-            openai.api_key = os.environ["OPENAI_API_KEY"]
     
     # Preprocesses input dataframe
     def preprocess_df(self, df):
@@ -145,7 +141,7 @@ class lloom:
 
     def spinner_wrapper(self):
         # Wrapper for loading spinner
-        return yaspin(text="Loading", color="yellow")
+        return yaspin(text="Loading")
 
     # Estimate cost of generation for the given params
     def estimate_gen_cost(self, params=None, verbose=False):

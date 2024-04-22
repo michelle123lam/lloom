@@ -19,20 +19,19 @@ import ipywidgets as widgets
 import re
 
 # Clustering
-from bertopic import BERTopic
-from bertopic.backend import OpenAIBackend
 from hdbscan import HDBSCAN
+import umap
 
 # Local imports
 if __package__ is None or __package__ == '':
     # uses current directory visibility
-    from llm import multi_query_gpt_wrapper, calc_cost_by_tokens
+    from llm import multi_query_gpt_wrapper, calc_cost_by_tokens, get_embeddings
     from prompts import *
     from concept import Concept
     from __init__ import MatrixWidget, ConceptSelectWidget
 else:
     # uses current package visibility
-    from .llm import multi_query_gpt_wrapper, calc_cost_by_tokens
+    from .llm import multi_query_gpt_wrapper, calc_cost_by_tokens, get_embeddings
     from .prompts import *
     from .concept import Concept
     from .__init__ import MatrixWidget, ConceptSelectWidget
@@ -74,22 +73,26 @@ def pretty_print_dict_list(d_list):
 
 def cluster_helper(in_df, doc_col, doc_id_col, min_cluster_size, cluster_id_col, embed_model_name):
     # OpenAI embeddings with HDBSCAN clustering
-    embedding_model = OpenAIBackend(embed_model_name)
+    id_vals = in_df[doc_id_col].tolist()
+    text_vals = in_df[doc_col].tolist()
 
-    hdbscan_model = HDBSCAN(
+    embeddings = get_embeddings(embed_model_name, text_vals)
+    umap_model = umap.UMAP(
+        n_neighbors=15,
+        n_components=5,
+        min_dist=0.0,
+        metric='cosine',
+    )
+    umap_embeddings = umap_model.fit_transform(embeddings)
+    hdb = HDBSCAN(
         min_cluster_size=min_cluster_size, 
         metric='euclidean', 
         cluster_selection_method='leaf', 
         prediction_data=True
     )
-    topic_model = BERTopic(
-        embedding_model=embedding_model, 
-        hdbscan_model=hdbscan_model
-    )
+    res = hdb.fit(umap_embeddings)
+    clusters = res.labels_
 
-    id_vals = in_df[doc_id_col].tolist()
-    text_vals = in_df[doc_col].tolist()
-    clusters, probs = topic_model.fit_transform(text_vals)
     rows = list(zip(id_vals, text_vals, clusters)) # id_col, text_col, cluster_id_col
     cluster_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, cluster_id_col])
     cluster_df = cluster_df.sort_values(by=[cluster_id_col])
@@ -124,8 +127,8 @@ def calc_cost(results, model_name, step_name, sess, debug=False):
     if results is None:
         return
     # Cost estimation
-    in_tokens = np.sum([res.llm_output["token_usage"]["prompt_tokens"] for res in results])
-    out_tokens = np.sum([res.llm_output["token_usage"]["completion_tokens"] for res in results])
+    in_tokens = np.sum([res.usage.prompt_tokens for res in results])
+    out_tokens = np.sum([res.usage.completion_tokens for res in results])
     in_token_cost, out_token_cost = calc_cost_by_tokens(model_name, in_tokens, out_tokens)
     total_cost = in_token_cost + out_token_cost
     if debug:
@@ -1179,7 +1182,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     rationale_col = "score rationale"
     highlight_col = "highlight"
     rationale_df = score_df[[doc_id_col, "concept_name", "rationale", highlight_col]]
-    rationale_df.rename(columns={"rationale": rationale_col}, inplace=True)
+    rationale_df = rationale_df.rename(columns={"rationale": rationale_col})
     rationale_df[doc_id_col] = rationale_df[doc_id_col].astype(str)
 
     # Prep data for each group
