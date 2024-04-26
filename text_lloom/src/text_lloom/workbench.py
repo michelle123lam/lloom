@@ -17,12 +17,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from llm import get_token_estimate, EMBED_COSTS
+    from llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .llm import get_token_estimate, EMBED_COSTS
+    from .llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
 
 # WORKBENCH class ================================
 class lloom:
@@ -31,16 +31,32 @@ class lloom:
         df: pd.DataFrame,
         text_col: str,
         id_col: str = None,
-        save_path: str = None,
+        distill_model_name = "gpt-3.5-turbo",
+        embed_model_name = "text-embedding-3-large",
+        synth_model_name = "gpt-4-turbo",
+        score_model_name = "gpt-3.5-turbo",
+        rate_limits = {}, # D_i = "model-name": (n_requests, wait_time_secs)
         debug: bool = False,
     ):
         # Settings
-        self.model_name = "gpt-3.5-turbo"
-        self.embed_model_name = "text-embedding-3-large"
-        self.synth_model_name = "gpt-4-turbo-preview"
-        self.score_model_name = "gpt-3.5-turbo"
-        self.use_base_api = True
+        self.distill_model_name = distill_model_name  # Distill operators (filter and summarize)
+        self.embed_model_name = embed_model_name  # Cluster operator
+        self.synth_model_name = synth_model_name  # Synthesize operator
+        self.score_model_name = score_model_name  # Score operator
         self.debug = debug  # Whether to run in debug mode
+
+        # Rate limits
+        # n_requests: number of requests allowed in one batch
+        # wait_time_secs: time period (in seconds) to wait before making more requests
+        # RPM (Requests per minute) = n_requests * (60 / wait_time_secs)
+        if len(rate_limits) == 0:
+            rate_limits = RATE_LIMITS  # Use default values set from llm.py
+        else:
+            # Intersect user-provided rate_limits with full set of options set in default RATE_LIMITS
+            for k, v in RATE_LIMITS.items():
+                if k not in rate_limits:
+                    rate_limits[k] = v  # Add in defaults for any missing values
+        self.rate_limits = rate_limits
 
         # Input data
         self.doc_id_col = id_col
@@ -158,17 +174,17 @@ class lloom:
         # Filter: generate filter_n_quotes for each doc
         est_cost = {}
         
-        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.model_name) for doc in self.in_df[self.doc_col].tolist()])
+        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.distill_model_name) for doc in self.in_df[self.doc_col].tolist()])
         quotes_tokens_per_doc = params["filter_n_quotes"] * est_quote_tokens 
         filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
-        est_cost["distill_filter"] = calc_cost_by_tokens(self.model_name, filter_in_tokens, filter_out_tokens)
+        est_cost["distill_filter"] = calc_cost_by_tokens(self.distill_model_name, filter_in_tokens, filter_out_tokens)
 
         # Summarize: create n_bullets for each doc
-        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.model_name)
+        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.distill_model_name)
         summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
         bullets_tokens_per_doc = params["summ_n_bullets"] * est_bullet_tokens
         summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
-        est_cost["distill_summarize"] = calc_cost_by_tokens(self.model_name, summ_in_tokens, summ_out_tokens)
+        est_cost["distill_summarize"] = calc_cost_by_tokens(self.distill_model_name, summ_in_tokens, summ_out_tokens)
 
         # Cluster: embed each bullet point
         cluster_rate = EMBED_COSTS[self.embed_model_name] 
@@ -310,7 +326,7 @@ class lloom:
                     text_df=self.in_df, 
                     doc_col=self.doc_col,
                     doc_id_col=self.doc_id_col,
-                    model_name=self.model_name,
+                    model_name=self.distill_model_name,
                     n_quotes=params["filter_n_quotes"],
                     seed=seed,
                     sess=self,
@@ -332,7 +348,7 @@ class lloom:
                 text_df=self.df_filtered, 
                 doc_col=self.doc_col,
                 doc_id_col=self.doc_id_col,
-                model_name=self.model_name,
+                model_name=self.distill_model_name,
                 n_bullets=params["summ_n_bullets"],
                 seed=seed,
                 sess=self,
@@ -437,7 +453,7 @@ class lloom:
 
     async def select_auto(self, max_concepts):
         # Select the best concepts up to max_concepts
-        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name)
+        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name, self.rate_limits)
 
         # Handle if selection failed
         if len(selected_concepts) == 0:

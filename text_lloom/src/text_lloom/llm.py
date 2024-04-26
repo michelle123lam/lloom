@@ -34,9 +34,10 @@ SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns 
 RATE_LIMITS = {
     # https://platform.openai.com/account/limits
     # (n_requests, wait_time_secs)
-    "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm (max 10k requests per minute for org)
-    "gpt-4": (20, 10), # = 20*6 = 120 rpm (max 10k requests per minute for org)
-    "gpt-4-turbo-preview": (20, 10), # = 20*6 = 120 rpm, testing purposes
+    "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm
+    "gpt-4": (20, 10), # = 20*6 = 120 rpm
+    "gpt-4-turbo-preview": (20, 10), # = 20*6 = 120 rpm
+    "gpt-4-turbo": (20, 10), # = 20*6 = 120 rpm
 }
 
 CONTEXT_WINDOW = {
@@ -45,6 +46,7 @@ CONTEXT_WINDOW = {
     "gpt-3.5-turbo": 16385,  # Max 4096 output tokens
     "gpt-4": 8192, 
     "gpt-4-turbo-preview": 128000,  # Max 4096 output tokens
+    "gpt-4-turbo": 128000,  # Max 4096 output tokens
 }
 
 COSTS = {
@@ -52,6 +54,7 @@ COSTS = {
     "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
     "gpt-4": [0.03/1000, 0.06/1000],
     "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
+    "gpt-4-turbo": [0.01/1000, 0.03/1000],
 }
 
 EMBED_COSTS = {
@@ -59,10 +62,6 @@ EMBED_COSTS = {
     "text-embedding-3-small": (0.00002/1000),
     "text-embedding-3-large": (0.00013/1000),
 }
-
-def get_system_prompt():
-    system_message_prompt = SystemMessagePromptTemplate.from_template(SYS_TEMPLATE)
-    return system_message_prompt
 
 def get_token_estimate(text, model_name):
     # Fetch the number of tokens used by a prompt
@@ -146,11 +145,12 @@ def retry_with_exponential_backoff(
 
 # CUSTOM LLM API WRAPPERS ================================
 
-async def base_api_wrapper(cur_prompt, model_name):
+async def base_api_wrapper(cur_prompt, model_name, temperature):
     # Wrapper for calling the base OpenAI API
     cur_prompt = truncate_prompt(cur_prompt, model_name, out_token_alloc=1500)
     res = await client.chat.completions.create(
         model=model_name,
+        temperature=temperature,
         messages=[
             {"role": "system", "content": SYS_TEMPLATE},
             {"role": "user", "content": cur_prompt},
@@ -170,7 +170,7 @@ def truncate_prompt(prompt, model_name, out_token_alloc):
     return prompt
 
 # Internal function making calls to LLM; runs a single LLM query
-async def multi_query_gpt(model_name, prompt_template, arg_dict, batch_num=None, wait_time=None, debug=False):
+async def multi_query_gpt(model_name, prompt_template, arg_dict, batch_num=None, wait_time=None, temperature=0, debug=False):
     if wait_time is not None:
         if debug:
             print(f"Batch {batch_num}, wait time {wait_time}")
@@ -178,7 +178,7 @@ async def multi_query_gpt(model_name, prompt_template, arg_dict, batch_num=None,
 
     try: 
         prompt = prompt_template.format(**arg_dict)
-        res = await base_api_wrapper(prompt, model_name)
+        res = await base_api_wrapper(prompt, model_name, temperature)
     except Exception as e:
         print("Error", e)
         return None
@@ -195,17 +195,20 @@ def process_results(results):
     res_text = [(get_res_str(res) if res else None) for res in results]
     return res_text
 
-async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temperature=0, batch_num=None, batched=True, debug=False):
+async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=None, temperature=0, batch_num=None, batched=True, debug=False):
     # Run multiple LLM queries
     if debug:
         print("model_name", model_name)
+    
+    if rate_limits is None:
+        rate_limits = RATE_LIMITS  # Use default values
 
     if not batched:
         # Non-batched version
-        tasks = [multi_query_gpt(model_name, prompt_template, args) for args in arg_dicts]
+        tasks = [multi_query_gpt(model_name, prompt_template, args, temperature=temperature) for args in arg_dicts]
     else:
         # Batched version
-        n_requests, wait_time_secs = RATE_LIMITS[model_name]
+        n_requests, wait_time_secs = rate_limits[model_name]
         tasks = []
         arg_dict_batches = [arg_dicts[i:i + n_requests] for i in range(0, len(arg_dicts), n_requests)]
         for inner_batch_num, cur_arg_dicts in enumerate(arg_dict_batches):
@@ -215,7 +218,7 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, temper
                 wait_time = wait_time_secs * batch_num
             if debug:
                 wait_time = 0 # Debug mode
-            cur_tasks = [multi_query_gpt(model_name, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
+            cur_tasks = [multi_query_gpt(model_name, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time, temperature=temperature) for args in cur_arg_dicts]
             tasks.extend(cur_tasks)
 
     res_full = await asyncio.gather(*tasks)

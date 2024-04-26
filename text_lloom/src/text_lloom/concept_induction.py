@@ -175,7 +175,11 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
     
     # Run prompts
     prompt_template = filter_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     ex_ids = [ex_id for ex_id in text_df[doc_id_col].tolist()]
@@ -229,7 +233,11 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
     
     # Run prompts
     prompt_template = summarize_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     for ex_id, res in zip(all_ex_ids, res_text):
@@ -352,7 +360,11 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
 
     # Run prompts
     prompt_template = synthesize_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     concepts = {}
@@ -466,7 +478,11 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
 
     # Run prompts
     prompt_template = review_remove_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -514,7 +530,11 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
 
     # Run prompts
     prompt_template = review_merge_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -573,7 +593,7 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
 # Input: concepts (concept_id -> Concept)
 # Parameters: max_concepts, model_name
 # Output: selected_concepts: dict (concept_id -> Concept)
-async def review_select(concepts, max_concepts, model_name):
+async def review_select(concepts, max_concepts, model_name, rate_limits=None):
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
@@ -583,7 +603,7 @@ async def review_select(concepts, max_concepts, model_name):
 
     # Run prompts
     prompt_template = review_select_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -709,7 +729,11 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
         prompt_template = score_highlight_prompt
     else:
         prompt_template = score_no_highlight_prompt
-    results, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, batch_num=batch_i)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    results, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, batch_num=batch_i, rate_limits=rate_limits)
 
     # Parse results
     # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
@@ -825,7 +849,11 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
     
     # Run prompts
     prompt_template = summarize_concept_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -950,7 +978,11 @@ async def auto_eval(items, concepts, model_name="gpt-3.5-turbo", debug=False, se
 
     # Run prompts
     prompt_template = concept_auto_eval_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
     
     res_text = res_text[0]
     if debug:
