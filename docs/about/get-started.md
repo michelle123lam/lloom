@@ -195,6 +195,56 @@ Total cost: $0.14
 Tokens: total=67045, in=55565, out=11480
 ```
 
+## Rate limits
+Depending on the volume of data you are analyzing and the details of your OpenAI account/organization, you may run into OpenAI API [rate limits](https://platform.openai.com/docs/guides/rate-limits) (with respect to tokens per minute (TPM) or requests per minute (RPM)). LLooM provides several avenues to address rate limits.
+
+### Modifying underlying models
+By default, LLooM currently uses `gpt-3.5-turbo` for the Distill and Score operators, `gpt-4-turbo` for the Synthesize operator, and `text-embedding-3-large` for the Cluster operator. These values are set in [`workbench.py`](https://github.com/michelle123lam/lloom/blob/1f74f4569f8c8fc00f11852f1fcd136e35fc30df/text_lloom/src/text_lloom/workbench.py#L34-L37). However, users can specify different models for each of these operators within the LLooM instance.
+```py {4-8}
+l = wb.lloom(
+    df=df,
+    text_col="text",
+    # Model specification
+    distill_model_name = "gpt-3.5-turbo",
+    embed_model_name = "text-embedding-3-large",
+    synth_model_name = "gpt-4-turbo",
+    score_model_name = "gpt-3.5-turbo",
+)
+```
+
+### Customizing wait times
+LLooM has built-in functionality for batching asynchronous requests to avoid rate limit issues. However, the necessary batch size and timing may vary across different users depending on details of their dataset and account. 
+
+Thus, users can override the **number of requests in a batch** and the **length of time to wait** between batches with the `rate_limits` parameter. The current defaults are defined as `RATE_LIMITS` in [`llm.py`](https://github.com/michelle123lam/lloom/blob/24a7f5b1335311b90b4788608a3784a5d87e4482/text_lloom/src/text_lloom/llm.py#L34-L41). It may be helpful to refer to your organization's own [rate limits](https://platform.openai.com/account/limits) to set these values.
+
+```py {4-10}
+l = wb.lloom(
+    df=df,
+    text_col="text",
+    # Rate limit parameter specification
+    rate_limits={
+        # Specify any custom parameters
+        # Otherwise, they default to the RATE_LIMITS settings in llm.py
+        # "model-name": (n_requests, wait_time_secs)
+        "gpt-4-turbo": (40, 10),  
+    }
+)
+```
+- `n_requests`: number of requests allowed in one batch
+- `wait_time_secs`: time period (in seconds) to wait before making more requests
+- RPM (Requests per minute): `n_requests * (60 / wait_time_secs)`. In the above example, we specified 40 requests every 10 seconds, which means 240 requests per minute.
+
+### Batching score operations
+The `Score` operator in particular may run into rate limits because it initiates a higher volume of concurrent requests to score all documents for all selected concepts. By default, scoring is applied _individually_ for each concept and each document (`batch_size=1`) to produce more reliable scores. 
+
+However, users can opt to increase the batch size, which will score multiple documents at a time for a given concept. This will reduce the number of unique API calls, but may sacrifice scoring reliability.
+
+```py
+score_df = await l.score(
+    batch_size=5,
+)
+```
+
 
 ## LLooM Operators
 If you'd like to dive deeper and reconfigure the core operators used within LLooM (like the `Distill`, `Cluster`, and `Synthesize` operators), you can access the base functions from the `concept_induction` module:
