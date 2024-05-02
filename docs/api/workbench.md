@@ -225,7 +225,7 @@ l.vis(slice_col="n_likes", norm_by="concept")
 # With normalization by slice
 l.vis(slice_col="n_likes", norm_by="slice")
 ```
-Check out [Using the LLooM Workbench](./vis-guide.md) for a more detailed guide on the visualization components.
+Check out [Using the LLooM Workbench](../about/vis-guide.md) for a more detailed guide on the visualization components.
 ![LLooM vis() function output](/media/ui/vis_output.png)
 
 ## add
