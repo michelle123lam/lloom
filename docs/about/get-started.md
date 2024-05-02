@@ -253,4 +253,4 @@ If you'd like to dive deeper and reconfigure the core operators used within LLoo
 import text_lloom.concept_induction as ci
 ```
 
-Please refer to the [API Reference](../api/core) for details on each of the core LLooM operators.
+Please refer to the [API Reference](../api/operators) for details on each of the core LLooM operators.

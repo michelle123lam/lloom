@@ -39,7 +39,7 @@ export default defineConfig({
 
     nav: [
       { text: 'About', link: '/about/' },
-      { text: 'API Reference', link: '/api/' }
+      { text: 'API Reference', link: '/api/workbench' }
     ],
 
     sidebar: {
@@ -66,9 +66,8 @@ export default defineConfig({
         {
           text: 'API Reference',
           items: [
-            { text: 'Overview', link: '/api/' },
             { text: 'LLooM Workbench', link: '/api/workbench' },
-            { text: 'LLooM Operators', link: '/api/core' },
+            { text: 'LLooM Operators', link: '/api/operators' },
           ]
         }
       ]
