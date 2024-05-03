@@ -42,7 +42,7 @@ Runs concept generation, which includes the `Distill`-`Cluster`-`Synthesize` ope
     ```py
     {
         "filter_n_quotes": filter_n_quotes,  # Number of quotes per document
-        "summ_n_bullets": summ_n_bullets,  # Number of bulletpoints per document
+        "summ_n_bullets": summ_n_bullets,  # Number of bullet points per document
         "synth_n_concepts": synth_n_concepts,  # Number of concepts per cluster/batch
     }
     ```
@@ -98,7 +98,7 @@ In the output, each box contains the concept name, concept inclusion criteria, a
 Automatically selects up to the specified number of concepts via an LLM call.
 
 **Parameters**:
-- `max_concepts` _(int)_: The maximum number of concepts for the system to select out of the set of generated concepts. All of these concepts will be scored when the user calls the `score()` funciton.
+- `max_concepts` _(int)_: The maximum number of concepts for the system to select out of the set of generated concepts. All of these concepts will be scored when the user calls the `score()` function.
 
 **Example**:
 ```py
@@ -305,7 +305,7 @@ You will be prompted to provide a few more details:
 - **Analysis goal**: Share as much detail as you'd like about your analysis: What data were you using? What questions were you trying to answer? What did you find?
 
 ## estimate_gen_cost
-`l.estimate_gen_cost(params=None, verbose=False)`
+`estimate_gen_cost(params=None, verbose=False)`
 
 Estimates the cost of running `gen()` with the given parameters. The function is automatically run within calls to `gen()` for the user to review before proceeding with concept generation.
 

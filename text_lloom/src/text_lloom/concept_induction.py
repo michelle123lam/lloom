@@ -326,7 +326,7 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     # Prepare prompts
     # Create prompt arg dictionary with example IDs
     if seed is not None:
-        seeding_phrase = f"If possible, please make the patterns RELATED TO {seed.upper()}."
+        seeding_phrase = f"The patterns MUST BE RELATED TO {seed.upper()}."
     else:
         seeding_phrase = ""
 
@@ -438,9 +438,9 @@ def get_merge_results(merged):
 # Output: 
 # - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review(concepts, concept_df, concept_col_prefix, model_name, debug=False, sess=None, return_logs=False):
+async def review(concepts, concept_df, concept_col_prefix, model_name, debug=False, seed=None, sess=None, return_logs=False):
     # Model is asked to review the provided set of concepts
-    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, sess=sess)
+    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, seed=seed, sess=sess)
     concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col_prefix, model_name=model_name, sess=sess)
 
     merge_results = get_merge_results(merged)
@@ -472,7 +472,7 @@ async def review(concepts, concept_df, concept_col_prefix, model_name, debug=Fal
 # Output: 
 # - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review_remove(concepts, concept_df, concept_col_prefix, model_name, sess):
+async def review_remove(concepts, concept_df, concept_col_prefix, model_name, seed, sess):
     concepts = concepts.copy()  # Make a copy of the concepts dict to avoid modifying the original
     start = time.time()
     concept_name_col = f"{concept_col_prefix}_name"
@@ -481,10 +481,14 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
         "concepts": concepts_list_str,
+        "seed": seed,
     }]
 
     # Run prompts
-    prompt_template = review_remove_prompt
+    if seed is None:
+        prompt_template = review_remove_prompt
+    else:
+        prompt_template = review_remove_prompt_seed
     if sess is not None:
         rate_limits = sess.rate_limits
     else:
@@ -1201,7 +1205,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     # Fetch the results table
     df = get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, cols_to_show)
     df[doc_id_col] = df[doc_id_col].astype(str)  # Ensure doc_id_col is string type
-    # cb = self.get_codebook_info()
 
     concept_cts = {}
     slice_cts = {}
@@ -1462,7 +1465,7 @@ async def check_concept_seed(concepts, seed, model_name="gpt-3.5-turbo"):
     ]
 
     # Run prompts
-    prompt_template = match_concept_prompt
+    prompt_template = review_remove_prompt_seed
     res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
     res = res_text[0]
     concepts_to_remove = json_load(res, top_level_key="remove")

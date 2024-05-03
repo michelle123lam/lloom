@@ -458,6 +458,7 @@ class lloom:
                             concept_df=df_concepts, 
                             concept_col_prefix=concept_col_prefix, 
                             model_name=self.synth_model_name, 
+                            seed=seed,
                             sess=self,
                             return_logs=True,
                         )

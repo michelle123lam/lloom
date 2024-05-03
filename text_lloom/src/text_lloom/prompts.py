@@ -54,6 +54,24 @@ Please respond ONLY with a valid JSON in the following format:
 }}
 """
 
+review_remove_prompt_seed = """
+I have this dict of CONCEPTS (keys) and their corresponding inclusion criteria (values), as follows:
+{concepts}
+
+I have the following THEME:
+{seed}
+
+Please identify any CONCEPTS that DO NOT relate to the THEME and that should be removed. If there no such concepts, please leave the list empty.
+Please respond ONLY with a valid JSON in the following format:
+
+{{
+    "remove": [ 
+        "<CONCEPT_NAME_5>",
+        "<CONCEPT_NAME_6>",
+    ]
+}}
+"""
+
 review_merge_prompt = """
 I have this set of themes generated from text examples:
 {concepts}
@@ -217,25 +235,6 @@ Please respond with a list of each concept and either the item it matches or NON
             "item_id": "<item_id_number or NONE>",
             "rationale": "<rationale for match>",
         }}
-    ]
-}}
-"""
-
-# Match Concept ========================
-match_concept_prompt = """
-I have this dict of CONCEPTS (keys) and their corresponding inclusion criteria (values), as follows:
-{concepts}
-
-I have the following theme:
-{seed}
-
-Please identify any CONCEPTS that do not match the THEME. If there no such concepts, please leave the list empty.
-Please respond ONLY with a valid JSON in the following format:
-
-{{
-    "remove": [ 
-        "<CONCEPT_NAME_5>",
-        "<CONCEPT_NAME_6>",
     ]
 }}
 """
