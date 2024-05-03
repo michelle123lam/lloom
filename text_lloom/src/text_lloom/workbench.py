@@ -298,13 +298,52 @@ class lloom:
         print(f"\n\n{self.bold_txt('Active concepts')} (n={len(active_concepts)}):")
         for c_id, c in active_concepts.items():
             print(f"- {self.bold_txt(c.name)}: {c.prompt}")
+    
+    def show_prompt(self, step_name):
+        # Displays the default prompt for the specified step.
+        steps_to_prompts = {
+            "distill_filter": filter_prompt,
+            "distill_summarize": summarize_prompt,
+            "synthesize": synthesize_prompt,
+        }
+        if step_name in steps_to_prompts:
+            return steps_to_prompts[step_name]
+        else:
+            raise Exception(f"Operator `{step_name}` not found. The available operators for custom prompts are: {list(steps_to_prompts.keys())}")
+    
+    def validate_prompt(self, step_name, prompt):
+        # Validate prompt for a given step to ensure that it includes the necessary template fields.
+        # Raises an exception if any required field is missing.
+        prompt_reqs = {
+            "distill_filter": ["ex", "n_quotes", "seeding_phrase"],
+            "distill_summarize": ["ex", "n_bullets", "seeding_phrase", "n_words"],
+            "synthesize": ["examples", "n_concepts_phrase", "seeding_phrase"],
+        }
+        reqs = prompt_reqs[step_name]
+        for req in reqs:
+            template_str = f"{{{req}}}"  # Check for {req} in the prompt
+            if template_str not in prompt:
+                raise Exception(f"Custom prompt for `{step_name}` is missing required template field: `{req}`. All required fields: {reqs}. For example, this is the default prompt template:\n{self.show_prompt(step_name)}")
+        
 
     # HELPER FUNCTIONS ================================
-    async def gen(self, seed=None, params=None, n_synth=1, auto_review=True, debug=True):
+    async def gen(self, seed=None, params=None, n_synth=1, custom_prompts=None, auto_review=True, debug=True):
         if params is None:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
                 print(f"{self.bold_txt('Auto-suggested parameters')}: {params}")
+        if custom_prompts is None:
+            # Use default prompts
+            custom_prompts = {
+                "distill_filter": self.show_prompt("distill_filter"),
+                "distill_summarize": self.show_prompt("distill_summarize"),
+                "synthesize": self.show_prompt("synthesize"),
+            }
+        else:
+            # Validate that prompts are formatted correctly
+            for step_name, prompt in custom_prompts.items():
+                if prompt is not None:
+                    self.validate_prompt(step_name, prompt)
         
         # Run cost estimation
         self.estimate_gen_cost(params)
@@ -318,7 +357,7 @@ class lloom:
 
         # Run concept generation
         filter_n_quotes = params["filter_n_quotes"]
-        if filter_n_quotes > 1:
+        if (filter_n_quotes > 1) and (custom_prompts["distill_filter"] is not None):
             step_name = "Distill-filter"
             self.print_step_name(step_name)
             with self.spinner_wrapper() as spinner:
@@ -328,6 +367,7 @@ class lloom:
                     doc_id_col=self.doc_id_col,
                     model_name=self.distill_model_name,
                     n_quotes=params["filter_n_quotes"],
+                    prompt_template=custom_prompts["distill_filter"],
                     seed=seed,
                     sess=self,
                 )
@@ -339,25 +379,30 @@ class lloom:
                 display(df_filtered)
         else:
             # Just use original df to generate bullets
-            self.df_filtered = self.in_df
+            self.df_filtered = self.in_df[[self.doc_id_col, self.doc_col]]
         
-        step_name = "Distill-summarize"
-        self.print_step_name(step_name)
-        with self.spinner_wrapper() as spinner:
-            df_bullets = await distill_summarize(
-                text_df=self.df_filtered, 
-                doc_col=self.doc_col,
-                doc_id_col=self.doc_id_col,
-                model_name=self.distill_model_name,
-                n_bullets=params["summ_n_bullets"],
-                seed=seed,
-                sess=self,
-            )
-            self.df_bullets = df_bullets
-            spinner.text = "Done"
-            spinner.ok("✅")
-        if debug:
-            display(df_bullets)
+        if (custom_prompts["distill_summarize"] is not None):
+            step_name = "Distill-summarize"
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_bullets = await distill_summarize(
+                    text_df=self.df_filtered, 
+                    doc_col=self.doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.distill_model_name,
+                    n_bullets=params["summ_n_bullets"],
+                    prompt_template=custom_prompts["distill_summarize"],
+                    seed=seed,
+                    sess=self,
+                )
+                self.df_bullets = df_bullets
+                spinner.text = "Done"
+                spinner.ok("✅")
+            if debug:
+                display(df_bullets)
+        else:
+            # Just use filtered df to generate concepts
+            self.df_bullets = self.df_filtered
         
         df_cluster_in = df_bullets
         synth_doc_col = self.doc_col
@@ -393,6 +438,7 @@ class lloom:
                     concept_col_prefix=concept_col_prefix,
                     n_concepts=synth_n_concepts,
                     pattern_phrase="unique topic",
+                    prompt_template=custom_prompts["synthesize"],
                     seed=seed,
                     sess=self,
                     return_logs=True,
@@ -670,11 +716,12 @@ class lloom:
         self,
         max_concepts=8,
         seed=None, params=None, n_synth=1,
+        custom_prompts=None,
         debug=True
     ):
         # Runs gen(), select(), and score() all at once
         # Run generation
-        await self.gen(seed=seed, params=params, n_synth=n_synth, auto_review=True, debug=debug)
+        await self.gen(seed=seed, params=params, n_synth=n_synth, custom_prompts=custom_prompts, auto_review=True, debug=debug)
 
         # Select the best concepts
         await self.select_auto(max_concepts=max_concepts)

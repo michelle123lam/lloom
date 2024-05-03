@@ -127,8 +127,8 @@ def calc_cost(results, model_name, step_name, sess, debug=False):
     if results is None:
         return
     # Cost estimation
-    in_tokens = np.sum([res.usage.prompt_tokens for res in results])
-    out_tokens = np.sum([res.usage.completion_tokens for res in results])
+    in_tokens = np.sum([(res.usage.prompt_tokens) if res is not None else 0 for res in results])
+    out_tokens = np.sum([(res.usage.completion_tokens) if res is not None else 0 for res in results])
     in_token_cost, out_token_cost = calc_cost_by_tokens(model_name, in_tokens, out_tokens)
     total_cost = in_token_cost + out_token_cost
     if debug:
@@ -151,7 +151,7 @@ def filter_empty_rows(df, text_col_name):
 # - text_df: DataFrame (columns: doc_id, doc)
 # Parameters: model_name, n_quotes, seed
 # Output: quote_df (columns: doc_id, quote)
-async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, seed=None, sess=None):
+async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, prompt_template=None, seed=None, sess=None):
     # Filtering operates on provided text
     start = time.time()
 
@@ -174,7 +174,8 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
     ]
     
     # Run prompts
-    prompt_template = filter_prompt
+    if prompt_template is None:
+        prompt_template = filter_prompt
     if sess is not None:
         rate_limits = sess.rate_limits
     else:
@@ -199,7 +200,7 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
 #   --> text could be original or filtered (quotes)
 # Parameters: n_bullets, n_words_per_bullet, seed
 # Output: bullet_df (columns: doc_id, bullet)
-async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets="2-4", n_words_per_bullet="5-8", seed=None, sess=None):
+async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets="2-4", n_words_per_bullet="5-8", prompt_template=None, seed=None, sess=None):
     # Summarization operates on text_col
     start = time.time()
 
@@ -232,7 +233,9 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
         all_ex_ids.append(ex_id)
     
     # Run prompts
-    prompt_template = summarize_prompt
+    if prompt_template is None:
+        prompt_template = summarize_prompt
+        
     if sess is not None:
         rate_limits = sess.rate_limits
     else:
@@ -301,7 +304,7 @@ def dict_to_json(examples):
 # Output: 
 # - concepts: dict (concept_id -> concept dict)
 # - concept_df: DataFrame (columns: doc_id, doc, concept_id, concept_name, concept_prompt)
-async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=False, pattern_phrase="unifying pattern", dedupe=True, seed=None, sess=None, return_logs=False):
+async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=False, pattern_phrase="unifying pattern", dedupe=True, prompt_template=None, seed=None, sess=None, return_logs=False):
     # Synthesis operates on "doc" column for each cluster_id
     # Concept object is created for each concept
     start = time.time()
@@ -323,9 +326,9 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     # Prepare prompts
     # Create prompt arg dictionary with example IDs
     if seed is not None:
-        seed_phrase = f"If possible, please make the patterns RELATED TO {seed.upper()}."
+        seeding_phrase = f"If possible, please make the patterns RELATED TO {seed.upper()}."
     else:
-        seed_phrase = ""
+        seeding_phrase = ""
 
     seed_label = seed
     arg_dicts = []
@@ -346,7 +349,7 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                 arg_dict = {
                     "examples": ex_dicts_json,
                     "n_concepts_phrase": get_n_concepts_phrase(cur_df),
-                    "seed_phrase": seed_phrase
+                    "seeding_phrase": seeding_phrase
                 }
                 arg_dicts.append(arg_dict)
         else:
@@ -356,12 +359,13 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
             arg_dict = {
                 "examples": ex_dicts_json,
                 "n_concepts_phrase": get_n_concepts_phrase(cur_df),
-                "seed_phrase": seed_phrase
+                "seeding_phrase": seeding_phrase
             }
             arg_dicts.append(arg_dict)
 
     # Run prompts
-    prompt_template = synthesize_prompt
+    if prompt_template is None:
+        prompt_template = synthesize_prompt
     if sess is not None:
         rate_limits = sess.rate_limits
     else:
@@ -476,7 +480,7 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
     }]
 
     # Run prompts
@@ -528,7 +532,7 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
     }]
 
     # Run prompts
@@ -600,7 +604,7 @@ async def review_select(concepts, max_concepts, model_name, rate_limits=None):
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
         "max_concepts": max_concepts,
     }]
 
@@ -627,8 +631,8 @@ def get_ex_batch_args(df, text_col, doc_id_col, concept_name, concept_prompt):
     examples_json = dict_to_json(ex)
     arg_dict = {
         "examples_json": examples_json,
-        "pattern_name": concept_name,
-        "pattern_prompt": concept_prompt,
+        "concept_name": concept_name,
+        "concept_prompt": concept_prompt,
         "example_ids": list(df[doc_id_col])
     }
     return arg_dict

@@ -26,7 +26,7 @@ synthesize_prompt = """
 I have this set of bullet point summaries of text examples:
 {examples}
 
-Please write a summary of {n_concepts_phrase} for these examples {seed_phrase} For each high-level pattern, write a 2-4 word NAME for the pattern and an associated 1-sentence ChatGPT PROMPT that could take in a new text example and determine whether the relevant pattern applies. Also include 1-2 example_ids for items that BEST exemplify the pattern. Please respond ONLY with a valid JSON in the following format:
+Please write a summary of {n_concepts_phrase} for these examples. {seeding_phrase} For each high-level pattern, write a 2-4 word NAME for the pattern and an associated 1-sentence ChatGPT PROMPT that could take in a new text example and determine whether the relevant pattern applies. Also include 1-2 example_ids for items that BEST exemplify the pattern. Please respond ONLY with a valid JSON in the following format:
 {{
     "patterns": [ 
         {{"name": "<PATTERN_NAME_1>", "prompt": "<PATTERN_PROMPT_1>", "example_ids": ["<EXAMPLE_ID_1>", "<EXAMPLE_ID_2>"]}},
@@ -38,7 +38,7 @@ Please write a summary of {n_concepts_phrase} for these examples {seed_phrase} F
 # Review ========================
 review_remove_prompt = """
 I have this set of themes generated from text examples:
-{themes}
+{concepts}
 
 Please identify any themes that should be REMOVED because they are either:
 (1) Too specific/narrow and would only describe a few examples, or 
@@ -56,7 +56,7 @@ Please respond ONLY with a valid JSON in the following format:
 
 review_merge_prompt = """
 I have this set of themes generated from text examples:
-{themes}
+{concepts}
 
 Please identify any PAIRS of themes that are similar or overlapping that should be MERGED together. 
 Please respond ONLY with a valid JSON in the following format with the original themes and a new name and prompt for the merged theme. Do NOT simply combine the prior theme names or prompts, but come up with a new 2-3 word name and 1-sentence ChatGPT prompt. If there no similar themes, please leave the list empty.
@@ -79,7 +79,7 @@ Please respond ONLY with a valid JSON in the following format with the original 
 
 review_select_prompt = """
 I have this set of themes generated from text examples:
-{themes}
+{concepts}
 
 Please select AT MOST {max_concepts} themes to include in the final set of themes. These themes should be the highest quality themes in the set: (1) NOT too generic or vague (should not describe most examples), (2) NOT too specific (should not only describe a small set of examples), and (3) NOT overlapping with other selected themes (they should capture a range of different patterns).
 Please respond ONLY with a valid JSON in the following format:
@@ -98,8 +98,8 @@ CONTEXT:
     I have the following text examples in a JSON:
     {examples_json}
 
-    I also have a pattern named {pattern_name} with the following PROMPT: 
-    {pattern_prompt}
+    I also have a pattern named {concept_name} with the following PROMPT: 
+    {concept_prompt}
 
 TASK:
     For each example, please evaluate the PROMPT by generating a 1-sentence RATIONALE of your thought process and providing a resulting ANSWER of ONE of the following multiple-choice options, including just the letter: 
@@ -125,8 +125,8 @@ CONTEXT:
     I have the following text examples in a JSON:
     {examples_json}
 
-    I also have a pattern named {pattern_name} with the following PROMPT: 
-    {pattern_prompt}
+    I also have a pattern named {concept_name} with the following PROMPT: 
+    {concept_prompt}
 
 TASK:
     For each example, please evaluate the PROMPT by generating a 1-sentence RATIONALE of your thought process and providing a resulting ANSWER of ONE of the following multiple-choice options, including just the letter: 
