@@ -19,20 +19,19 @@ import ipywidgets as widgets
 import re
 
 # Clustering
-from bertopic import BERTopic
-from bertopic.backend import OpenAIBackend
 from hdbscan import HDBSCAN
+import umap
 
 # Local imports
 if __package__ is None or __package__ == '':
     # uses current directory visibility
-    from llm import multi_query_gpt_wrapper, calc_cost_by_tokens
+    from llm import multi_query_gpt_wrapper, calc_cost_by_tokens, get_embeddings
     from prompts import *
     from concept import Concept
     #from __init__ import MatrixWidget, ConceptSelectWidget
 else:
     # uses current package visibility
-    from .llm import multi_query_gpt_wrapper, calc_cost_by_tokens
+    from .llm import multi_query_gpt_wrapper, calc_cost_by_tokens, get_embeddings
     from .prompts import *
     from .concept import Concept
     #from .__init__ import MatrixWidget, ConceptSelectWidget
@@ -74,29 +73,33 @@ def pretty_print_dict_list(d_list):
 
 def cluster_helper(in_df, doc_col, doc_id_col, min_cluster_size, cluster_id_col, embed_model_name):
     # OpenAI embeddings with HDBSCAN clustering
-    embedding_model = OpenAIBackend(embed_model_name)
+    id_vals = in_df[doc_id_col].tolist()
+    text_vals = in_df[doc_col].tolist()
 
-    hdbscan_model = HDBSCAN(
+    embeddings = get_embeddings(embed_model_name, text_vals)
+    umap_model = umap.UMAP(
+        n_neighbors=15,
+        n_components=5,
+        min_dist=0.0,
+        metric='cosine',
+    )
+    umap_embeddings = umap_model.fit_transform(embeddings)
+    hdb = HDBSCAN(
         min_cluster_size=min_cluster_size, 
         metric='euclidean', 
         cluster_selection_method='leaf', 
         prediction_data=True
     )
-    topic_model = BERTopic(
-        embedding_model=embedding_model, 
-        hdbscan_model=hdbscan_model
-    )
+    res = hdb.fit(umap_embeddings)
+    clusters = res.labels_
 
-    id_vals = in_df[doc_id_col].tolist()
-    text_vals = in_df[doc_col].tolist()
-    clusters, probs = topic_model.fit_transform(text_vals)
     rows = list(zip(id_vals, text_vals, clusters)) # id_col, text_col, cluster_id_col
     cluster_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, cluster_id_col])
     cluster_df = cluster_df.sort_values(by=[cluster_id_col])
     
     return cluster_df
 
-def save_progress(sess, df, step_name, start, res, model_name, debug=True):
+def save_progress(sess, df, step_name, start, res, model_name, debug=False):
     # Save df to session
     if (sess is not None) and (df is not None):
         k = sess.get_save_key(step_name)
@@ -108,7 +111,7 @@ def save_progress(sess, df, step_name, start, res, model_name, debug=True):
     # Gets cost
     calc_cost(res, model_name, step_name, sess, debug=debug)
 
-def get_timing(start, step_name, sess, debug=True):
+def get_timing(start, step_name, sess, debug=False):
     if start is None:
         return
     elapsed = time.time() - start
@@ -119,13 +122,13 @@ def get_timing(start, step_name, sess, debug=True):
         k = sess.get_save_key(step_name)
         sess.time[k] = elapsed
 
-def calc_cost(results, model_name, step_name, sess, debug=True):
+def calc_cost(results, model_name, step_name, sess, debug=False):
     # Calculate cost with API results and model name
     if results is None:
         return
     # Cost estimation
-    in_tokens = np.sum([res.llm_output["token_usage"]["prompt_tokens"] for res in results])
-    out_tokens = np.sum([res.llm_output["token_usage"]["completion_tokens"] for res in results])
+    in_tokens = np.sum([(res.usage.prompt_tokens) if res is not None else 0 for res in results])
+    out_tokens = np.sum([(res.usage.completion_tokens) if res is not None else 0 for res in results])
     in_token_cost, out_token_cost = calc_cost_by_tokens(model_name, in_tokens, out_tokens)
     total_cost = in_token_cost + out_token_cost
     if debug:
@@ -148,7 +151,7 @@ def filter_empty_rows(df, text_col_name):
 # - text_df: DataFrame (columns: doc_id, doc)
 # Parameters: model_name, n_quotes, seed
 # Output: quote_df (columns: doc_id, quote)
-async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, seed=None, sess=None):
+async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, prompt_template=None, seed=None, sess=None):
     # Filtering operates on provided text
     start = time.time()
 
@@ -171,8 +174,13 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
     ]
     
     # Run prompts
-    prompt_template = filter_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if prompt_template is None:
+        prompt_template = filter_prompt
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     ex_ids = [ex_id for ex_id in text_df[doc_id_col].tolist()]
@@ -184,7 +192,7 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
             rows.append([ex_id, cur_filtered])
     quote_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col])
     
-    save_progress(sess, quote_df, step_name="distill_filter", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, quote_df, step_name="Distill-filter", start=start, res=res_full, model_name=model_name)
     return quote_df
 
 
@@ -192,7 +200,7 @@ async def distill_filter(text_df, doc_col, doc_id_col, model_name, n_quotes=3, s
 #   --> text could be original or filtered (quotes)
 # Parameters: n_bullets, n_words_per_bullet, seed
 # Output: bullet_df (columns: doc_id, bullet)
-async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets="2-4", n_words_per_bullet="5-8", seed=None, sess=None):
+async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets="2-4", n_words_per_bullet="5-8", prompt_template=None, seed=None, sess=None):
     # Summarization operates on text_col
     start = time.time()
 
@@ -225,8 +233,14 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
         all_ex_ids.append(ex_id)
     
     # Run prompts
-    prompt_template = summarize_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if prompt_template is None:
+        prompt_template = summarize_prompt
+        
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     for ex_id, res in zip(all_ex_ids, res_text):
@@ -237,7 +251,7 @@ async def distill_summarize(text_df, doc_col, doc_id_col, model_name, n_bullets=
                 rows.append([ex_id, bullet])
     bullet_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col])
 
-    save_progress(sess, bullet_df, step_name="distill_summarize", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, bullet_df, step_name="Distill-summarize", start=start, res=res_full, model_name=model_name)
     return bullet_df
 
 
@@ -273,7 +287,7 @@ async def cluster(text_df, doc_col, doc_id_col, cluster_id_col="cluster_id", min
         # Cluster and group by clusters
         cluster_df = cluster_helper(text_df, doc_col, doc_id_col, min_cluster_size=min_cluster_size, cluster_id_col=cluster_id_col, embed_model_name=embed_model_name)
 
-    save_progress(sess, cluster_df, step_name="cluster", start=start, res=None, model_name=None)
+    save_progress(sess, cluster_df, step_name="Cluster", start=start, res=None, model_name=None)
     return cluster_df
 
 
@@ -290,7 +304,7 @@ def dict_to_json(examples):
 # Output: 
 # - concepts: dict (concept_id -> concept dict)
 # - concept_df: DataFrame (columns: doc_id, doc, concept_id, concept_name, concept_prompt)
-async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=True, pattern_phrase="unifying pattern", dedupe=True, seed=None, sess=None):
+async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col="cluster_id", concept_col_prefix="concept", n_concepts=None, batch_size=None, verbose=False, pattern_phrase="unifying pattern", dedupe=True, prompt_template=None, seed=None, sess=None, return_logs=False):
     # Synthesis operates on "doc" column for each cluster_id
     # Concept object is created for each concept
     start = time.time()
@@ -312,9 +326,9 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     # Prepare prompts
     # Create prompt arg dictionary with example IDs
     if seed is not None:
-        seed_phrase = f"If possible, please make the patterns RELATED TO {seed.upper()}."
+        seeding_phrase = f"The patterns MUST BE RELATED TO {seed.upper()}."
     else:
-        seed_phrase = ""
+        seeding_phrase = ""
 
     seed_label = seed
     arg_dicts = []
@@ -335,7 +349,7 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                 arg_dict = {
                     "examples": ex_dicts_json,
                     "n_concepts_phrase": get_n_concepts_phrase(cur_df),
-                    "seed_phrase": seed_phrase
+                    "seeding_phrase": seeding_phrase
                 }
                 arg_dicts.append(arg_dict)
         else:
@@ -345,23 +359,26 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
             arg_dict = {
                 "examples": ex_dicts_json,
                 "n_concepts_phrase": get_n_concepts_phrase(cur_df),
-                "seed_phrase": seed_phrase
+                "seeding_phrase": seeding_phrase
             }
             arg_dicts.append(arg_dict)
 
     # Run prompts
-    prompt_template = synthesize_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if prompt_template is None:
+        prompt_template = synthesize_prompt
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     concepts = {}
     rows = []
+    logs = ""
     for cur_cluster_id, res in zip(cluster_ids, res_text):
         cur_concepts = json_load(res, top_level_key="patterns")
         if cur_concepts is not None:
-            # concepts.extend(cur_concepts)
-            # cur_examples_dict = {ex_to_id[cur_ex]: cur_ex for cur_ex in cur_examples}
-            
             for concept_dict in cur_concepts:
                 ex_ids = concept_dict["example_ids"]
                 ex_ids = set(ex_ids) # remove duplicates
@@ -380,10 +397,13 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
                     if cur_key in ex_id_to_ex:
                         row = [ex_id, ex_id_to_ex[cur_key], concept.id, concept.name, concept.prompt, concept.seed]
                         rows.append(row)
+            # Print intermediate results
+            examples = cluster_dfs[cur_cluster_id][doc_col].tolist()
+            concepts_formatted = pretty_print_dict_list(cur_concepts)
+            cur_log = f"\n\nInput examples: {examples}\nOutput concepts: {concepts_formatted}"
+            logs += cur_log
             if verbose:
-                examples = cluster_dfs[cur_cluster_id][doc_col].tolist()
-                concepts_formatted = pretty_print_dict_list(cur_concepts)
-                print(f"\n\nInput examples: {examples}\nOutput concepts: {concepts_formatted}")
+                print(cur_log)
     # doc_id, text, concept_id, concept_name, concept_prompt
     concept_df = pd.DataFrame(rows, columns=[doc_id_col, doc_col, concept_col_prefix, f"{concept_col_prefix}_name", f"{concept_col_prefix}_prompt", "seed"])
 
@@ -391,40 +411,58 @@ async def synthesize(cluster_df, doc_col, doc_id_col, model_name, cluster_id_col
     if dedupe:
         concept_df = dedupe_concepts(concept_df, concept_col=f"{concept_col_prefix}_namePrompt")
 
-    save_progress(sess, concept_df, step_name="synthesize", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df, step_name="Synthesize", start=start, res=res_full, model_name=model_name)
     # Save to session if provided
     if sess is not None:
         for c_id, c in concepts.items():
             sess.concepts[c_id] = c
+    
+    if return_logs:
+        return concept_df, logs
     return concept_df
 
 def dedupe_concepts(df, concept_col):
     # Remove duplicate concept rows
     return df.drop_duplicates(subset=[concept_col])
 
-def pretty_print_merge_results(merged):
+def get_merge_results(merged):
+    out = ""
     for m in merged:
         orig_concepts = m["original_themes"]
-        print(f"[{orig_concepts}] --> {m['merged_theme_name']}: {m['merged_theme_prompt']}")
+        cur_out = f"\t{orig_concepts} --> {m['merged_theme_name']}: {m['merged_theme_prompt']}"
+        out += cur_out + "\n"
+    return out
 
 # Input: concept_df (columns: doc_id, text, concept_id, concept_name, concept_prompt)
 # Parameters: n_concepts
 # Output: 
 # - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review(concepts, concept_df, concept_col_prefix, model_name, debug=True, sess=None):
+async def review(concepts, concept_df, concept_col_prefix, model_name, debug=False, seed=None, sess=None, return_logs=False):
     # Model is asked to review the provided set of concepts
-    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, sess=sess)
+    concepts_out, concept_df_out, removed = await review_remove(concepts, concept_df, concept_col_prefix, model_name=model_name, seed=seed, sess=sess)
     concepts_out, concept_df_out, merged = await review_merge(concepts_out, concept_df_out, concept_col_prefix, model_name=model_name, sess=sess)
 
+    merge_results = get_merge_results(merged)
+    logs = f"""
+    Auto-review:
+    Removed ({len(removed)}):
+        {removed}
+    Merged ({len(merged)}): 
+    {merge_results}
+    """
     if debug:
-        print(f"Removed ({len(removed)}):\n{removed}")
-        print(f"Merged ({len(merged)}):")
-        pretty_print_merge_results(merged)
+        print(f"\n\nAuto-review")
+        print(f"")
+        print(f"")
+        
 
     # TODO: ask model to filter to the "best" N concepts
     if sess is not None:
         sess.concepts = concepts_out
+    
+    if return_logs:
+        return concepts_out, concept_df_out, logs
     return concepts_out, concept_df_out
 
 
@@ -434,7 +472,7 @@ async def review(concepts, concept_df, concept_col_prefix, model_name, debug=Tru
 # Output: 
 # - concepts: dict (concept_id -> Concept)
 # - concept_df: DataFrame (columns: doc_id, text, concept_id, concept_name, concept_prompt)
-async def review_remove(concepts, concept_df, concept_col_prefix, model_name, sess):
+async def review_remove(concepts, concept_df, concept_col_prefix, model_name, seed, sess):
     concepts = concepts.copy()  # Make a copy of the concepts dict to avoid modifying the original
     start = time.time()
     concept_name_col = f"{concept_col_prefix}_name"
@@ -442,12 +480,20 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
+        "seed": seed,
     }]
 
     # Run prompts
-    prompt_template = review_remove_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if seed is None:
+        prompt_template = review_remove_prompt
+    else:
+        prompt_template = review_remove_prompt_seed
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -465,7 +511,7 @@ async def review_remove(concepts, concept_df, concept_col_prefix, model_name, se
     for c_id in c_ids_to_remove:
         concepts.pop(c_id, None)  # Remove from concepts dict
 
-    save_progress(sess, concept_df_out, step_name="review_remove", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df_out, step_name="Review-remove", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_remove
 
 def get_concept_by_name(concepts, concept_name):
@@ -490,12 +536,16 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
     }]
 
     # Run prompts
     prompt_template = review_merge_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -547,24 +597,24 @@ async def review_merge(concepts, concept_df, concept_col_prefix, model_name, ses
     for c_id in c_ids_to_remove:
         concepts.pop(c_id, None) # Remove from concepts dict
 
-    save_progress(sess, concept_df_out, step_name="review_merge", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, concept_df_out, step_name="Review-merge", start=start, res=res_full, model_name=model_name)
     return concepts, concept_df_out, concepts_to_merge
 
 # Model selects the best concepts up to `max_concepts`
 # Input: concepts (concept_id -> Concept)
 # Parameters: max_concepts, model_name
 # Output: selected_concepts: dict (concept_id -> Concept)
-async def review_select(concepts, max_concepts, model_name):
+async def review_select(concepts, max_concepts, model_name, rate_limits=None):
     concepts_list = [f"- Name: {c.name}, Prompt: {c.prompt}" for c in concepts.values()]
     concepts_list_str = "\n".join(concepts_list)
     arg_dicts = [{
-        "themes": concepts_list_str,
+        "concepts": concepts_list_str,
         "max_concepts": max_concepts,
     }]
 
     # Run prompts
     prompt_template = review_select_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -585,8 +635,8 @@ def get_ex_batch_args(df, text_col, doc_id_col, concept_name, concept_prompt):
     examples_json = dict_to_json(ex)
     arg_dict = {
         "examples_json": examples_json,
-        "pattern_name": concept_name,
-        "pattern_prompt": concept_prompt,
+        "concept_name": concept_name,
+        "concept_prompt": concept_prompt,
         "example_ids": list(df[doc_id_col])
     }
     return arg_dict
@@ -693,7 +743,11 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
         prompt_template = score_highlight_prompt
     else:
         prompt_template = score_no_highlight_prompt
-    results, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, batch_num=batch_i)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    results, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, batch_num=batch_i, rate_limits=rate_limits)
 
     # Parse results
     # Cols: doc_id, text, concept_id, concept_name, concept_prompt, score, highlight
@@ -713,7 +767,7 @@ async def score_helper(concept, batch_i, concept_id, df, text_col, doc_id_col, m
         missing_rows = get_empty_score_df(missing_rows, concept, concept_id, text_col, doc_id_col)
         score_df = pd.concat([score_df, missing_rows])
 
-    save_progress(sess, score_df, step_name="score_helper", start=None, res=res_full, model_name=model_name)
+    save_progress(sess, score_df, step_name="Score-helper", start=None, res=res_full, model_name=model_name)
     if sess is not None:
         # Save to session if provided
         sess.results[concept_id] = score_df
@@ -742,7 +796,7 @@ async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gp
     # Combine score_dfs
     score_df = pd.concat(score_dfs)
 
-    save_progress(sess, score_df, step_name="score", start=start, res=None, model_name=None)
+    save_progress(sess, score_df, step_name="Score", start=start, res=None, model_name=None)
     return score_df
 
 # Based on concept scoring, refine concepts
@@ -809,7 +863,11 @@ async def summarize_concept(score_df, concept_id, model_name="gpt-4-turbo-previe
     
     # Run prompts
     prompt_template = summarize_concept_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
 
     # Process results
     res = res_text[0]
@@ -932,7 +990,11 @@ async def auto_eval(items, concepts, model_name="gpt-3.5-turbo", debug=False, se
 
     # Run prompts
     prompt_template = concept_auto_eval_prompt
-    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
+    if sess is not None:
+        rate_limits = sess.rate_limits
+    else:
+        rate_limits = None
+    res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=rate_limits)
     
     res_text = res_text[0]
     if debug:
@@ -981,7 +1043,7 @@ async def auto_eval(items, concepts, model_name="gpt-3.5-turbo", debug=False, se
         else:
             print(f"{c_id}: {c} -- NONE")
 
-    save_progress(sess, df=None, step_name="auto_eval", start=start, res=res_full, model_name=model_name)
+    save_progress(sess, df=None, step_name="Auto-eval", start=start, res=res_full, model_name=model_name)
     return concepts_found, concept_coverage
 
 # Adds color-background styling for score columns to match score value
@@ -1143,7 +1205,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     # Fetch the results table
     df = get_concept_col_df(df, score_df, concepts, doc_id_col, doc_col, score_col, cols_to_show)
     df[doc_id_col] = df[doc_id_col].astype(str)  # Ensure doc_id_col is string type
-    # cb = self.get_codebook_info()
 
     concept_cts = {}
     slice_cts = {}
@@ -1164,7 +1225,7 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
     rationale_col = "score rationale"
     highlight_col = "highlight"
     rationale_df = score_df[[doc_id_col, "concept_name", "rationale", highlight_col]]
-    rationale_df.rename(columns={"rationale": rationale_col}, inplace=True)
+    rationale_df = rationale_df.rename(columns={"rationale": rationale_col})
     rationale_df[doc_id_col] = rationale_df[doc_id_col].astype(str)
 
     # Prep data for each group
@@ -1403,7 +1464,7 @@ async def check_concept_seed(concepts, seed, model_name="gpt-3.5-turbo"):
     ]
 
     # Run prompts
-    prompt_template = match_concept_prompt
+    prompt_template = review_remove_prompt_seed
     res_text, res_full = await multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name)
     res = res_text[0]
     concepts_to_remove = json_load(res, top_level_key="remove")

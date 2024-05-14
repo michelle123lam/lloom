@@ -4,11 +4,12 @@
 # Imports
 import time
 import pandas as pd
-import ipywidgets as widgets
 import random
 from nltk.tokenize import sent_tokenize
 import os
-import openai
+from yaspin import yaspin
+import base64
+import requests
 
 
 # Local imports
@@ -16,12 +17,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from llm import get_token_estimate, EMBED_COSTS
+    from llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .llm import get_token_estimate, EMBED_COSTS
+    from .llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
 
 # WORKBENCH class ================================
 class lloom:
@@ -30,16 +31,32 @@ class lloom:
         df: pd.DataFrame,
         text_col: str,
         id_col: str = None,
-        save_path: str = None,
+        distill_model_name = "gpt-3.5-turbo",
+        embed_model_name = "text-embedding-3-large",
+        synth_model_name = "gpt-4-turbo",
+        score_model_name = "gpt-3.5-turbo",
+        rate_limits = {}, # D_i = "model-name": (n_requests, wait_time_secs)
         debug: bool = False,
     ):
         # Settings
-        self.model_name = "gpt-3.5-turbo"
-        self.embed_model_name = "text-embedding-3-large"
-        self.synth_model_name = "gpt-4-turbo-preview"
-        self.score_model_name = "gpt-3.5-turbo"
-        self.use_base_api = True
+        self.distill_model_name = distill_model_name  # Distill operators (filter and summarize)
+        self.embed_model_name = embed_model_name  # Cluster operator
+        self.synth_model_name = synth_model_name  # Synthesize operator
+        self.score_model_name = score_model_name  # Score operator
         self.debug = debug  # Whether to run in debug mode
+
+        # Rate limits
+        # n_requests: number of requests allowed in one batch
+        # wait_time_secs: time period (in seconds) to wait before making more requests
+        # RPM (Requests per minute) = n_requests * (60 / wait_time_secs)
+        if len(rate_limits) == 0:
+            rate_limits = RATE_LIMITS  # Use default values set from llm.py
+        else:
+            # Intersect user-provided rate_limits with full set of options set in default RATE_LIMITS
+            for k, v in RATE_LIMITS.items():
+                if k not in rate_limits:
+                    rate_limits[k] = v  # Add in defaults for any missing values
+        self.rate_limits = rate_limits
 
         # Input data
         self.doc_id_col = id_col
@@ -65,11 +82,9 @@ class lloom:
             "out_tokens": [],
         }
 
-        # Set up API key
+        # Check for API key
         if "OPENAI_API_KEY" not in os.environ:
             raise Exception("API key not found. Please set the OPENAI_API_KEY environment variable by running: `os.environ['OPENAI_API_KEY'] = 'your_key'`")
-        else:
-            openai.api_key = os.environ["OPENAI_API_KEY"]
     
     # Preprocesses input dataframe
     def preprocess_df(self, df):
@@ -104,11 +119,45 @@ class lloom:
         print(f"Saved session to {cur_path}")
 
         self.select_widget = select_widget  # Restore widget after saving
+    
+    def get_pkl_str(self):
+        # Saves current session to pickle string
+        select_widget = self.select_widget
+        self.select_widget = None  # Remove widget before saving (can't be pickled)
+
+        pkl_str = pickle.dumps(self)
+        self.select_widget = select_widget  # Restore widget after saving
+        return pkl_str
 
     def get_save_key(self, step_name):
         t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
         k = (step_name, t)  # Key of step name and current time
         return k
+
+    # Printed text formatting
+    def bold_txt(self, s):
+        # Bold text
+        return f"\033[1m{s}\033[0m"
+
+    def highlight_txt(self, s, color="yellow"):
+        # Highlight text (background color)
+        if color == "yellow":
+            return f"\x1b[48;5;228m{s}\x1b[0m"
+        elif color == "blue":
+            return f"\x1b[48;5;117m{s}\x1b[0m"
+
+    def bold_highlight_txt(self, s):
+        # Both bold and highlight text
+        return self.bold_txt(self.highlight_txt(s))
+    
+    def print_step_name(self, step_name):
+        # Print step name (with blue highlighting)
+        format_step_name = f"{self.highlight_txt(step_name, color='blue')}"
+        print(f"\n\n{format_step_name}")
+
+    def spinner_wrapper(self):
+        # Wrapper for loading spinner
+        return yaspin(text="Loading")
 
     # Estimate cost of generation for the given params
     def estimate_gen_cost(self, params=None, verbose=False):
@@ -125,17 +174,17 @@ class lloom:
         # Filter: generate filter_n_quotes for each doc
         est_cost = {}
         
-        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.model_name) for doc in self.in_df[self.doc_col].tolist()])
+        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.distill_model_name) for doc in self.in_df[self.doc_col].tolist()])
         quotes_tokens_per_doc = params["filter_n_quotes"] * est_quote_tokens 
         filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
-        est_cost["distill_filter"] = calc_cost_by_tokens(self.model_name, filter_in_tokens, filter_out_tokens)
+        est_cost["distill_filter"] = calc_cost_by_tokens(self.distill_model_name, filter_in_tokens, filter_out_tokens)
 
         # Summarize: create n_bullets for each doc
-        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.model_name)
+        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.distill_model_name)
         summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
         bullets_tokens_per_doc = params["summ_n_bullets"] * est_bullet_tokens
         summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
-        est_cost["distill_summarize"] = calc_cost_by_tokens(self.model_name, summ_in_tokens, summ_out_tokens)
+        est_cost["distill_summarize"] = calc_cost_by_tokens(self.distill_model_name, summ_in_tokens, summ_out_tokens)
 
         # Cluster: embed each bullet point
         cluster_rate = EMBED_COSTS[self.embed_model_name] 
@@ -155,7 +204,7 @@ class lloom:
         est_cost["review"] = calc_cost_by_tokens(self.synth_model_name, rev_in_tokens, rev_out_tokens)
         
         total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
-        print(f"\n\nEstimated cost: {np.round(total_cost, 2)}")
+        print(f"\n\n{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
         if verbose:
@@ -187,7 +236,7 @@ class lloom:
 
         total_cost = np.sum(est_cost)
         print(f"\n\nScoring {n_concepts} concepts for {len(self.in_df)} documents")
-        print(f"Estimated cost: {np.round(total_cost, 2)}")
+        print(f"{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
         print("**Please note that this is only an approximate cost estimate**")
 
         if verbose:
@@ -226,80 +275,134 @@ class lloom:
     def summary(self, verbose=True):
         # Time
         total_time = np.sum(list(self.time.values()))
-        print(f"Total time: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
+        print(f"{self.bold_txt('Total time')}: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
         if verbose:
             for step_name, time in self.time.items():
                 print(f"\t{step_name}: {time:0.2f} sec")
 
         # Cost
         total_cost = np.sum(list(self.cost.values()))
-        print(f"\n\nTotal cost: {total_cost:0.2f}")
+        print(f"\n\n{self.bold_txt('Total cost')}: ${total_cost:0.2f}")
         if verbose:
             for step_name, cost in self.cost.items():
-                print(f"\t{step_name}: {cost:0.3f}")
+                print(f"\t{step_name}: ${cost:0.3f}")
 
         # Tokens
         in_tokens = np.sum(self.tokens["in_tokens"])
         out_tokens = np.sum(self.tokens["out_tokens"])
         total_tokens =  in_tokens + out_tokens
-        print(f"\n\nTokens: total={total_tokens}, in={in_tokens}, out={out_tokens}")
+        print(f"\n\n{self.bold_txt('Tokens')}: total={total_tokens}, in={in_tokens}, out={out_tokens}")
 
     def show_selected(self):
         active_concepts = self.__get_active_concepts()
-        print(f"\n\nActive concepts (n={len(active_concepts)}):")
+        print(f"\n\n{self.bold_txt('Active concepts')} (n={len(active_concepts)}):")
         for c_id, c in active_concepts.items():
-            print(f"- {c.name}: {c.prompt}")
+            print(f"- {self.bold_txt(c.name)}: {c.prompt}")
+    
+    def show_prompt(self, step_name):
+        # Displays the default prompt for the specified step.
+        steps_to_prompts = {
+            "distill_filter": filter_prompt,
+            "distill_summarize": summarize_prompt,
+            "synthesize": synthesize_prompt,
+        }
+        if step_name in steps_to_prompts:
+            return steps_to_prompts[step_name]
+        else:
+            raise Exception(f"Operator `{step_name}` not found. The available operators for custom prompts are: {list(steps_to_prompts.keys())}")
+    
+    def validate_prompt(self, step_name, prompt):
+        # Validate prompt for a given step to ensure that it includes the necessary template fields.
+        # Raises an exception if any required field is missing.
+        prompt_reqs = {
+            "distill_filter": ["ex", "n_quotes", "seeding_phrase"],
+            "distill_summarize": ["ex", "n_bullets", "seeding_phrase", "n_words"],
+            "synthesize": ["examples", "n_concepts_phrase", "seeding_phrase"],
+        }
+        reqs = prompt_reqs[step_name]
+        for req in reqs:
+            template_str = f"{{{req}}}"  # Check for {req} in the prompt
+            if template_str not in prompt:
+                raise Exception(f"Custom prompt for `{step_name}` is missing required template field: `{req}`. All required fields: {reqs}. For example, this is the default prompt template:\n{self.show_prompt(step_name)}")
+        
 
     # HELPER FUNCTIONS ================================
-    async def gen(self, seed=None, params=None, n_synth=1, auto_review=True, debug=True):
+    async def gen(self, seed=None, params=None, n_synth=1, custom_prompts=None, auto_review=True, debug=True):
         if params is None:
             params = self.auto_suggest_parameters(debug=debug)
             if debug:
-                print(f"Auto-suggested parameters: {params}")
+                print(f"{self.bold_txt('Auto-suggested parameters')}: {params}")
+        if custom_prompts is None:
+            # Use default prompts
+            custom_prompts = {
+                "distill_filter": self.show_prompt("distill_filter"),
+                "distill_summarize": self.show_prompt("distill_summarize"),
+                "synthesize": self.show_prompt("synthesize"),
+            }
+        else:
+            # Validate that prompts are formatted correctly
+            for step_name, prompt in custom_prompts.items():
+                if prompt is not None:
+                    self.validate_prompt(step_name, prompt)
         
         # Run cost estimation
         self.estimate_gen_cost(params)
         
         # Confirm to proceed
-        user_input = input("\nProceed with generation? (y/n): ")
+        print(f"\n\n{self.bold_highlight_txt('Action required')}")
+        user_input = input("Proceed with generation? (y/n): ")
         if user_input.lower() != "y":
             print("Cancelled generation")
             return
 
         # Run concept generation
         filter_n_quotes = params["filter_n_quotes"]
-        if filter_n_quotes > 1:
-            df_filtered = await distill_filter(
-                text_df=self.in_df, 
-                doc_col=self.doc_col,
-                doc_id_col=self.doc_id_col,
-                model_name=self.model_name,
-                n_quotes=params["filter_n_quotes"],
-                seed=seed,
-                sess=self,
-            )
-            self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
-            self.df_filtered = df_filtered
+        if (filter_n_quotes > 1) and (custom_prompts["distill_filter"] is not None):
+            step_name = "Distill-filter"
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_filtered = await distill_filter(
+                    text_df=self.in_df, 
+                    doc_col=self.doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.distill_model_name,
+                    n_quotes=params["filter_n_quotes"],
+                    prompt_template=custom_prompts["distill_filter"],
+                    seed=seed,
+                    sess=self,
+                )
+                self.df_to_score = df_filtered  # Change to use filtered df for concept scoring
+                self.df_filtered = df_filtered
+                spinner.text = "Done"
+                spinner.ok("✅")
             if debug:
-                print("df_filtered")
                 display(df_filtered)
         else:
             # Just use original df to generate bullets
-            self.df_filtered = self.in_df
+            self.df_filtered = self.in_df[[self.doc_id_col, self.doc_col]]
         
-        df_bullets = await distill_summarize(
-            text_df=self.df_filtered, 
-            doc_col=self.doc_col,
-            doc_id_col=self.doc_id_col,
-            model_name=self.model_name,
-            n_bullets=params["summ_n_bullets"],
-            seed=seed,
-            sess=self,
-        )
-        self.df_bullets = df_bullets
-        if debug:
-            print("df_bullets")
-            display(df_bullets)
+        if (custom_prompts["distill_summarize"] is not None):
+            step_name = "Distill-summarize"
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_bullets = await distill_summarize(
+                    text_df=self.df_filtered, 
+                    doc_col=self.doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.distill_model_name,
+                    n_bullets=params["summ_n_bullets"],
+                    prompt_template=custom_prompts["distill_summarize"],
+                    seed=seed,
+                    sess=self,
+                )
+                self.df_bullets = df_bullets
+                spinner.text = "Done"
+                spinner.ok("✅")
+            if debug:
+                display(df_bullets)
+        else:
+            # Just use filtered df to generate concepts
+            self.df_bullets = self.df_filtered
         
         df_cluster_in = df_bullets
         synth_doc_col = self.doc_col
@@ -308,45 +411,75 @@ class lloom:
         # Perform synthesize step n_synth times
         for i in range(n_synth):
             self.concepts = {}
-            df_cluster = await cluster(
-                text_df=df_cluster_in, 
-                doc_col=synth_doc_col,
-                doc_id_col=self.doc_id_col,
-                embed_model_name=self.embed_model_name,
-                sess=self,
-            )
+
+            step_name = "Cluster"
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_cluster = await cluster(
+                    text_df=df_cluster_in, 
+                    doc_col=synth_doc_col,
+                    doc_id_col=self.doc_id_col,
+                    embed_model_name=self.embed_model_name,
+                    sess=self,
+                )
+                spinner.text = "Done"
+                spinner.ok("✅")
             if debug:
-                print("df_cluster")
                 display(df_cluster)
             
-            df_concepts = await synthesize(
-                cluster_df=df_cluster, 
-                doc_col=synth_doc_col,
-                doc_id_col=self.doc_id_col,
-                model_name=self.synth_model_name,
-                concept_col_prefix=concept_col_prefix,
-                n_concepts=synth_n_concepts,
-                pattern_phrase="unique topic",
-                seed=seed,
-                sess=self,
-            )
-
-            # Review current concepts (remove low-quality, merge similar)
-            if auto_review:
-                _, df_concepts = await review(concepts=self.concepts, concept_df=df_concepts, concept_col_prefix=concept_col_prefix, model_name=self.synth_model_name, sess=self)
-
-            self.concept_history[i] = self.concepts
+            step_name = "Synthesize"
+            self.print_step_name(step_name)
+            with self.spinner_wrapper() as spinner:
+                df_concepts, synth_logs = await synthesize(
+                    cluster_df=df_cluster, 
+                    doc_col=synth_doc_col,
+                    doc_id_col=self.doc_id_col,
+                    model_name=self.synth_model_name,
+                    concept_col_prefix=concept_col_prefix,
+                    n_concepts=synth_n_concepts,
+                    pattern_phrase="unique topic",
+                    prompt_template=custom_prompts["synthesize"],
+                    seed=seed,
+                    sess=self,
+                    return_logs=True,
+                )
+                spinner.text = "Done"
+                spinner.ok("✅")
             if debug:
-                # Print results
-                print(f"synthesize {i + 1}: (n={len(self.concepts)})")
-                for k, c in self.concepts.items():
-                    print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
+                print(synth_logs)
+
+                # Review current concepts (remove low-quality, merge similar)
+                if auto_review:
+                    step_name = "Review"
+                    self.print_step_name(step_name)
+                    with self.spinner_wrapper() as spinner:
+                        _, df_concepts, review_logs = await review(
+                            concepts=self.concepts, 
+                            concept_df=df_concepts, 
+                            concept_col_prefix=concept_col_prefix, 
+                            model_name=self.synth_model_name, 
+                            seed=seed,
+                            sess=self,
+                            return_logs=True,
+                        )
+                        spinner.text = "Done"
+                        spinner.ok("✅")
+                    if debug:
+                        print(review_logs)
+
+                self.concept_history[i] = self.concepts
+                if debug:
+                    # Print results
+                    print(f"\n\n{self.highlight_txt('Synthesize', color='blue')} {i + 1}: (n={len(self.concepts)} concepts)")
+                    for k, c in self.concepts.items():
+                        print(f'- Concept {k}:\n\t{c.name}\n\t- Prompt: {c.prompt}')
             
             # Update synthesize params for next iteration
             df_concepts["synth_doc_col"] = df_concepts[f"{concept_col_prefix}_name"] + ": " + df_concepts[f"{concept_col_prefix}_prompt"]
             df_cluster_in = df_concepts
             synth_doc_col = "synth_doc_col"
             synth_n_concepts = math.floor(synth_n_concepts * 0.75)
+        print("✅ Done with concept generation!")
 
     def __concepts_to_json(self):
         concept_dict = {c_id: c.to_dict() for c_id, c in self.concepts.items()}
@@ -367,7 +500,7 @@ class lloom:
 
     async def select_auto(self, max_concepts):
         # Select the best concepts up to max_concepts
-        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name)
+        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name, self.rate_limits)
 
         # Handle if selection failed
         if len(selected_concepts) == 0:
@@ -411,7 +544,8 @@ class lloom:
         self.estimate_score_cost(n_concepts=len(concepts), batch_size=batch_size, get_highlights=get_highlights)
 
         # Confirm to proceed
-        user_input = input("\nProceed with scoring? (y/n): ")
+        print(f"\n\n{self.bold_highlight_txt('Action required')}")
+        user_input = input("Proceed with scoring? (y/n): ")
         if user_input.lower() != "y":
             print("Cancelled scoring")
             return
@@ -429,6 +563,7 @@ class lloom:
             threshold=1.0,
         )
 
+        print("✅ Done with concept scoring!")
         return score_df
 
     def __get_concept_from_name(self, name):
@@ -543,15 +678,51 @@ class lloom:
         concepts_json = json.dumps(concepts_dict)
         return concepts_json
 
+    def submit(self):
+        # Submit the current session results to the database
+        # Prepare pickled lloom instance
+        l_pkl = self.get_pkl_str()
+        l_pkl_str = base64.b64encode(l_pkl).decode('ascii')
+
+        # Gather user inputs
+        print("Thank you for using LLooM and submitting your work! We would love to hear more about your analysis.")
+        print("\nPlease provide a contact email address. This will allow us to follow up to better meet your needs and/or feature your work on our site!")
+        email = input("Email address: ")
+
+        print("\nBriefly summarize the goal of your analysis: What data were you using? What questions were you trying to answer?")
+        goal = input("Goal: ")
+
+        with self.spinner_wrapper() as spinner:
+            cur_data = {
+                "email": email,
+                "goal": goal,
+                "lloom_pkl": l_pkl_str,
+            }
+            hdr = {"Content-Type": "application/json"}
+            cur_url = "https://lloom-log-server.vercel.app"
+
+            try:
+                r = requests.post(f"{cur_url}/save", json=cur_data, headers=hdr)
+
+                # Parse result
+                r_json = json.loads(r.text)
+                status = r_json["message"]
+                spinner.text = f"Submission status: {status}"
+                spinner.ok("✅")
+            except Exception as e:
+                spinner.fail("❌")
+                print(f"Error: {e}")
+
     async def gen_auto(
         self,
         max_concepts=8,
         seed=None, params=None, n_synth=1,
+        custom_prompts=None,
         debug=True
     ):
         # Runs gen(), select(), and score() all at once
         # Run generation
-        await self.gen(seed=seed, params=params, n_synth=n_synth, auto_review=True, debug=debug)
+        await self.gen(seed=seed, params=params, n_synth=n_synth, custom_prompts=custom_prompts, auto_review=True, debug=debug)
 
         # Select the best concepts
         await self.select_auto(max_concepts=max_concepts)
