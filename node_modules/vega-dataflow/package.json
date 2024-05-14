@@ -1,0 +1,31 @@
+{
+  "name": "vega-dataflow",
+  "version": "5.7.5",
+  "description": "Reactive dataflow processing.",
+  "keywords": [
+    "vega",
+    "dataflow",
+    "reactive",
+    "streaming",
+    "data"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-dataflow.js",
+  "module": "build/vega-dataflow.module.js",
+  "unpkg": "build/vega-dataflow.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "vega-format": "^1.1.1",
+    "vega-loader": "^4.5.1",
+    "vega-util": "^1.17.1"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}

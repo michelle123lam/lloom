@@ -29,13 +29,13 @@ if __package__ is None or __package__ == '':
     from llm import multi_query_gpt_wrapper, calc_cost_by_tokens
     from prompts import *
     from concept import Concept
-    from __init__ import MatrixWidget, ConceptSelectWidget
+    #from __init__ import MatrixWidget, ConceptSelectWidget
 else:
     # uses current package visibility
     from .llm import multi_query_gpt_wrapper, calc_cost_by_tokens
     from .prompts import *
     from .concept import Concept
-    from .__init__ import MatrixWidget, ConceptSelectWidget
+    #from .__init__ import MatrixWidget, ConceptSelectWidget
 
 # CONSTANTS ================================
 NAN_SCORE = 0  # Numerical score to use in place of NaN values for matrix viz
@@ -1343,7 +1343,6 @@ def prep_vis_dfs(df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_b
 # - debug: boolean (whether to print debug statements)
 def visualize(in_df, score_df, doc_col, doc_id_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=[], slice_col=None, max_slice_bins=None, slice_bounds=None, show_highlights=False, norm_by=None, debug=False):
     matrix_df, item_df, item_df_wide, metadata_dict = prep_vis_dfs(in_df, score_df, doc_id_col, doc_col, score_col, df_filtered, df_bullets, concepts, cols_to_show=cols_to_show, slice_col=slice_col, max_slice_bins=max_slice_bins, slice_bounds=slice_bounds,show_highlights=show_highlights, norm_by=norm_by, debug=debug)
-
     data = matrix_df.to_json(orient='records')
     data_items = item_df.to_json(orient='records')
     data_items_wide = item_df_wide.to_json(orient='records')

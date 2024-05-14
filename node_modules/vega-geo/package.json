@@ -1,0 +1,38 @@
+{
+  "name": "vega-geo",
+  "version": "4.4.1",
+  "description": "Geographic data transforms for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "geo",
+    "projection",
+    "graticule"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-geo.js",
+  "module": "build/vega-geo.module.js",
+  "unpkg": "build/vega-geo.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs --config-transform",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "d3-array": "^3.2.2",
+    "d3-color": "^3.1.0",
+    "d3-geo": "^3.1.0",
+    "vega-canvas": "^1.2.7",
+    "vega-dataflow": "^5.7.5",
+    "vega-projection": "^1.6.0",
+    "vega-statistics": "^1.8.1",
+    "vega-util": "^1.17.1"
+  },
+  "devDependencies": {
+    "vega-transforms": "*"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}

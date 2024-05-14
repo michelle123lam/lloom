@@ -1,0 +1,9 @@
+/**
+ * @packageDocumentation
+ * @module statedb
+ */
+export * from './dataconnector';
+export * from './interfaces';
+export * from './restorablepool';
+export * from './statedb';
+export * from './tokens';

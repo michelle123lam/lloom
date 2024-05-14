@@ -1,0 +1,11 @@
+/**
+ * The namespace for clipboard related functionality.
+ */
+export declare namespace ClipboardExt {
+    /**
+     * Copy text to the system clipboard.
+     *
+     * @param text - The text to copy to the clipboard.
+     */
+    function copyText(text: string): void;
+}

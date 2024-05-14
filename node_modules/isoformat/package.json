@@ -1,0 +1,30 @@
+{
+  "name": "isoformat",
+  "version": "0.2.1",
+  "description": "A tidy ISO 8601 date formatter and parser",
+  "homepage": "https://github.com/mbostock/isoformat/",
+  "license": "ISC",
+  "author": {
+    "name": "Mike Bostock",
+    "url": "https://bost.ocks.org/mike"
+  },
+  "type": "module",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mbostock/isoformat.git"
+  },
+  "files": [
+    "src/**/*.js"
+  ],
+  "scripts": {
+    "test": "mocha test/**/*-test.js && eslint src test",
+    "prepublishOnly": "yarn test",
+    "postpublish": "git push && git push --tags"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "mocha": "^9.1.1"
+  }
+}

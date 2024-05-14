@@ -1,0 +1,32 @@
+{
+  "name": "vega-view-transforms",
+  "version": "4.5.9",
+  "description": "View-specific transforms for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "view",
+    "layout"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-view-transforms.js",
+  "module": "build/vega-view-transforms.module.js",
+  "unpkg": "build/vega-view-transforms.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs --config-transform",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "vega-dataflow": "^5.7.5",
+    "vega-scenegraph": "^4.10.2",
+    "vega-util": "^1.17.1"
+  },
+  "devDependencies": {
+    "vega-transforms": "*"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}

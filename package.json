@@ -11,7 +11,7 @@
     "@anywidget/vite": "^0.1.2",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
     "esbuild": "^0.19.11",
-    "vite": "^5.0.12",
+    "vite": "^5.2.10",
     "vitepress": "^1.0.0-rc.42"
   },
   "dependencies": {

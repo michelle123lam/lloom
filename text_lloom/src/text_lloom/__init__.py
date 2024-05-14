@@ -12,7 +12,7 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-_DEV = False # switch to False for production
+_DEV = True # switch to False for production
 
 if _DEV:
   # from `npx vite`

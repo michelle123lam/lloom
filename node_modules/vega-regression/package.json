@@ -1,0 +1,33 @@
+{
+  "name": "vega-regression",
+  "version": "1.2.0",
+  "description": "Regression transform for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "regression",
+    "loess"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-regression.js",
+  "module": "build/vega-regression.module.js",
+  "unpkg": "build/vega-regression.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "d3-array": "^3.2.2",
+    "vega-dataflow": "^5.7.3",
+    "vega-statistics": "^1.9.0",
+    "vega-util": "^1.15.2"
+  },
+  "devDependencies": {
+    "vega-transforms": "*"
+  },
+  "gitHead": "a7a312ebe9db675ae03bd354f193ed34a976d21f"
+}

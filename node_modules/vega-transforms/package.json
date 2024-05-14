@@ -1,0 +1,38 @@
+{
+  "name": "vega-transforms",
+  "version": "4.11.1",
+  "description": "Data processing transforms for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "dataflow",
+    "transforms",
+    "filter",
+    "aggregate",
+    "project",
+    "window",
+    "sort",
+    "bin",
+    "data"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-transforms.js",
+  "module": "build/vega-transforms.module.js",
+  "unpkg": "build/vega-transforms.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "d3-array": "^3.2.2",
+    "vega-dataflow": "^5.7.5",
+    "vega-statistics": "^1.8.1",
+    "vega-time": "^2.1.1",
+    "vega-util": "^1.17.1"
+  },
+  "gitHead": "7703dbd9d655f36329046f581de955a0e086ae51"
+}

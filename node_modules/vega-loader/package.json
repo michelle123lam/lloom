@@ -1,0 +1,45 @@
+{
+  "name": "vega-loader",
+  "version": "4.5.1",
+  "description": "Network request and file loading utilities.",
+  "keywords": [
+    "vega",
+    "loader",
+    "file",
+    "http",
+    "fetch",
+    "json",
+    "csv",
+    "tsv",
+    "topojson",
+    "parse",
+    "type",
+    "inference"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-loader.node.js",
+  "module": "build/vega-loader.node.module.js",
+  "unpkg": "build/vega-loader.min.js",
+  "jsdelivr": "build/vega-loader.min.js",
+  "repository": "vega/vega",
+  "browser": {
+    "./build/vega-loader.node.js": "./build/vega-loader.browser.js",
+    "./build/vega-loader.node.module.js": "./build/vega-loader.browser.module.js"
+  },
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "d3-dsv": "^3.0.1",
+    "node-fetch": "^2.6.7",
+    "topojson-client": "^3.1.0",
+    "vega-format": "^1.1.1",
+    "vega-util": "^1.17.1"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}

@@ -1,0 +1,34 @@
+{
+  "name": "vega-wordcloud",
+  "version": "4.1.4",
+  "description": "Wordcloud layout transform for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "wordcloud",
+    "layout"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-wordcloud.js",
+  "module": "build/vega-wordcloud.module.js",
+  "unpkg": "build/vega-wordcloud.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs --config-transform",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "vega-canvas": "^1.2.7",
+    "vega-dataflow": "^5.7.5",
+    "vega-scale": "^7.3.0",
+    "vega-statistics": "^1.8.1",
+    "vega-util": "^1.17.1"
+  },
+  "devDependencies": {
+    "vega-transforms": "*"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}

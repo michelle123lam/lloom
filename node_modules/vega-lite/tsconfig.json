@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Node",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": false,
+    "preserveConstEnums": true,
+    "resolveJsonModule": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "isolatedModules": true,
+    "lib": ["ESNext.Array", "DOM", "DOM.Iterable", "ES2021.String"],
+    "ignoreDeprecations": "5.0",
+    "noEmit": true
+  },
+  "files": ["src/index.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "test-runtime/**/*.ts", "site/static/**/*.ts", "examples/*.test.ts"],
+  "exclude": ["build/**/*"]
+}

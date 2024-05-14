@@ -1,0 +1,36 @@
+{
+  "name": "vega-hierarchy",
+  "version": "4.1.1",
+  "description": "Hierarchical layout transforms for Vega dataflows.",
+  "keywords": [
+    "vega",
+    "hierarchy",
+    "layout",
+    "tree",
+    "treemap",
+    "cluster",
+    "pack"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Jeffrey Heer (http://idl.cs.washington.edu)",
+  "main": "build/vega-hierarchy.js",
+  "module": "build/vega-hierarchy.module.js",
+  "unpkg": "build/vega-hierarchy.min.js",
+  "repository": "vega/vega",
+  "scripts": {
+    "prebuild": "rimraf build",
+    "build": "rollup -c rollup.config.mjs",
+    "pretest": "yarn build --config-test",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublishOnly": "yarn test && yarn build"
+  },
+  "dependencies": {
+    "d3-hierarchy": "^3.1.2",
+    "vega-dataflow": "^5.7.5",
+    "vega-util": "^1.17.1"
+  },
+  "devDependencies": {
+    "vega-transforms": "*"
+  },
+  "gitHead": "fb1092f6b931d450f9c210b67ae4752bd3dd461b"
+}
