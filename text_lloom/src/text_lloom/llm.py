@@ -48,7 +48,7 @@ CONTEXT_WINDOW = {
     "gpt-4": 8192,
     "gpt-4-turbo-preview": 128000,  # Max 4096 output tokens
     "gpt-4-turbo": 128000,  # Max 4096 output tokens
-    "got-4o": 128000,  # Max 4096 output tokens
+    "gpt-4o": 128000,  # Max 4096 output tokens
 }
 
 COSTS = {
