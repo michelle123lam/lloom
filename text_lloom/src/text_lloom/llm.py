@@ -34,19 +34,21 @@ SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns 
 RATE_LIMITS = {
     # https://platform.openai.com/account/limits
     # (n_requests, wait_time_secs)
-    "gpt-3.5-turbo": (300, 10), # = 300*6 = 1800 rpm
-    "gpt-4": (20, 10), # = 20*6 = 120 rpm
-    "gpt-4-turbo-preview": (20, 10), # = 20*6 = 120 rpm
-    "gpt-4-turbo": (20, 10), # = 20*6 = 120 rpm
+    "gpt-3.5-turbo": (300, 10),  # = 300*6 = 1800 rpm
+    "gpt-4": (20, 10),  # = 20*6 = 120 rpm
+    "gpt-4-turbo-preview": (20, 10),  # = 20*6 = 120 rpm
+    "gpt-4-turbo": (20, 10),  # = 20*6 = 120 rpm
+    "gpt-4o": (20, 10)  # = 20*6 = 120 rpm
 }
 
 CONTEXT_WINDOW = {
     # https://platform.openai.com/docs/models
     # Total tokens shared between input and output
     "gpt-3.5-turbo": 16385,  # Max 4096 output tokens
-    "gpt-4": 8192, 
+    "gpt-4": 8192,
     "gpt-4-turbo-preview": 128000,  # Max 4096 output tokens
     "gpt-4-turbo": 128000,  # Max 4096 output tokens
+    "gpt-4o": 128000,  # Max 4096 output tokens
 }
 
 COSTS = {
@@ -55,6 +57,7 @@ COSTS = {
     "gpt-4": [0.03/1000, 0.06/1000],
     "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
     "gpt-4-turbo": [0.01/1000, 0.03/1000],
+    "gpt-4o": [0.005/1000, 0.015/1000],
 }
 
 EMBED_COSTS = {
