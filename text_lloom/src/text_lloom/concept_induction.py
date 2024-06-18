@@ -794,7 +794,7 @@ async def score_concepts(text_df, text_col, doc_id_col, concepts, model_name="gp
     score_dfs = await tqdm_asyncio.gather(*tasks, file=sys.stdout)
 
     # Combine score_dfs
-    score_df = pd.concat(score_dfs)
+    score_df = pd.concat(score_dfs, ignore_index=True)
 
     save_progress(sess, score_df, step_name="Score", start=start, res=None, model_name=None)
     return score_df
