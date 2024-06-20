@@ -66,6 +66,12 @@ EMBED_COSTS = {
     "text-embedding-3-large": (0.00013/1000),
 }
 
+EMBED_MAX_BATCH_SIZE = {
+    "text-embedding-ada-002": 2048,
+    "text-embedding-3-small": 2048,
+    "text-embedding-3-large": 2048,
+}
+
 def get_token_estimate(text, model_name):
     # Fetch the number of tokens used by a prompt
     encoding = tiktoken.encoding_for_model(model_name)
@@ -233,9 +239,17 @@ def get_embeddings(embed_model_name, text_vals):
     # Gets OpenAI embeddings
     # replace newlines, which can negatively affect performance.
     text_vals_mod = [text.replace("\n", " ") for text in text_vals]
-    resp = embed_client.embeddings.create(
-        input=text_vals_mod,
-        model=embed_model_name,
-    )
-    embeddings = [r.embedding for r in resp.data]
+
+    # Avoid hitting maximum embedding length.
+    num_texts = len(text_vals_mod)
+    chunk_size = EMBED_MAX_BATCH_SIZE[embed_model_name]
+    chunked_text_vals = np.array_split(text_vals_mod, np.arange(
+        chunk_size, num_texts, chunk_size))
+    embeddings = []
+    for chunk_text_vals in chunked_text_vals:
+        resp = embed_client.embeddings.create(
+            input=chunk_text_vals,
+            model=embed_model_name,
+        )
+        embeddings += [r.embedding for r in resp.data]
     return np.array(embeddings)
