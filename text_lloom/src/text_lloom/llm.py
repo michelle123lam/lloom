@@ -63,10 +63,10 @@ EMBED_COSTS = {
     "text-embedding-3-large": (0.00013/1000),
 }
 
-EMBED_MAX_LENGTHS = {
-    "text-embedding-ada-002": 2000,
-    "text-embedding-3-small": 2000,
-    "text-embedding-3-large": 2000,
+EMBED_MAX_BATCH_SIZE = {
+    "text-embedding-ada-002": 2048,
+    "text-embedding-3-small": 2048,
+    "text-embedding-3-large": 2048,
 }
 
 def get_token_estimate(text, model_name):
@@ -239,7 +239,7 @@ def get_embeddings(embed_model_name, text_vals):
 
     # Avoid hitting maximum embedding length.
     num_texts = len(text_vals_mod)
-    chunk_size = EMBED_MAX_LENGTHS[embed_model_name]
+    chunk_size = EMBED_MAX_BATCH_SIZE[embed_model_name]
     chunked_text_vals = np.array_split(text_vals_mod, np.arange(
         chunk_size, num_texts, chunk_size))
     embeddings = []
