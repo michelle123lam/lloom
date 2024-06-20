@@ -562,6 +562,7 @@ class lloom:
             sess=self,
             threshold=1.0,
         )
+        score_df = self.__escape_unicode(score_df)
 
         print("✅ Done with concept scoring!")
         return score_df
@@ -573,12 +574,21 @@ class lloom:
             if c.name == name:
                 return c
         return None
+
+    def __escape_unicode(self, df_in):
+        # Escapes unicode characters in the dataframe to avoid UnicodeEncodeError
+        df = df_in.copy()
+        for col in df.columns:
+            if df[col].dtype == object:
+                df[col] = df[col].apply(lambda x: np.nan if (x == np.nan or x is None) else x.encode('unicode-escape').decode('ascii'))
+        return df
     
     def get_score_df(self):
         active_concepts = self.__get_active_concepts()
         active_score_dfs = [self.results[c_id] for c_id in active_concepts.keys() if c_id in self.results]
-        score_df = pd.concat(active_score_dfs)
+        score_df = pd.concat(active_score_dfs, ignore_index=True)
         score_df = score_df.rename(columns={"doc_id": self.doc_id_col})
+        score_df = self.__escape_unicode(score_df)
         return score_df
 
     def __get_concept_highlights(self, c, threshold=1.0, highlight_col="highlight", lim=3):
@@ -611,7 +621,7 @@ class lloom:
         # Includes concept, criteria, summary, representative examples, prevalence, and highlights
         matched = item_df[(item_df.concept_score_orig >= threshold)]
         if not include_outliers:
-            matched = matched[item_df.concept != "Outlier"]
+            matched = matched[matched.concept != "Outlier"]
 
         df = matched.groupby(by=["id", "concept"]).count().reset_index()[["concept", self.doc_col]]
         concepts = [self.__get_concept_from_name(c_name) for c_name in df.concept.tolist()]
