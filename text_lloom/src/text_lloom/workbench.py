@@ -17,12 +17,12 @@ if __package__ is None or __package__ == '':
     # uses current directory visibility
     from concept_induction import *
     from concept import Concept
-    from llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
+    from llm import Model, EmbedModel
 else:
     # uses current package visibility
     from .concept_induction import *
     from .concept import Concept
-    from .llm import get_token_estimate, EMBED_COSTS, RATE_LIMITS
+    from .llm import Model, EmbedModel
 
 # WORKBENCH class ================================
 class lloom:
@@ -31,32 +31,20 @@ class lloom:
         df: pd.DataFrame,
         text_col: str,
         id_col: str = None,
-        distill_model_name = "gpt-3.5-turbo",
-        embed_model_name = "text-embedding-3-large",
-        synth_model_name = "gpt-4-turbo",
-        score_model_name = "gpt-3.5-turbo",
-        rate_limits = {}, # D_i = "model-name": (n_requests, wait_time_secs)
+        distill_model: Model = None,
+        cluster_model: EmbedModel = None,
+        synth_model: Model = None,
+        score_model: Model = None,
         debug: bool = False,
     ):
-        # Settings
-        self.distill_model_name = distill_model_name  # Distill operators (filter and summarize)
-        self.embed_model_name = embed_model_name  # Cluster operator
-        self.synth_model_name = synth_model_name  # Synthesize operator
-        self.score_model_name = score_model_name  # Score operator
         self.debug = debug  # Whether to run in debug mode
 
-        # Rate limits
-        # n_requests: number of requests allowed in one batch
-        # wait_time_secs: time period (in seconds) to wait before making more requests
-        # RPM (Requests per minute) = n_requests * (60 / wait_time_secs)
-        if len(rate_limits) == 0:
-            rate_limits = RATE_LIMITS  # Use default values set from llm.py
-        else:
-            # Intersect user-provided rate_limits with full set of options set in default RATE_LIMITS
-            for k, v in RATE_LIMITS.items():
-                if k not in rate_limits:
-                    rate_limits[k] = v  # Add in defaults for any missing values
-        self.rate_limits = rate_limits
+        # Assign models for each operator
+        # TODO: add defaults if distill_model, etc. are not specified
+        self.distill_model = distill_model
+        self.cluster_model = cluster_model
+        self.synth_model = synth_model
+        self.score_model = score_model
 
         # Input data
         self.doc_id_col = id_col
@@ -82,10 +70,7 @@ class lloom:
             "out_tokens": [],
         }
 
-        # Check for API key
-        if "OPENAI_API_KEY" not in os.environ:
-            raise Exception("API key not found. Please set the OPENAI_API_KEY environment variable by running: `os.environ['OPENAI_API_KEY'] = 'your_key'`")
-    
+
     # Preprocesses input dataframe
     def preprocess_df(self, df):
         # Handle missing ID column
@@ -159,90 +144,90 @@ class lloom:
         # Wrapper for loading spinner
         return yaspin(text="Loading")
 
-    # Estimate cost of generation for the given params
-    def estimate_gen_cost(self, params=None, verbose=False):
-        if params is None:
-            params = self.auto_suggest_parameters()
-            print(f"No parameters provided, so using auto-suggested parameters: {params}")
-        # Conservative estimates based on empirical data
-        # TODO: change to gather estimates from test cases programmatically
-        est_quote_tokens = 40  # Tokens for a quote
-        est_bullet_tokens = 10  # Tokens for a bullet point
-        est_n_clusters = 4  # Estimate of number of clusters
-        est_concept_tokens = 40  # Tokens for one generated concept JSON
+    # # Estimate cost of generation for the given params
+    # def estimate_gen_cost(self, params=None, verbose=False):
+    #     if params is None:
+    #         params = self.auto_suggest_parameters()
+    #         print(f"No parameters provided, so using auto-suggested parameters: {params}")
+    #     # Conservative estimates based on empirical data
+    #     # TODO: change to gather estimates from test cases programmatically
+    #     est_quote_tokens = 40  # Tokens for a quote
+    #     est_bullet_tokens = 10  # Tokens for a bullet point
+    #     est_n_clusters = 4  # Estimate of number of clusters
+    #     est_concept_tokens = 40  # Tokens for one generated concept JSON
 
-        # Filter: generate filter_n_quotes for each doc
-        est_cost = {}
+    #     # Filter: generate filter_n_quotes for each doc
+    #     est_cost = {}
         
-        filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.distill_model_name) for doc in self.in_df[self.doc_col].tolist()])
-        quotes_tokens_per_doc = params["filter_n_quotes"] * est_quote_tokens 
-        filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
-        est_cost["distill_filter"] = calc_cost_by_tokens(self.distill_model_name, filter_in_tokens, filter_out_tokens)
+    #     filter_in_tokens = np.sum([get_token_estimate(filter_prompt + doc, self.distill_model.name) for doc in self.in_df[self.doc_col].tolist()])
+    #     quotes_tokens_per_doc = params["filter_n_quotes"] * est_quote_tokens 
+    #     filter_out_tokens = quotes_tokens_per_doc * len(self.in_df)
+    #     est_cost["distill_filter"] = calc_cost_by_tokens(self.distill_model.name, filter_in_tokens, filter_out_tokens)
 
-        # Summarize: create n_bullets for each doc
-        summ_prompt_tokens = get_token_estimate(summarize_prompt, self.distill_model_name)
-        summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
-        bullets_tokens_per_doc = params["summ_n_bullets"] * est_bullet_tokens
-        summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
-        est_cost["distill_summarize"] = calc_cost_by_tokens(self.distill_model_name, summ_in_tokens, summ_out_tokens)
+    #     # Summarize: create n_bullets for each doc
+    #     summ_prompt_tokens = get_token_estimate(summarize_prompt, self.distill_model.name)
+    #     summ_in_tokens = np.sum([(summ_prompt_tokens + quotes_tokens_per_doc) for _ in range(len(self.in_df))])
+    #     bullets_tokens_per_doc = params["summ_n_bullets"] * est_bullet_tokens
+    #     summ_out_tokens = bullets_tokens_per_doc * len(self.in_df)
+    #     est_cost["distill_summarize"] = calc_cost_by_tokens(self.distill_model.name, summ_in_tokens, summ_out_tokens)
 
-        # Cluster: embed each bullet point
-        cluster_rate = EMBED_COSTS[self.embed_model_name] 
-        cluster_tokens = bullets_tokens_per_doc * len(self.in_df) * cluster_rate
-        est_cost["cluster"] = (cluster_tokens, 0)
+    #     # Cluster: embed each bullet point
+    #     cluster_rate = EMBED_COSTS[self.cluster_model.name] 
+    #     cluster_tokens = bullets_tokens_per_doc * len(self.in_df) * cluster_rate
+    #     est_cost["cluster"] = (cluster_tokens, 0)
 
-        # Synthesize: create n_concepts for each of the est_n_clusters
-        n_bullets_per_cluster = (params["summ_n_bullets"] * len(self.in_df)) / est_n_clusters
-        synth_prompt_tokens = get_token_estimate(synthesize_prompt, self.synth_model_name)
-        synth_in_tokens = np.sum([(synth_prompt_tokens + (est_bullet_tokens * n_bullets_per_cluster)) for _ in range(est_n_clusters)])
-        synth_out_tokens = params["synth_n_concepts"] * est_n_clusters * est_concept_tokens
-        est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model_name, synth_in_tokens, synth_out_tokens)
+    #     # Synthesize: create n_concepts for each of the est_n_clusters
+    #     n_bullets_per_cluster = (params["summ_n_bullets"] * len(self.in_df)) / est_n_clusters
+    #     synth_prompt_tokens = get_token_estimate(synthesize_prompt, self.synth_model.name)
+    #     synth_in_tokens = np.sum([(synth_prompt_tokens + (est_bullet_tokens * n_bullets_per_cluster)) for _ in range(est_n_clusters)])
+    #     synth_out_tokens = params["synth_n_concepts"] * est_n_clusters * est_concept_tokens
+    #     est_cost["synthesize"] = calc_cost_by_tokens(self.synth_model.name, synth_in_tokens, synth_out_tokens)
 
-        # Review: pass all names and prompts
-        rev_in_tokens = synth_out_tokens * 2  # For both review_remove and review_merge
-        rev_out_tokens = rev_in_tokens * 0.5  # Conservatively assume half size
-        est_cost["review"] = calc_cost_by_tokens(self.synth_model_name, rev_in_tokens, rev_out_tokens)
+    #     # Review: pass all names and prompts
+    #     rev_in_tokens = synth_out_tokens * 2  # For both review_remove and review_merge
+    #     rev_out_tokens = rev_in_tokens * 0.5  # Conservatively assume half size
+    #     est_cost["review"] = calc_cost_by_tokens(self.synth_model.name, rev_in_tokens, rev_out_tokens)
         
-        total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
-        print(f"\n\n{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
-        print("**Please note that this is only an approximate cost estimate**")
+    #     total_cost = np.sum([c[0] + c[1] for c in est_cost.values()])
+    #     print(f"\n\n{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
+    #     print("**Please note that this is only an approximate cost estimate**")
 
-        if verbose:
-            print(f"\nEstimated cost breakdown:")
-            for step_name, cost in est_cost.items():
-                total_cost = np.sum(cost)
-                print(f"\t{step_name}: {total_cost:0.4f}")
+    #     if verbose:
+    #         print(f"\nEstimated cost breakdown:")
+    #         for step_name, cost in est_cost.items():
+    #             total_cost = np.sum(cost)
+    #             print(f"\t{step_name}: {total_cost:0.4f}")
 
-    # Estimate cost of scoring for the given number of concepts
-    def estimate_score_cost(self, n_concepts=None, batch_size=5, get_highlights=True, verbose=False):
-        if n_concepts is None:
-            active_concepts = self.__get_active_concepts()
-            n_concepts = len(active_concepts)
-        if get_highlights:
-            score_prompt = score_highlight_prompt
-        else:
-            score_prompt = score_no_highlight_prompt
+    # # Estimate cost of scoring for the given number of concepts
+    # def estimate_score_cost(self, n_concepts=None, batch_size=5, get_highlights=True, verbose=False):
+    #     if n_concepts is None:
+    #         active_concepts = self.__get_active_concepts()
+    #         n_concepts = len(active_concepts)
+    #     if get_highlights:
+    #         score_prompt = score_highlight_prompt
+    #     else:
+    #         score_prompt = score_no_highlight_prompt
         
-        # TODO: change to gather estimates from test cases programmatically
-        est_concept_tokens = 20  # Tokens for concept name + prompt
-        est_score_json_tokens = 100  # Tokens for score JSON for one document
+    #     # TODO: change to gather estimates from test cases programmatically
+    #     est_concept_tokens = 20  # Tokens for concept name + prompt
+    #     est_score_json_tokens = 100  # Tokens for score JSON for one document
             
-        score_prompt_tokens = get_token_estimate(score_prompt, self.score_model_name)
-        n_batches = math.ceil(len(self.in_df) / batch_size)
-        all_doc_tokens = np.sum([get_token_estimate(doc, self.score_model_name) for doc in self.df_to_score[self.doc_col].tolist()])  # Tokens to encode all documents
-        score_in_tokens = all_doc_tokens + (n_batches * (score_prompt_tokens + est_concept_tokens))
-        score_out_tokens = est_score_json_tokens * n_concepts * len(self.in_df)
-        est_cost = calc_cost_by_tokens(self.score_model_name, score_in_tokens, score_out_tokens)
+    #     score_prompt_tokens = get_token_estimate(score_prompt, self.score_model.name)
+    #     n_batches = math.ceil(len(self.in_df) / batch_size)
+    #     all_doc_tokens = np.sum([get_token_estimate(doc, self.score_model.name) for doc in self.df_to_score[self.doc_col].tolist()])  # Tokens to encode all documents
+    #     score_in_tokens = all_doc_tokens + (n_batches * (score_prompt_tokens + est_concept_tokens))
+    #     score_out_tokens = est_score_json_tokens * n_concepts * len(self.in_df)
+    #     est_cost = calc_cost_by_tokens(self.score_model.name, score_in_tokens, score_out_tokens)
 
-        total_cost = np.sum(est_cost)
-        print(f"\n\nScoring {n_concepts} concepts for {len(self.in_df)} documents")
-        print(f"{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
-        print("**Please note that this is only an approximate cost estimate**")
+    #     total_cost = np.sum(est_cost)
+    #     print(f"\n\nScoring {n_concepts} concepts for {len(self.in_df)} documents")
+    #     print(f"{self.bold_txt('Estimated cost')}: ${np.round(total_cost, 2)}")
+    #     print("**Please note that this is only an approximate cost estimate**")
 
-        if verbose:
-            print(f"\nEstimated cost breakdown:")
-            for step_name, cost in zip(["Input", "Output"], est_cost):
-                print(f"\t{step_name}: {cost:0.4f}")
+    #     if verbose:
+    #         print(f"\nEstimated cost breakdown:")
+    #         for step_name, cost in zip(["Input", "Output"], est_cost):
+    #             print(f"\t{step_name}: {cost:0.4f}")
 
     def auto_suggest_parameters(self, sample_size=None, target_n_concepts=20, debug=False):
         # Suggests concept generation parameters based on rough heuristics
@@ -346,7 +331,7 @@ class lloom:
                     self.validate_prompt(step_name, prompt)
         
         # Run cost estimation
-        self.estimate_gen_cost(params)
+        # self.estimate_gen_cost(params) # TEMP
         
         # Confirm to proceed
         print(f"\n\n{self.bold_highlight_txt('Action required')}")
@@ -365,7 +350,7 @@ class lloom:
                     text_df=self.in_df, 
                     doc_col=self.doc_col,
                     doc_id_col=self.doc_id_col,
-                    model_name=self.distill_model_name,
+                    model=self.distill_model,
                     n_quotes=params["filter_n_quotes"],
                     prompt_template=custom_prompts["distill_filter"],
                     seed=seed,
@@ -389,7 +374,7 @@ class lloom:
                     text_df=self.df_filtered, 
                     doc_col=self.doc_col,
                     doc_id_col=self.doc_id_col,
-                    model_name=self.distill_model_name,
+                    model=self.distill_model,
                     n_bullets=params["summ_n_bullets"],
                     prompt_template=custom_prompts["distill_summarize"],
                     seed=seed,
@@ -419,7 +404,7 @@ class lloom:
                     text_df=df_cluster_in, 
                     doc_col=synth_doc_col,
                     doc_id_col=self.doc_id_col,
-                    embed_model_name=self.embed_model_name,
+                    embed_model=self.cluster_model,
                     sess=self,
                 )
                 spinner.text = "Done"
@@ -434,7 +419,7 @@ class lloom:
                     cluster_df=df_cluster, 
                     doc_col=synth_doc_col,
                     doc_id_col=self.doc_id_col,
-                    model_name=self.synth_model_name,
+                    model=self.synth_model,
                     concept_col_prefix=concept_col_prefix,
                     n_concepts=synth_n_concepts,
                     pattern_phrase="unique topic",
@@ -457,7 +442,7 @@ class lloom:
                             concepts=self.concepts, 
                             concept_df=df_concepts, 
                             concept_col_prefix=concept_col_prefix, 
-                            model_name=self.synth_model_name, 
+                            model=self.synth_model, 
                             seed=seed,
                             sess=self,
                             return_logs=True,
@@ -500,7 +485,11 @@ class lloom:
 
     async def select_auto(self, max_concepts):
         # Select the best concepts up to max_concepts
-        selected_concepts = await review_select(self.concepts, max_concepts, self.synth_model_name, self.rate_limits)
+        selected_concepts = await review_select(
+            concepts=self.concepts, 
+            max_concepts=max_concepts, 
+            model=self.synth_model, 
+        )
 
         # Handle if selection failed
         if len(selected_concepts) == 0:
@@ -541,7 +530,7 @@ class lloom:
             concepts = {c_id: c for c_id, c in concepts.items() if c_id not in self.results}
         
         # Run cost estimation
-        self.estimate_score_cost(n_concepts=len(concepts), batch_size=batch_size, get_highlights=get_highlights)
+        # self.estimate_score_cost(n_concepts=len(concepts), batch_size=batch_size, get_highlights=get_highlights) TEMP
 
         # Confirm to proceed
         print(f"\n\n{self.bold_highlight_txt('Action required')}")
@@ -556,7 +545,7 @@ class lloom:
             text_col=self.doc_col, 
             doc_id_col=self.doc_id_col,
             concepts=concepts,
-            model_name=self.score_model_name,
+            model=self.score_model,
             batch_size=batch_size,
             get_highlights=get_highlights,
             sess=self,
