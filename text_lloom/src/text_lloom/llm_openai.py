@@ -90,17 +90,17 @@ def truncate_tokens_fn(model, text, out_token_alloc=1500):
 def get_context_window(model_name):
     if model_name in MODEL_INFO:
         return MODEL_INFO[model_name]["context_window"]
-    return None
+    raise Exception(f"Model {model_name} not in our defaults. Please specify the `context_window` parameter within the OpenAIModel instance. See https://platform.openai.com/docs/models for more info.")
 
 def get_cost(model_name):
     if model_name in MODEL_INFO:
         return MODEL_INFO[model_name]["cost"]
-    return None
+    raise Exception(f"Model {model_name} not in our defaults. Please specify the `cost` parameter within the OpenAIModel instance in the form: (input_cost_per_token, output_cost_per_token). See https://openai.com/pricing for more info.")
 
 def get_rate_limit(model_name):
     if model_name in MODEL_INFO:
         return MODEL_INFO[model_name]["rate_limit"]
-    return None
+    raise Exception(f"Model {model_name} not in our defaults. Please specify the `rate_limit` parameter within the OpenAIModel instance in the form: (n_requests, wait_time_secs). See https://platform.openai.com/account/limits to inform rate limit choices.")
 
 # Model info: https://platform.openai.com/docs/models
 # Pricing: https://openai.com/pricing

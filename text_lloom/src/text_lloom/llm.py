@@ -41,6 +41,8 @@ class EmbedModel:
         self.client = setup_fn(api_key)
         self.args = args
 
+
+# OpenAI MODEL CLASSES ================================
 class OpenAIModel(Model):
     # OpenAIModel class for OpenAI LLMs
     # Adds the following parameters for token and cost tracking:
@@ -65,7 +67,6 @@ class OpenAIModel(Model):
         if rate_limit is None:
             rate_limit = llm_openai.get_rate_limit(name)
         self.rate_limit = rate_limit
-        
 
 class OpenAIEmbedModel(EmbedModel):
     # OpenAIEmbedModel class for OpenAI embedding models
@@ -78,6 +79,7 @@ class OpenAIEmbedModel(EmbedModel):
         if cost is None:
             cost = llm_openai.get_cost(name)
         self.cost = cost
+
 
 # CUSTOM LLM API WRAPPERS ================================
 
