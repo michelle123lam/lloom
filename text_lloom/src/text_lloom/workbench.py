@@ -578,9 +578,17 @@ class lloom:
     def __escape_unicode(self, df_in):
         # Escapes unicode characters in the dataframe to avoid UnicodeEncodeError
         df = df_in.copy()
+
+        def parse_unicode(x):
+            if (x == np.nan or x is None):
+                return np.nan
+            elif type(x) != str:
+                return x
+            return x.encode('unicode-escape').decode('ascii')
+        
         for col in df.columns:
             if df[col].dtype == object:
-                df[col] = df[col].apply(lambda x: np.nan if (x == np.nan or x is None) else x.encode('unicode-escape').decode('ascii'))
+                df[col] = df[col].apply(lambda x: parse_unicode(x))
         return df
     
     def get_score_df(self):
