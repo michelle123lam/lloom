@@ -738,7 +738,7 @@ class lloom:
         self.concepts[c.id] = c
 
         # Update widget
-        self.select_widget = self.select()
+        #self.select_widget = self.select()
 
         # Run scoring
         cur_score_df = await self.score(c_ids=[c.id], get_highlights=get_highlights)
