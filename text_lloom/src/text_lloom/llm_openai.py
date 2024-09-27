@@ -138,6 +138,11 @@ MODEL_INFO = {
         "cost": (5/TOKENS_1M, 15/TOKENS_1M),
         "rate_limit": (20, 10)  # = 20*6 = 120 rpm
     },
+    "gpt-4o-mini": {
+        "context_window": 128000,
+        "cost": (0.15/TOKENS_1M, 0.6/TOKENS_1M),
+        "rate_limit": (300, 10)  # = 300*6 = 1800 rpm
+    },
     "text-embedding-ada-002":{
         "cost": (0.1/TOKENS_1M, 0),
     },

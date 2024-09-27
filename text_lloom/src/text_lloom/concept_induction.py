@@ -277,6 +277,7 @@ async def cluster(text_df, doc_col, doc_id_col, embed_model, cluster_id_col="clu
         ]
         cluster_ids = list(chain.from_iterable(cluster_ids))[:n_items]
         cluster_df[cluster_id_col] = cluster_ids
+        tokens = 0
     else:
         # Cluster and group by clusters
         cluster_df, tokens = cluster_helper(text_df, doc_col, doc_id_col, min_cluster_size=min_cluster_size, cluster_id_col=cluster_id_col, embed_model=embed_model)

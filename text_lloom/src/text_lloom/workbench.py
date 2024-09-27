@@ -331,7 +331,7 @@ class lloom:
                 has_cost = True
         return has_cost
     
-    def summary(self, verbose=True):
+    def summary(self, verbose=True, return_vals=False):
         # Time
         total_time = np.sum(list(self.time.values()))
         print(f"{self.bold_txt('Total time')}: {total_time:0.2f} sec ({(total_time/60):0.2f} min)")
@@ -352,6 +352,9 @@ class lloom:
             out_tokens = np.sum(self.tokens["out_tokens"])
             total_tokens =  in_tokens + out_tokens
             print(f"\n\n{self.bold_txt('Tokens')}: total={total_tokens}, in={in_tokens}, out={out_tokens}")
+        
+        if return_vals:
+            return total_time, total_cost, total_tokens, in_tokens, out_tokens
 
     def show_selected(self):
         active_concepts = self.__get_active_concepts()
@@ -409,11 +412,12 @@ class lloom:
         self.estimate_gen_cost(params)
         
         # Confirm to proceed
-        print(f"\n\n{self.bold_highlight_txt('Action required')}")
-        user_input = input("Proceed with generation? (y/n): ")
-        if user_input.lower() != "y":
-            print("Cancelled generation")
-            return
+        if debug:
+            print(f"\n\n{self.bold_highlight_txt('Action required')}")
+            user_input = input("Proceed with generation? (y/n): ")
+            if user_input.lower() != "y":
+                print("Cancelled generation")
+                return
 
         # Run concept generation
         filter_n_quotes = params["filter_n_quotes"]
