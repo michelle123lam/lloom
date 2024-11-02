@@ -5,181 +5,91 @@ This file contains utility functions for processing calls to LLMs.
 """
 
 # IMPORTS ================================
-import time
-import random
-from pathos.multiprocessing import Pool
-import hashlib
 import numpy as np
-import os
-
 import asyncio
-import tiktoken
+import llm_openai as llm_openai
 
-# OPENAI setup =============================
-import openai
-from openai import OpenAI, AsyncOpenAI
+# MODEL CLASSES ================================
+class Model:
+    # Specification to run LLooM operator with a specific large language model
+    # - name: str, name of the model (ex: "gpt-3.5-turbo")
+    # - setup_fn: function, function to set up the LLM client
+    # - fn: function, function to call the model (i.e., to run LLM prompt)
+    # - api_key: str (optional), API key
+    # - rate_limit: tuple (optional), (n_requests, wait_time_secs)
+    def __init__(self, name, setup_fn, fn, api_key=None, rate_limit=None, **args):
+        self.name = name
+        self.setup_fn = setup_fn
+        self.fn = fn
+        self.rate_limit = rate_limit
+        self.client = setup_fn(api_key)
+        self.args = args
 
-if "OPENAI_API_KEY" not in os.environ:
-    raise Exception("API key not found. Please set the OPENAI_API_KEY environment variable by running: `os.environ['OPENAI_API_KEY'] = 'your_key'`")
-client = AsyncOpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
-embed_client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
 
-# CONSTANTS ================================
-SYS_TEMPLATE = "You are a helpful assistant who helps with identifying patterns in text examples."
+class EmbedModel:
+    # Specification to run LLooM operator with a specific embedding model
+    # - name: str, name of the model (ex: "text-embedding-ada-002")
+    # - setup_fn: function, function to set up the embedding client
+    # - fn: function, function to call the model (i.e., to fetch embedding)
+    # - api_key: str (optional), API key
+    # - batch_size: int (optional), maximum batch size for embeddings (None for no batching)
+    def __init__(self, name, setup_fn, fn, api_key=None, batch_size=None, **args):
+        self.name = name
+        self.setup_fn = setup_fn
+        self.fn = fn
+        self.batch_size = batch_size
+        self.client = setup_fn(api_key)
+        self.args = args
 
-RATE_LIMITS = {
-    # https://platform.openai.com/account/limits
-    # (n_requests, wait_time_secs)
-    "gpt-3.5-turbo": (300, 10),  # = 300*6 = 1800 rpm
-    "gpt-4": (20, 10),  # = 20*6 = 120 rpm
-    "gpt-4-turbo-preview": (20, 10),  # = 20*6 = 120 rpm
-    "gpt-4-turbo": (20, 10),  # = 20*6 = 120 rpm
-    "gpt-4o": (20, 10)  # = 20*6 = 120 rpm
-}
 
-CONTEXT_WINDOW = {
-    # https://platform.openai.com/docs/models
-    # Total tokens shared between input and output
-    "gpt-3.5-turbo": 16385,  # Max 4096 output tokens
-    "gpt-4": 8192,
-    "gpt-4-turbo-preview": 128000,  # Max 4096 output tokens
-    "gpt-4-turbo": 128000,  # Max 4096 output tokens
-    "gpt-4o": 128000,  # Max 4096 output tokens
-}
+# OpenAI MODEL CLASSES ================================
+class OpenAIModel(Model):
+    # OpenAIModel class for OpenAI LLMs
+    # Adds the following parameters for token and cost tracking:
+    # - context_window: int (optional), total tokens shared between input and output
+    # - cost: float (optional), cost per token (input_cost, output_cost)
+    def __init__(self, name, api_key, setup_fn=llm_openai.setup_llm_fn, fn=llm_openai.call_llm_fn, rate_limit=None, context_window=None, cost=None, **args):
+        super().__init__(name, setup_fn, fn, api_key, rate_limit, **args)
+        # OpenAI-specific setup
+        # TODO: add helpers to support token and cost tracking for other models
+        self.truncate_fn = llm_openai.truncate_tokens_fn  # called in llm_openai.py call_llm_fn()
+        self.cost_fn = llm_openai.cost_fn  # called in concept_induction.py calc_cost()
+        self.count_tokens_fn = llm_openai.count_tokens_fn  # called in workbench.py estimate_gen_cost()
 
-COSTS = {
-    # https://openai.com/pricing
-    "gpt-3.5-turbo": [0.0005/1000, 0.0015/1000],
-    "gpt-4": [0.03/1000, 0.06/1000],
-    "gpt-4-turbo-preview": [0.01/1000, 0.03/1000],
-    "gpt-4-turbo": [0.01/1000, 0.03/1000],
-    "gpt-4o": [0.005/1000, 0.015/1000],
-}
+        if context_window is None:
+            context_window = llm_openai.get_context_window(name)
+        self.context_window = context_window
+        
+        if cost is None:
+            cost = llm_openai.get_cost(name)
+        self.cost = cost
 
-EMBED_COSTS = {
-    "text-embedding-ada-002": (0.00010/1000),
-    "text-embedding-3-small": (0.00002/1000),
-    "text-embedding-3-large": (0.00013/1000),
-}
+        if rate_limit is None:
+            rate_limit = llm_openai.get_rate_limit(name)
+        self.rate_limit = rate_limit
 
-EMBED_MAX_BATCH_SIZE = {
-    "text-embedding-ada-002": 2048,
-    "text-embedding-3-small": 2048,
-    "text-embedding-3-large": 2048,
-}
+class OpenAIEmbedModel(EmbedModel):
+    # OpenAIEmbedModel class for OpenAI embedding models
+    # Adds the following parameters for cost tracking:
+    # - cost: float (optional), cost per token (input_cost, output_cost)
+    def __init__(self, name, setup_fn=llm_openai.setup_embed_fn, fn=llm_openai.call_embed_fn, api_key=None, batch_size=2048, cost=None, **args):
+        super().__init__(name, setup_fn, fn, api_key, batch_size, **args)
+        # OpenAI-specific setup
+        self.count_tokens_fn = llm_openai.count_tokens_fn  # called in llm_openai.py call_embed_fn()
+        if cost is None:
+            cost = llm_openai.get_cost(name)
+        self.cost = cost
 
-def get_token_estimate(text, model_name):
-    # Fetch the number of tokens used by a prompt
-    encoding = tiktoken.encoding_for_model(model_name)
-    tokens = encoding.encode(text)
-    num_tokens = len(tokens)
-    return num_tokens
-
-def get_token_estimate_list(text_list, model_name):
-    # Fetch the number of tokens used by a list of prompts
-    token_list = [get_token_estimate(text, model_name) for text in text_list]
-    return np.sum(token_list)
-
-def truncate_text_tokens(text, model_name, max_tokens):
-    # Truncate a prompt to fit within a maximum number of tokens
-    encoding = tiktoken.encoding_for_model(model_name)
-    tokens = encoding.encode(text)
-    n_tokens = len(tokens)
-    if max_tokens is not None and n_tokens > max_tokens:
-        # Truncate the prompt
-        tokens = tokens[:max_tokens]
-        n_tokens = max_tokens
-    text = encoding.decode(tokens)
-    return text, n_tokens
-
-def calc_cost_by_tokens(model_name, in_tokens, out_tokens):
-    # Calculate cost with the tokens and model name
-    in_cost = in_tokens * COSTS[model_name][0]
-    out_cost = out_tokens * COSTS[model_name][1]
-    return in_cost, out_cost
-
-# RETRYING + MULTIPROCESSING ================================
-
-""" 
-Defines a Python decorator to avoid API rate limits by retrying with exponential backoff.
-From: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_handle_rate_limits.ipynb
-"""
-def retry_with_exponential_backoff(
-    func,
-    initial_delay: float = 1,
-    exponential_base: float = 2,
-    jitter: bool = True,
-    max_retries: int = 3,
-    errors: tuple = (openai.RateLimitError,),
-):
-    """Retry a function with exponential backoff."""
-
-    def wrapper(*args, **kwargs):
-        # Initialize variables
-        num_retries = 0
-        delay = initial_delay
-
-        # Loop until a successful response or max_retries is hit or an exception is raised
-        while True:
-            try:
-                return func(*args, **kwargs)
-
-            # Retry on specified errors
-            except errors as e:
-                # Increment retries
-                num_retries += 1
-
-                # Check if max retries has been reached
-                if num_retries > max_retries:
-                    raise Exception(
-                        f"Maximum number of retries ({max_retries}) exceeded."
-                    )
-
-                # Increment the delay
-                delay *= exponential_base * (1 + jitter * random.random())
-
-                # Sleep for the delay
-                print("DELAY ", delay)
-                time.sleep(delay)
-
-            # Raise exceptions for any errors not specified
-            except Exception as e:
-                print("Exception", e)
-
-    return wrapper
 
 # CUSTOM LLM API WRAPPERS ================================
 
-async def base_api_wrapper(cur_prompt, model_name, temperature):
-    # Wrapper for calling the base OpenAI API
-    cur_prompt = truncate_prompt(cur_prompt, model_name, out_token_alloc=1500)
-    res = await client.chat.completions.create(
-        model=model_name,
-        temperature=temperature,
-        messages=[
-            {"role": "system", "content": SYS_TEMPLATE},
-            {"role": "user", "content": cur_prompt},
-        ]
-    )
+# Wrapper for calling the base OpenAI API
+async def base_api_wrapper(cur_prompt, model):
+    res = await model.fn(model, cur_prompt)
     return res
 
-def get_prompt_hash(p):
-    user_message = p[1].content  # Isolate the user message
-    hash = hashlib.sha256(user_message.encode()).hexdigest()
-    return hash
-
-def truncate_prompt(prompt, model_name, out_token_alloc):
-    # Truncate a prompt to fit within a maximum number of tokens
-    max_tokens = CONTEXT_WINDOW[model_name] - out_token_alloc
-    prompt, n_tokens = truncate_text_tokens(prompt, model_name, max_tokens)
-    return prompt
-
 # Internal function making calls to LLM; runs a single LLM query
-async def multi_query_gpt(model_name, prompt_template, arg_dict, batch_num=None, wait_time=None, temperature=0, debug=False):
+async def multi_query_gpt(model, prompt_template, arg_dict, batch_num=None, wait_time=None, debug=False):
     if wait_time is not None:
         if debug:
             print(f"Batch {batch_num}, wait time {wait_time}")
@@ -187,37 +97,25 @@ async def multi_query_gpt(model_name, prompt_template, arg_dict, batch_num=None,
 
     try: 
         prompt = prompt_template.format(**arg_dict)
-        res = await base_api_wrapper(prompt, model_name, temperature)
+        res = await base_api_wrapper(prompt, model)
     except Exception as e:
         print("Error", e)
-        return None
+        return None, None  # result, tokens
     
     return res
 
-def get_res_str(res):
-    # Fetch the response string OpenAI response JSON
-    return res.choices[0].message.content
-
-def process_results(results):
-    # Extract just the text generations from response JSONs
-    # Insert None if the result is None
-    res_text = [(get_res_str(res) if res else None) for res in results]
-    return res_text
-
-async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_limits=None, temperature=0, batch_num=None, batched=True, debug=False):
-    # Run multiple LLM queries
+# Run multiple LLM queries
+async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model, batch_num=None, batched=True, debug=False):
     if debug:
-        print("model_name", model_name)
+        print("model_name", model.name)
     
-    if rate_limits is None:
-        rate_limits = RATE_LIMITS  # Use default values
-
-    if not batched:
+    rate_limit = model.rate_limit
+    if (not batched) or (rate_limit is None):
         # Non-batched version
-        tasks = [multi_query_gpt(model_name, prompt_template, args, temperature=temperature) for args in arg_dicts]
+        tasks = [multi_query_gpt(model, prompt_template, args) for args in arg_dicts]
     else:
         # Batched version
-        n_requests, wait_time_secs = rate_limits[model_name]
+        n_requests, wait_time_secs = rate_limit
         tasks = []
         arg_dict_batches = [arg_dicts[i:i + n_requests] for i in range(0, len(arg_dicts), n_requests)]
         for inner_batch_num, cur_arg_dicts in enumerate(arg_dict_batches):
@@ -227,29 +125,43 @@ async def multi_query_gpt_wrapper(prompt_template, arg_dicts, model_name, rate_l
                 wait_time = wait_time_secs * batch_num
             if debug:
                 wait_time = 0 # Debug mode
-            cur_tasks = [multi_query_gpt(model_name, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time, temperature=temperature) for args in cur_arg_dicts]
+            cur_tasks = [multi_query_gpt(model, prompt_template, arg_dict=args, batch_num=batch_num, wait_time=wait_time) for args in cur_arg_dicts]
             tasks.extend(cur_tasks)
 
     res_full = await asyncio.gather(*tasks)
 
-    res_text = process_results(res_full)
-    return res_text, res_full
+    # Unpack results into the text and token counts
+    res_text, tokens_list = list(zip(*res_full))
+    in_tokens = np.sum([tokens[0] for tokens in tokens_list if tokens is not None])
+    out_tokens = np.sum([tokens[1] for tokens in tokens_list if tokens is not None])
+    tokens = (in_tokens, out_tokens)
+    return res_text, tokens
 
-def get_embeddings(embed_model_name, text_vals):
-    # Gets OpenAI embeddings
+def get_embeddings(embed_model, text_vals):
+    # Gets text embeddings
     # replace newlines, which can negatively affect performance.
     text_vals_mod = [text.replace("\n", " ") for text in text_vals]
 
-    # Avoid hitting maximum embedding length.
-    num_texts = len(text_vals_mod)
-    chunk_size = EMBED_MAX_BATCH_SIZE[embed_model_name]
-    chunked_text_vals = np.array_split(text_vals_mod, np.arange(
-        chunk_size, num_texts, chunk_size))
-    embeddings = []
-    for chunk_text_vals in chunked_text_vals:
-        resp = embed_client.embeddings.create(
-            input=chunk_text_vals,
-            model=embed_model_name,
-        )
-        embeddings += [r.embedding for r in resp.data]
-    return np.array(embeddings)
+    if embed_model.batch_size is not None:
+        # Run batched version and avoid hitting maximum embedding batch size.
+        num_texts = len(text_vals_mod)
+        batch_size = embed_model.batch_size
+        batched_text_vals = np.array_split(text_vals_mod, np.arange(
+            batch_size, num_texts, batch_size))
+        embeddings = []
+        token_counts = []
+        for batch_text_vals in batched_text_vals:
+            batch_embeddings, tokens = embed_model.fn(embed_model, batch_text_vals)
+            embeddings += batch_embeddings
+            token_counts.append(tokens)
+    else:
+        # Run non-batched version
+        embeddings = []
+        token_counts = []
+        for text_val in text_vals_mod:
+            embedding, tokens = embed_model.fn(embed_model, text_val)
+            embeddings.append(embedding)
+            token_counts.append(tokens)
+    
+    tokens = np.sum([count for count in token_counts if count is not None])
+    return np.array(embeddings), tokens
