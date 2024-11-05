@@ -7,7 +7,14 @@ This file contains utility functions for processing calls to LLMs.
 # IMPORTS ================================
 import numpy as np
 import asyncio
-import llm_openai as llm_openai
+
+# Local imports
+if __package__ is None or __package__ == '':
+    # uses current directory visibility
+    from llm_openai import *
+else:
+    # uses current package visibility
+    from .llm_openai import *
 
 # MODEL CLASSES ================================
 class Model:
@@ -48,36 +55,36 @@ class OpenAIModel(Model):
     # Adds the following parameters for token and cost tracking:
     # - context_window: int (optional), total tokens shared between input and output
     # - cost: float (optional), cost per token (input_cost, output_cost)
-    def __init__(self, name, api_key, setup_fn=llm_openai.setup_llm_fn, fn=llm_openai.call_llm_fn, rate_limit=None, context_window=None, cost=None, **args):
+    def __init__(self, name, api_key, setup_fn=setup_llm_fn, fn=call_llm_fn, rate_limit=None, context_window=None, cost=None, **args):
         super().__init__(name, setup_fn, fn, api_key, rate_limit, **args)
         # OpenAI-specific setup
         # TODO: add helpers to support token and cost tracking for other models
-        self.truncate_fn = llm_openai.truncate_tokens_fn  # called in llm_openai.py call_llm_fn()
-        self.cost_fn = llm_openai.cost_fn  # called in concept_induction.py calc_cost()
-        self.count_tokens_fn = llm_openai.count_tokens_fn  # called in workbench.py estimate_gen_cost()
+        self.truncate_fn = truncate_tokens_fn  # called in llm_openai.py call_llm_fn()
+        self.cost_fn = cost_fn  # called in concept_induction.py calc_cost()
+        self.count_tokens_fn = count_tokens_fn  # called in workbench.py estimate_gen_cost()
 
         if context_window is None:
-            context_window = llm_openai.get_context_window(name)
+            context_window = get_context_window(name)
         self.context_window = context_window
         
         if cost is None:
-            cost = llm_openai.get_cost(name)
+            cost = get_cost(name)
         self.cost = cost
 
         if rate_limit is None:
-            rate_limit = llm_openai.get_rate_limit(name)
+            rate_limit = get_rate_limit(name)
         self.rate_limit = rate_limit
 
 class OpenAIEmbedModel(EmbedModel):
     # OpenAIEmbedModel class for OpenAI embedding models
     # Adds the following parameters for cost tracking:
     # - cost: float (optional), cost per token (input_cost, output_cost)
-    def __init__(self, name, setup_fn=llm_openai.setup_embed_fn, fn=llm_openai.call_embed_fn, api_key=None, batch_size=2048, cost=None, **args):
+    def __init__(self, name, setup_fn=setup_embed_fn, fn=call_embed_fn, api_key=None, batch_size=2048, cost=None, **args):
         super().__init__(name, setup_fn, fn, api_key, batch_size, **args)
         # OpenAI-specific setup
-        self.count_tokens_fn = llm_openai.count_tokens_fn  # called in llm_openai.py call_embed_fn()
+        self.count_tokens_fn = count_tokens_fn  # called in llm_openai.py call_embed_fn()
         if cost is None:
-            cost = llm_openai.get_cost(name)
+            cost = get_cost(name)
         self.cost = cost
 
 
