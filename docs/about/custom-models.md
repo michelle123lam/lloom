@@ -5,7 +5,7 @@ LLooM supports custom models to serve the Distill, Cluster, Synthesize, and Scor
 In all of these cases, users provide their own model specification when **creating their LLooM instance** (optionally with a short API-specific function implementation). All other steps remain the same as shown on the [Getting Started](./get-started.md) page.
 
 ## Different OpenAI Models
-See our example [Colab notebook]() or follow these steps to specify different OpenAI models for the LLooM operators. 
+See our example [Colab notebook](https://colab.research.google.com/drive/1GKk7my5QA8rs7V4pi-WP0vJIvBYEkPnZ?usp=sharing) or follow these steps to specify different OpenAI models for the LLooM operators. 
 
 First, import our helper classes for the OpenAI models:
 ```py
@@ -88,7 +88,7 @@ l = wb.lloom(
 ```
 
 ## Alternative LLM APIs
-See our example [Colab notebook]() to follow along on how to incorporate different LLM APIs to serve LLooM operators.
+See our example [Colab notebook](https://colab.research.google.com/drive/1uY1JcLA_3Bu7C34Pb9S_qLtbADIDjc5j?usp=sharing) to follow along on how to incorporate different LLM APIs to serve LLooM operators.
 
 First, import our helper classes for custom models:
 ```py

@@ -8,7 +8,7 @@
     </h3>
 </p>
 <p align="">
-    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
+    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb">
         <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>&nbsp
     <a href="https://badge.fury.io/py/text_lloom"><img src="https://badge.fury.io/py/text_lloom.svg" alt="PyPI text_lloom" height="20"></a>
@@ -64,7 +64,7 @@ LLooM is a **concept induction** algorithm that extracts and applies concepts to
 </p>
 
 ## Get Started
-Follow the [**Get Started**](https://stanfordhci.github.io/lloom/about/get-started) instructions on our documentation for a walkthrough of the main LLooM functions to run on your own dataset. We suggest starting with this [template Colab Notebook](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb).
+Follow the [**Get Started**](https://stanfordhci.github.io/lloom/about/get-started) instructions on our documentation for a walkthrough of the main LLooM functions to run on your own dataset. We suggest starting with this [template Colab Notebook](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb).
 
 This will involve downloading our Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
 ```sh

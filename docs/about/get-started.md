@@ -1,8 +1,8 @@
 # Get Started <Badge type="tip" text="^0.8.0" />
 
-LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. We suggest starting with this [**template Colab Notebook**](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb).
+LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. We suggest starting with this [**template Colab Notebook**](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb).
 
-<a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
