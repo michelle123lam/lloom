@@ -17,7 +17,7 @@ Then, prep your OpenAI API key to provide in your model spec:
 openai_key = "sk-YOUR-KEY-HERE"
 ```
 
-Then, specify the desired model name and API key for as many operators as you would like (among `distill_model`, `cluster_model`, `synth_model`, and `score_model`). If any of these are excluded, they will use the default settings.
+Then, specify the desired model name and API key for as many operators as you would like (among `distill_model`, `cluster_model`, `synth_model`, and `score_model`). If any of these are excluded, the system will use the default settings, as described on the Getting Started page.
 
 ```py {5-30}
 l = wb.lloom(
@@ -45,13 +45,13 @@ l = wb.lloom(
 ```
 
 ## Different rate limits
-Beyond specifying different model names, users can also modify details about the desired **rate limit** based on their dataset size and API limits. This parameter is set to a tuple `(n_requests, wait_time_secs)`:
+Beyond specifying different model names, you can also modify your desired **rate limit** based on dataset size and API limits. This parameter is set to a tuple `(n_requests, wait_time_secs)`:
 - `n_requests`: Number of requests allowed in one batch.
-- `wait_time_secs`: Time period (in seconds) to wait before making more requests.
+- `wait_time_secs`: Time period (in seconds) to wait after a batch before making more requests.
 
-This means that RPM (requests per minute) = `n_requests * (60 / wait_time_secs)`. In the above example, we specified 40 requests every 10 seconds, which means 240 requests per minute.
+This means that RPM (requests per minute) = `n_requests * (60 / wait_time_secs)`. For example, a rate limit tuple of `(40, 10)` specifies 40 requests every 10 seconds, which means 240 requests per minute.
 
-They may also modify information about the context window and cost if these parameters become out of date.
+You may also modify information about the context window and cost if these parameters become out of date.
 
 ```py
 l = wb.lloom(
@@ -95,7 +95,7 @@ First, import our helper classes for custom models:
 from text_lloom.llm import Model, EmbedModel
 ```
 
-Then, the key difference for non-OpenAI APIs is that users must implement two functions to (1) perform any necessary API **setup** operations and (2) to **call** the provided API and process its outputs. We will demonstrate these using the Gemini API.
+Then, the key difference for non-OpenAI APIs is that, for new models, you must implement two functions to (1) perform any necessary API **setup** operations and (2) to **call** the provided API and process its outputs. We will demonstrate these using the Gemini API.
 
 ### Setup functions
 A **setup** function takes an `api_key` as a parameter and is expected to return a `client` object, which is required for many LLM APIs and is used in the **call** functions. If the API does not use a client, this can be set as `None`. The function should perform any imports or initializations that are needed for the API to work properly.
