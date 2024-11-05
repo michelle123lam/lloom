@@ -47,7 +47,7 @@ class lloom:
 
         if distill_model is None:
             distill_model = OpenAIModel(
-                name="gpt-3.5-turbo", api_key=get_environ_api_key()
+                name="gpt-4o-mini", api_key=get_environ_api_key()
             )
         if cluster_model is None:
             cluster_model = OpenAIEmbedModel(
@@ -59,7 +59,7 @@ class lloom:
             )
         if score_model is None:
             score_model = OpenAIModel(
-                name="gpt-3.5-turbo", api_key=get_environ_api_key()
+                name="gpt-4o-mini", api_key=get_environ_api_key()
             )
 
         # Assign models for each operator

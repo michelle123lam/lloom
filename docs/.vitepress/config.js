@@ -20,6 +20,7 @@ export default defineConfig({
       gtag('config', 'G-YYD21V2BQE');`
     ]
   ],
+  appearance: false, // Do not enable dark mode (https://vitepress.dev/reference/site-config#appearance)
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: {
@@ -49,6 +50,7 @@ export default defineConfig({
           items: [
             { text: 'What is LLooM?', link: '/about/' },
             { text: 'Get Started', link: '/about/get-started' },
+            { text: 'Custom Models', link: '/about/custom-models' },
             { text: 'Using the LLooM Workbench', link: '/about/vis-guide' },
           ]
         },
@@ -60,7 +62,13 @@ export default defineConfig({
             { text: 'Academic Paper Abstracts', link: '/examples/paper-abstracts' },
             { text: 'AI Broader Impact Statements', link: '/examples/ai-impact-statements' }
           ]
-        }
+        },
+        {
+          text: 'Legacy documentation',
+          items: [
+            { text: 'Get Started (v0.7.5)', link: '/about/get-started-0.7.5' },
+          ]
+        },
       ],
       '/api/': [
         {

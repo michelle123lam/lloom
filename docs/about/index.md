@@ -95,7 +95,7 @@ The LLooM Workbench is an interactive text analysis tool for computational noteb
 → See the [Using the LLooM Workbench](./vis-guide.md) page for more detail on the Workbench.
 
 ## How does LLooM work?
-LLooM is a **concept induction** algorithm that extracts and applies concepts to make sense of unstructured text datasets. LLooM leverages large language models (specifically GPT-3.5 and GPT-4 in the current implementation) to synthesize sampled text spans, generate concepts defined by explicit criteria, apply concepts back to data, and iteratively generalize to higher-level concepts.
+LLooM is a **concept induction** algorithm that extracts and applies concepts to make sense of unstructured text datasets. LLooM leverages large language models (specifically GPT-4o and GPT-4o mini in the current implementation) to synthesize sampled text spans, generate concepts defined by explicit criteria, apply concepts back to data, and iteratively generalize to higher-level concepts.
 
 ![The full LLooM Process](/media/lloom_process_full.svg)
 

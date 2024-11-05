@@ -1,4 +1,8 @@
-# Get Started <Badge type="tip" text="^0.8.0" />
+# Get Started <Badge type="warning" text="0.7.5" />
+
+::: warning
+This page contains **legacy documentation** for earlier versions of the LLooM package (`0.7.5` and earlier). The current API (`0.8+`) has been modified to support arbitrary LLMs for the LLooM operators. Please see the current [Getting Started](./get-started.md) page to use the latest API.
+:::
 
 LLooM is currently designed as a Python package for computational notebooks. Follow the instructions on this page to get started with LLooM Workbench on your dataset. We suggest starting with this [**template Colab Notebook**](https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_04_LLooM_GettingStartedTemplate_v2.ipynb).
 
@@ -6,20 +10,17 @@ LLooM is currently designed as a Python package for computational notebooks. Fol
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
-## 1: Installation
+## Installation
 First, install the LLooM Python package, available on PyPI as [`text_lloom`](https://pypi.org/project/text_lloom/). We recommend setting up a virtual environment with [venv](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
 ```
 pip install text_lloom
 ```
 
-Now, you can use the LLooM package in a computational notebook! Create your notebook (i.e., with [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)) and then you can import the LLooM package:
+## Setup
+Now, you can use the LLooM package in a computational notebook! Create your notebook (i.e., with [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)) and then follow the steps below.
 
-```py
-import text_lloom.workbench as wb
-```
-
-## 2a: Quick LLooM instance (OpenAI defaults)
-By default, LLooM uses the **OpenAI API** under the hood to support its core operators (using GPT-4o mini and GPT-4o). If you use this default setting, you first need to locally set the `OPENAI_API_KEY` environment variable to use your own account.
+### OpenAI setup
+LLooM uses the OpenAI API under the hood to support its core operators (using GPT-3.5 and GPT-4). You'll first need to locally set the `OPENAI_API_KEY` variable to use your own account.
 ```py
 import os
 os.environ["OPENAI_API_KEY"] = "sk-YOUR-KEY-HERE"
@@ -29,31 +30,23 @@ os.environ["OPENAI_API_KEY"] = "sk-YOUR-KEY-HERE"
 LLooM provides (1) **cost estimation functions** that automatically run before operations that make calls to the OpenAI API and (2) **cost summary functions** to review tracked usage, but we encourage you to monitor usage on your account as always.
 :::
 
-After loading your data as a Pandas DataFrame, **create a new LLooM instance**. You will need to specify the name of the column that contains your input text documents (`text_col`). The ID column (`id_col`) is optional.
+### Import package
+Then, import the LLooM package:
+```py
+import text_lloom.workbench as wb
+```
+
+### Create a LLooM instance
+After loading your data as a Pandas DataFrame, create a new LLooM instance. You will need to specify the name of the column that contains your input text documents (`text_col`). The ID column (`id_col`) is optional.
 ```py
 l = wb.lloom(
     df=df,
     text_col="your_doc_text_col",
     id_col="your_doc_id_col",  # Optional
-    # By default, when not specified, uses the following models:
-    # - distill_model: gpt-4o-mini
-    # - cluster_model: text-embedding-3-large
-    # - synth_model: gpt-4o
-    # - score_model: gpt-4o-mini
 )
 ```
 
-## 2b: Custom LLooM instance
-Alternatively, users can specify **other LLMs** to support the LLooM operators, including:
-1. **Different OpenAI models** (e.g., swapping in `gpt-4` for the Synthesis operator)
-2. **Alternative LLM providers** (e.g., Gemini, Claude)
-3. **Open source** models (e.g., Llama, Mistral)
-
-Please visit the [Custom Models](./custom-models.md) page for information about these custom setups along with sample notebooks.
-The custom LLM setup also allows users to specify custom rate limits for each operator.
-
-
-## 3: Concept generation
+## Concept generation
 Next, you can go ahead and start the concept induction process by generating concepts. The **seed term** can steer concept induction towards more specific areas of interest (e.g., social issues" for political discussion or "evaluation methods" for academic papers). You can omit the `seed` parameter if you do not want to use a seed.
 ```py
 await l.gen(
@@ -69,7 +62,7 @@ score_df = await l.gen_auto(
 )
 ```
 
-## 4: Concept scoring
+## Concept scoring
 ### Review concepts
 Review the generated concepts and select concepts to inspect further:
 ```py
@@ -85,7 +78,7 @@ Then, apply these concepts to the full dataset with `score()`. This function wil
 score_df = await l.score()
 ```
 
-## 5: Visualization
+## Visualization
 Now, you can visualize the results in the main LLooM Workbench view. An interactive widget will appear when you run this function:
 ```py
 l.vis()
@@ -210,14 +203,40 @@ Tokens: total=67045, in=55565, out=11480
 Depending on the volume of data you are analyzing and the details of your OpenAI account/organization, you may run into OpenAI API [rate limits](https://platform.openai.com/docs/guides/rate-limits) (with respect to tokens per minute (TPM) or requests per minute (RPM)). LLooM provides several avenues to address rate limits.
 
 ### Modifying underlying models
-By default, LLooM currently uses `gpt-4o-mini` for the Distill and Score operators, `gpt-4o` for the Synthesize operator, and `text-embedding-3-large` for the Cluster operator. These values are set in [`workbench.py`](https://github.com/michelle123lam/lloom/blob/main/text_lloom/src/text_lloom/workbench.py). However, users can specify different models for each of these operators within the LLooM instance. See the [Custom Models](./custom-models.md) page for examples with other OpenAI models, other LLM APIs, and open source models.
+By default, LLooM currently uses `gpt-3.5-turbo` for the Distill and Score operators, `gpt-4-turbo` for the Synthesize operator, and `text-embedding-3-large` for the Cluster operator. These values are set in [`workbench.py`](https://github.com/michelle123lam/lloom/blob/1f74f4569f8c8fc00f11852f1fcd136e35fc30df/text_lloom/src/text_lloom/workbench.py#L34-L37). However, users can specify different models for each of these operators within the LLooM instance.
+```py {4-8}
+l = wb.lloom(
+    df=df,
+    text_col="text",
+    # Model specification
+    distill_model_name = "gpt-3.5-turbo",
+    embed_model_name = "text-embedding-3-large",
+    synth_model_name = "gpt-4-turbo",
+    score_model_name = "gpt-3.5-turbo",
+)
+```
 
 ### Customizing wait times
 LLooM has built-in functionality for batching asynchronous requests to avoid rate limit issues. However, the necessary batch size and timing may vary across different users depending on details of their dataset and account. 
 
-With the [Custom Models](./custom-models.html#different-rate-limits) option, users can override the **number of requests in a batch** and the **length of time to wait** between batches with the `rate_limit` parameter. 
+Thus, users can override the **number of requests in a batch** and the **length of time to wait** between batches with the `rate_limits` parameter. The current defaults are defined as `RATE_LIMITS` in [`llm.py`](https://github.com/michelle123lam/lloom/blob/24a7f5b1335311b90b4788608a3784a5d87e4482/text_lloom/src/text_lloom/llm.py#L34-L41). It may be helpful to refer to your organization's own [rate limits](https://platform.openai.com/account/limits) to set these values.
 
-The current defaults are defined using the `rate_limit` field in `MODEL_INFO` in [`llm_openai.py`](https://github.com/michelle123lam/lloom/blob/main/text_lloom/src/text_lloom/llm_openai.py). For OpenAI models, it may be helpful to refer to your organization's own [rate limits](https://platform.openai.com/account/limits) to set these values.
+```py {4-10}
+l = wb.lloom(
+    df=df,
+    text_col="text",
+    # Rate limit parameter specification
+    rate_limits={
+        # Specify any custom parameters
+        # Otherwise, they default to the RATE_LIMITS settings in llm.py
+        # "model-name": (n_requests, wait_time_secs)
+        "gpt-4-turbo": (40, 10),  
+    }
+)
+```
+- `n_requests`: number of requests allowed in one batch
+- `wait_time_secs`: time period (in seconds) to wait before making more requests
+- RPM (Requests per minute): `n_requests * (60 / wait_time_secs)`. In the above example, we specified 40 requests every 10 seconds, which means 240 requests per minute.
 
 ### Batching score operations
 The `Score` operator in particular may run into rate limits because it initiates a higher volume of concurrent requests to score all documents for all selected concepts. By default, scoring is applied _individually_ for each concept and each document (`batch_size=1`) to produce more reliable scores. 

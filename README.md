@@ -57,7 +57,7 @@ After running concept induction, the Workbench can display an interactive visual
   - **C2: Concept Matches and Non-Matches**: Shows all **input documents** in **table** form. Includes the original text, bullet summaries, concept scores, highlighted text that exemplifies the concept, score rationale, and metadata columns.
 
 ## How does LLooM work?
-LLooM is a **concept induction** algorithm that extracts and applies concepts to make sense of unstructured text datasets. LLooM leverages large language models (specifically GPT-3.5 and GPT-4 in the current implementation) to synthesize sampled text spans, generate concepts defined by explicit criteria, apply concepts back to data, and iteratively generalize to higher-level concepts.
+LLooM is a **concept induction** algorithm that extracts and applies concepts to make sense of unstructured text datasets. LLooM leverages large language models (specifically GPT-4o and GPT-4o mini in the current implementation) to synthesize sampled text spans, generate concepts defined by explicit criteria, apply concepts back to data, and iteratively generalize to higher-level concepts.
 
 <p align="center">
 <img src="./docs/public/media/lloom_process_full.svg" alt="LLooM splash figure" width="100%">
