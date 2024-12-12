@@ -8,11 +8,9 @@
     </h3>
 </p>
 <p align="">
-    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb">
-        <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-    </a>
+    <a target="_blank" href="https://colab.research.google.com/github/michelle123lam/lloom/blob/main/docs/public/nb/24_11_LLooM_GettingStartedTemplate_v1.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
     <a href="https://badge.fury.io/py/text_lloom"><img src="https://badge.fury.io/py/text_lloom.svg" alt="PyPI text_lloom" height="20"></a>
-    <img src="https://static.pepy.tech/badge/text-lloom" alt="PyPI Downloads">
+    <a href="https://www.pepy.tech/projects/text_lloom"><img src="https://static.pepy.tech/badge/text-lloom" alt="PyPI Downloads"></a>
 </p>
 
 **LLooM** is an interactive text analysis tool introduced as part of an ACM CHI 2024 paper:

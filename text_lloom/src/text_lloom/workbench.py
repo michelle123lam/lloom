@@ -11,6 +11,8 @@ from yaspin import yaspin
 import base64
 import requests
 
+import nltk
+nltk.download('punkt_tab', quiet=True)
 
 # Local imports
 if __package__ is None or __package__ == '':
